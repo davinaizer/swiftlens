@@ -2,7 +2,7 @@
 
 ## Current Objective
 
-Make repository documentation the implementation authority so phased delivery is enforced inside the repo, not in prompts.
+Align the bootstrap-generated documentation with the canonical SwiftLens governance pack so the repository itself is the implementation authority.
 
 ## Current Phase
 
@@ -12,9 +12,9 @@ Make repository documentation the implementation authority so phased delivery is
 
 ## Active Work
 
-1. Keep documentation aligned with the repository-governed phase contract.
-2. Reject any request that skips a phase or redefines architecture from a prompt.
-3. Preserve the deterministic, syntax-tree-first, OSS-maintainable scope.
+1. Replace generic bootstrap wording in the repository entrypoints and workflow docs.
+2. Keep the phase contract repository-governed, deterministic, and syntax-tree-first.
+3. Preserve the documented rejection rules for semantic analysis, plugin/platform drift, and other out-of-phase scope.
 
 ## Rejection Rules
 

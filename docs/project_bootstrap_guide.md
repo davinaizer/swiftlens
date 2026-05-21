@@ -1,6 +1,6 @@
 ---
 createdAt: "2026-05-01T15:20:17-0300"
-lastModifiedAt: "2026-05-01T15:20:17-0300"
+lastModifiedAt: "2026-05-21T00:00:00-0300"
 ---
 
 # Repository Bootstrap Guide
@@ -13,8 +13,8 @@ Use this guide to start a new repository from a Documentation Pack without inven
 
 - Pack title: SwiftLens Documentation Pack
 - Mandatory inputs: PRD, TAD
-- Optional but recommended: Project Profile
-- Recommended taxonomy: PRD, TAD, Package API Contract, Command and CLI Specification, Implementation Backlog, QA and Test Plan, Release and Publishing Runbook, Governance, Handoff
+- Optional but recommended: Project Profile, Project Definition Pack, Project Action Plan
+- Recommended taxonomy: README, PRD, TAD, Project Definition Pack, Project Action Plan, PLANS, docs/README, docs/governance/README, docs/governance/WORKFLOW_CONTRACT, project_bootstrap_guide
 
 ## Detected Repository Profile
 
@@ -32,60 +32,62 @@ Use this guide to start a new repository from a Documentation Pack without inven
 
 | Order | Document |
 | --- | --- |
-| 1 | PRD |
-| 2 | TAD |
-| 3 | Package API Contract |
-| 4 | Command and CLI Specification |
-| 5 | Implementation Backlog |
-| 6 | QA and Test Plan |
-| 7 | Release and Publishing Runbook |
-| 8 | Governance |
-| 9 | Handoff |
+| 1 | README |
+| 2 | docs/README |
+| 3 | docs/governance/README |
+| 4 | docs/governance/WORKFLOW_CONTRACT |
+| 5 | PRD |
+| 6 | TAD |
+| 7 | SwiftLens-project-definition-pack |
+| 8 | SwiftLens-project-action-plan |
+| 9 | PLANS |
+| 10 | project_bootstrap_guide |
 
 ## Suggested Deliverables
 
-- Swift Package manifest and target layout
-- Public API surface and module boundary rules
-- Executable command behavior or library export rules
-- Test strategy for package targets
-- Release or publishing notes when applicable
+- SwiftLens package manifest and target layout
+- SwiftLens CLI entrypoints and deterministic command behavior
+- Syntax-tree-first config, rule, and reporter contracts
+- Fixture-backed success and failure tests
+- Phase-gated governance docs and work-plan alignment
 
 ## Suggested Repo Structure
 
 | Path | Purpose |
 | --- | --- |
 | Package.swift | Swift Package manifest |
-| Sources/<ToolName>/ | package sources |
-| Tests/<ToolName>Tests/ | package tests |
+| Sources/SwiftLensCLI/ | CLI sources |
+| Tests/SwiftLensTests/ | package tests |
 | docs/ | documentation and governance |
 | scripts/ | utility scripts |
 | README.md | project overview and usage |
+| PLANS.md | active work plan |
 
 ## Bootstrap Sequence
 
 1. Validate the Documentation Pack before writing anything.
-2. Lock product intent in PRD.
-3. Lock system boundaries in TAD.
-4. Add the remaining source-of-truth documents in pack order.
+2. Lock product intent in `docs/prd.md`.
+3. Lock system boundaries in `docs/tad.md`.
+4. Align the definition pack and action plan with the governed phase contract.
 5. Add governance rules before implementation starts.
 6. Define any team or agent routing if the project uses delegation.
-7. Build backlog, QA, and handoff artifacts from the authoritative docs.
+7. Keep `PLANS.md` current when work changes hands.
 8. Start implementation only after the guide, governance, and validation rules exist.
 
 ## Suggested Workflow
 
-1. Define package boundaries before implementation.
-2. Decide whether the package is a library, executable, or mixed target set.
-3. Lock public API and dependency boundaries in TAD.
-4. Create tests alongside the first package slice.
-5. Keep scripts and docs adjacent to package-level work.
+1. Lock product intent in `docs/prd.md`.
+2. Lock architecture boundaries in `docs/tad.md`.
+3. Keep the work syntax-tree-first, deterministic, and CI-relevant.
+4. Keep phase transitions in `docs/SwiftLens-project-action-plan.md`.
+5. Update `PLANS.md` when work changes hands.
 6. Validate with `swift test` and any package-specific CLI checks.
 
 ## Governance Baseline
 
 - Keep a single source of truth per decision.
-- Put scope rules in PRD or the project rules doc, not in task chatter.
-- Put architecture boundaries in TAD or architecture governance, not in implementation notes.
+- Put scope rules in `docs/prd.md` or the project rules doc, not in task chatter.
+- Put architecture boundaries in `docs/tad.md` or architecture governance, not in implementation notes.
 - Put content, data, or domain rules in the relevant source-of-truth doc or governance file.
 - Put workflow, planning, and validation rules in governance docs before coding.
 - Record exceptions explicitly, with a removal plan and expiry if applicable.
@@ -102,7 +104,7 @@ Use this guide to start a new repository from a Documentation Pack without inven
 
 ## Validation Gate
 
-- Do not begin implementation if PRD or TAD is missing.
+- Do not begin implementation if `docs/prd.md` or `docs/tad.md` is missing.
 - Do not bypass governance, architecture, or domain rules silently.
 - Validate the first implementation slice before expanding scope.
 - Update the active task or handoff artifact whenever work changes hands.

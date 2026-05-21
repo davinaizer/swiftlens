@@ -2,15 +2,17 @@
 
 ## Purpose
 
-Define the shared workflow rules that every generated repository should follow.
+Define the shared workflow rules that keep SwiftLens repository-governed, phase-gated, syntax-tree-first, and deterministic.
 
 ## Baseline Rules
 
-- Start from the governance entrypoint before changing anything.
+- Start from `docs/README.md` and `docs/governance/README.md` before changing scope or workflow.
 - Keep one owner per workstream.
-- Record the active task state in a dedicated handoff or backlog document.
+- Keep the active task state in `PLANS.md` or the owning handoff/backlog document when work changes hands.
 - Use small, reversible changes.
-- Do not begin implementation if PRD or TAD is missing.
+- Do not begin implementation if `docs/prd.md` or `docs/tad.md` is missing or undefined.
+- Keep execution syntax-tree-first, deterministic, and CI-relevant.
+- Do not introduce semantic analysis, plugin ecosystems, platform/SaaS drift, or other out-of-phase capabilities.
 - Resolve undefined workflow details in governance first instead of in task chatter.
 
 ## Usage
