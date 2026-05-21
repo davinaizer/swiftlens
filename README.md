@@ -23,17 +23,31 @@ SwiftLens intentionally stops short of compiler-grade architectural analysis.
 - a SaaS governance product
 - an architecture visualization platform
 
-## Governance Doctrine
+## Repository-Governed Development Model
 
-Features that require semantic reconstruction, inferred architectural truth, runtime understanding, or persistent graph infrastructure are out of scope for SwiftLens V1 and should be rejected by default.
+- Repository docs govern implementation.
+- Prompts only initiate work.
+- Prompts cannot redefine architecture.
+- Prompts cannot bypass the phase contract.
+- Phase transitions are documented in [docs/SwiftLens-project-action-plan.md](docs/SwiftLens-project-action-plan.md).
+- Current phase identification is required before implementation.
+- Out-of-phase requests are rejected, not reprioritized.
 
-## Design Philosophy
+## Phased Implementation Philosophy
 
-- deterministic over intelligent
-- heuristics over semantic reconstruction
-- maintainability over completeness
-- explicit constraints over extensibility
-- OSS realism over enterprise ambition
+- Start with the smallest deterministic surface.
+- Prefer direct orchestration in early phases.
+- Add abstractions only when repetition proves they are operationally necessary.
+- Defer sophistication until the repo demonstrates repeated need.
+- Reject speculative future-proofing.
+- Reject premature extensibility.
+
+## Complexity Escalation Policy
+
+- If a concept appears once, keep it concrete.
+- If a concept appears repeatedly across fixtures or modules, consider a small abstraction.
+- Do not introduce protocol hierarchies unless they remove operational duplication or enforce a real invariant.
+- Do not add generalized frameworks to solve a phase-local problem.
 
 ## Non-Goals
 
@@ -44,8 +58,9 @@ Features that require semantic reconstruction, inferred architectural truth, run
 - deep dependency intelligence
 - enterprise workflow orchestration
 - runtime instrumentation
+- platformization
 
-## What it does
+## What It Does
 
 - Detects SwiftUI architectural drift
 - Flags governance drift using deterministic heuristics
@@ -53,7 +68,7 @@ Features that require semantic reconstruction, inferred architectural truth, run
 - Produces deterministic machine-readable output for CI and AI agents
 - Emits Markdown summaries for reviewers when requested
 
-## V1 rule packs
+## V1 Rule Packs
 
 SwiftLens V1 treats these packs as required:
 
@@ -65,7 +80,7 @@ SwiftLens V1 treats these packs as required:
 V1 is complete only when all required packs are implemented and validated.
 V1 uses built-in packs only; external pack surfaces are deferred.
 
-## V1 command contract
+## V1 Command Contract
 
 Expected CLI surface:
 
@@ -117,7 +132,7 @@ Documented config behavior:
 - route discovery is limited to declared or static routes only
 - ownership mapping is explicit-config only
 
-## Reporter contract
+## Reporter Contract
 
 Each violation should include:
 
@@ -130,7 +145,7 @@ Each violation should include:
 - reason
 - `fixPattern`
 
-## Planned repository layout
+## Planned Repository Layout
 
 ```text
 swiftlens/
@@ -145,39 +160,14 @@ swiftlens/
 └── README.md
 ```
 
-## Roadmap
+## Phase Summary
 
-Phase 1:
+The authoritative phase contract lives in [docs/SwiftLens-project-action-plan.md](docs/SwiftLens-project-action-plan.md).
 
-- CLI bootstrap
-- config loading
-- SwiftSyntax traversal
-- file discovery
+- Phase 1 establishes the CLI bootstrap, SwiftSyntax parsing, one deterministic rule, JSON output, exit codes, and fixture tests.
+- Later phases add only the capabilities explicitly allowed by the repository phase contract.
+- Prompts cannot skip ahead to semantic, platform, compiler, or plugin ambitions.
 
-Phase 2:
-
-- deterministic rule registry
-- stable rule IDs
-- rule execution pipeline
-
-Phase 3:
-
-- syntax/path/import governance rules
-- ownership mapping heuristics
-- shallow dependency checks
-
-Phase 4:
-
-- JSON/YAML reporters
-- CI exit codes
-- fixture-based testing
-
-Phase 5:
-
-- documentation hardening
-- governance pack stabilization
-- OSS maintenance readiness
-
-## Current status
+## Current Status
 
 The project is still in the planning and bootstrap stage. The docs define the V1 contract, but the CLI implementation is not complete yet.

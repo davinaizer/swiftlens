@@ -89,17 +89,26 @@ SwiftLens provides the missing enforcement layer between code changes and merge:
 - Provide IDE integration.
 - Provide distributed governance.
 
-## 6. Governance Doctrine
+## 6. Incremental Delivery Philosophy
+
+- Milestones must be constrained and phase-gated.
+- Growth must be deterministic and justified by actual repository behavior.
+- Simplicity wins over extensibility when both satisfy the current phase.
+- Speculative abstractions are rejected.
+- Future usefulness is not sufficient justification for a new abstraction or capability.
+- New scope must be earned by the current phase contract, not by anticipated future use.
+
+## 7. Governance Doctrine
 
 Features that require semantic reconstruction, inferred architectural truth, runtime understanding, or persistent graph infrastructure are out of scope for SwiftLens V1 and should be rejected by default.
 
-## 7. Precision Philosophy
+## 8. Precision Philosophy
 
 SwiftLens intentionally prefers transparent heuristics over opaque semantic analysis.
 
 False precision is more dangerous than incomplete detection.
 
-## 8. Target Users
+## 9. Target Users
 
 | User | Need |
 | --- | --- |
@@ -108,7 +117,7 @@ False precision is more dangerous than incomplete detection.
 | AI-heavy teams | Reduce review fatigue from boilerplate and overengineering |
 | Alfred team | Enforce AppRouter, state ownership, localization, icon, and preview invariants |
 
-## 9. Primary Use Cases
+## 10. Primary Use Cases
 
 | Use Case | Description |
 | --- | --- |
@@ -118,7 +127,7 @@ False precision is more dangerous than incomplete detection.
 | Architecture review | A reviewer receives a compact report of structural risks |
 | Alfred validation | Alfred-specific policy pack validates the model on a real codebase |
 
-## 10. Success Criteria
+## 11. Success Criteria
 
 SwiftLens v1 is successful if:
 
@@ -127,9 +136,9 @@ SwiftLens v1 is successful if:
 - it blocks hard violations in CI with deterministic exit codes
 - it reduces manual review effort by surfacing targeted, actionable issues
 
-## 11. User Stories
+## 12. User Stories
 
-### 10.1 Developer
+### 12.1 Developer
 
 As a SwiftUI developer, I want SwiftLens to tell me when code violates the architecture so I can fix the issue before review.
 
@@ -139,7 +148,7 @@ Acceptance criteria:
 - each finding identifies file, range, rule, reason, and fix pattern
 - output is readable without opening the full project manually
 
-### 10.2 AI Agent
+### 12.2 AI Agent
 
 As an AI coding agent, I want compact JSON or YAML findings so I can fix only the relevant files and avoid wasting tokens on broad exploration.
 
@@ -149,7 +158,7 @@ Acceptance criteria:
 - every finding has a stable rule ID
 - every finding includes precise file and range metadata
 
-### 10.3 Reviewer
+### 12.3 Reviewer
 
 As a reviewer, I want a Markdown summary of architecture risks so I can focus review effort on meaningful issues.
 
@@ -159,7 +168,7 @@ Acceptance criteria:
 - reports include project summary counts
 - reports avoid essay-style commentary unless explicitly requested
 
-### 10.4 Project Maintainer
+### 12.4 Project Maintainer
 
 As a maintainer, I want to map governance rules into executable config without hardcoding them into the tool.
 
@@ -169,9 +178,9 @@ Acceptance criteria:
 - governance docs remain the human source of truth
 - SwiftLens does not infer rules from prose in V1
 
-## 12. Product Scope
+## 13. Product Scope
 
-### 11.1 Required Rule Packs
+### 13.1 Required Rule Packs
 
 | Pack | Purpose | V1 Status |
 | --- | --- | --- |
@@ -182,7 +191,7 @@ Acceptance criteria:
 
 V1 uses built-in packs only; external pack surfaces are deferred.
 
-### 12.2 Mandatory V1 Rules
+### 13.2 Mandatory V1 Rules
 
 #### SwiftUI Core
 
@@ -224,7 +233,7 @@ V1 uses built-in packs only; external pack surfaces are deferred.
 | `CallbackChildViews` | warning | Child views should expose callbacks instead of owning routing |
 | `SendableDTOs` | warning | Touched DTOs should conform to `Sendable` where applicable |
 
-### 12.3 Configurable Scope
+### 13.3 Configurable Scope
 
 - project root or scan root
 - include and exclude glob patterns
@@ -233,7 +242,7 @@ V1 uses built-in packs only; external pack surfaces are deferred.
 - per-rule severity overrides
 - per-rule configuration parameters
 
-## 13. Output Modes
+## 14. Output Modes
 
 | Mode | Purpose |
 | --- | --- |
@@ -242,7 +251,7 @@ V1 uses built-in packs only; external pack surfaces are deferred.
 | `markdown` | PR and review summaries |
 | `compact` | Minimal terminal summary |
 
-## 14. Exit-Code Contract
+## 15. Exit-Code Contract
 
 | Condition | Exit Code |
 | --- | --- |
@@ -252,7 +261,7 @@ V1 uses built-in packs only; external pack surfaces are deferred.
 | Config issue | 2 |
 | Internal failure | 3 |
 
-## 15. Configuration Contract
+## 16. Configuration Contract
 
 `.swiftlens.yml` is the executable policy source. Governance prose is not parsed in V1.
 
@@ -274,7 +283,7 @@ Precedence:
 4. `rules.<rule>.config` merges over built-in rule config; unknown keys fail validation.
 5. CLI flags affect execution scope and reporter selection only.
 
-## 16. Release Criteria
+## 17. Release Criteria
 
 SwiftLens v1 is releasable when:
 
@@ -284,11 +293,11 @@ SwiftLens v1 is releasable when:
 - exit codes match the contract
 - the tool has been validated on Alfred or an equivalent real SwiftUI codebase
 
-## 17. Risks
+## 18. Risks
 
 | Risk | Impact | Mitigation |
 | --- | --- | --- |
 | False positives | Low trust, noisy CI | Start with deterministic syntax signals and validate on real code |
-| Weak architecture inference | Missed violations | Use project-specific config and declaration/index data |
+| Weak architecture inference | Missed violations | Use project-specific config and declaration records |
 | Scope creep | Delayed release | Freeze V1 scope and reject auto-fix / NLP / GUI work |
 | Overfitting to Alfred | Poor generalization | Keep generic packs separate from Alfred-specific policy |

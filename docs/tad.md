@@ -11,7 +11,7 @@
 
 ## 1. Architecture Objective
 
-Define the technical shape of SwiftLens so the CLI, config model, discovery pipeline, syntax index, rule engine, and reporters stay deterministic and testable.
+Define the technical shape of SwiftLens so the CLI, config model, discovery pipeline, syntax parsing layer, rule engine, and reporters stay deterministic and testable.
 
 The design priority is correctness and traceability, not extensibility at the cost of ambiguity.
 
@@ -23,6 +23,14 @@ The design priority is correctness and traceability, not extensibility at the co
 - rule evaluation avoids compiler infrastructure dependencies
 - findings are advisory governance signals, not semantic guarantees
 
+## 1.2 Phase-Aware Architecture Constraints
+
+- Early phases prefer direct orchestration over layered indirection.
+- Avoid premature abstractions.
+- Avoid protocol hierarchies unless they are operationally necessary.
+- Defer sophistication until repetition justifies it in fixtures or real repositories.
+- Introduce shared state or shared metadata only when the current phase explicitly needs it.
+
 ## 2. System Overview
 
 Pipeline:
@@ -32,8 +40,7 @@ CLI Entry
 → Project Discovery
 → Config Loader
 → SwiftSyntax Traversal
-→ Syntax / Structure Index
-→ Rule Engine
+→ Direct Rule Evaluation
 → Reporter
 → Exit Policy
 ```
@@ -47,6 +54,7 @@ CLI Entry
 5. Avoid auto-fix behavior in V1.
 6. Keep machine output compact and stable across runs.
 7. Prefer shallow declared relationships over inferred architecture.
+8. Add abstractions only when repetition proves they reduce operational risk.
 
 ## 4. Technology Choices
 
@@ -81,7 +89,7 @@ swiftlens/
 | `SwiftLensCLI` | Argument parsing, command routing, exit code |
 | `ProjectDiscovery` | Detect package, project, workspace, and source roots |
 | `ConfigLoader` | Load `.swiftlens.yml` and validate policy |
-| `SyntaxIndex` | Parse files and expose declaration and structure data |
+| `SyntaxRecords` | Deferred shared syntax metadata store, introduced only when repeated rule needs justify it |
 | `RuleEngine` | Execute configured rules |
 | `RulesSwiftUICore` | Generic SwiftUI rules |
 | `RulesAISlop` | Heuristic overengineering rules |
@@ -251,14 +259,14 @@ SwiftSyntax parsing should detect:
 - comments
 - navigation patterns
 
-### 10.1 Core Indexes
+### 10.1 Core Records
 
-| Index | Responsibility |
+| Record | Responsibility |
 | --- | --- |
-| Declaration index | Track declarations, kinds, and ranges |
+| Declaration record set | Track declarations, kinds, and ranges |
 | File ownership map | Associate files with feature or domain ownership |
 | Feature root ownership | Record which root owns which declaration set |
-| Reference index | Support shallow declared relationship checks only |
+| Reference record set | Support shallow declared relationship checks only |
 
 ### 10.2 Stored Metadata
 
@@ -290,6 +298,7 @@ Rules must not:
 - auto-fix architecture
 - infer semantic correctness
 - depend on build execution
+- require protocol hierarchies when a direct type or function call is sufficient
 
 A rule must justify its governance value relative to implementation complexity.
 
@@ -312,9 +321,9 @@ struct RuleContext {
     let project: ProjectModel
     let config: SwiftLensConfig
     let files: [SourceFile]
-    let syntaxIndex: SyntaxIndex
-    let declarationIndex: DeclarationIndex
-    let referenceIndex: ReferenceIndex?
+    let syntaxRecords: [SourceFileSyntaxRecord]
+    let declarationRecords: [DeclarationRecord]?
+    let referenceRecords: [ReferenceRecord]?
 }
 ```
 
@@ -366,8 +375,8 @@ Every violation must include:
 
 1. Load config.
 2. Resolve project scope.
-3. Parse files into syntax and structure indexes.
-4. Build declaration and reference metadata.
+3. Parse files into syntax and structure records.
+4. Build declaration and reference metadata only when the current phase requires it.
 5. Execute enabled rules in a deterministic order.
 6. Merge built-in defaults with pack and rule overrides.
 7. Collect violations.
@@ -376,30 +385,18 @@ Every violation must include:
 
 ## 13. Rule-Pack Strategy
 
-### 12.1 Initial Rule Priorities
+### 12.1 Phase 1 Rule Priority
 
-The first three rules to ship are:
+Phase 1 ships exactly one deterministic rule.
 
-- `AppRouterOnly`
-- `MassiveSwiftUIView`
-- `SingleUseProtocol`
+### 12.2 Later Rule Expansion
 
-### 12.2 Remaining V1 Architecture Rules
+After Phase 1 exits cleanly, expand the rule registry in the documented phase order:
 
-After the first three rules are trusted, implement:
-
-- `CrossFeatureImport`
-- `OrphanRoute`
-- `FeatureBoundaryViolation`
-- `DuplicateOwnership`
-
-### 12.3 Remaining Required Packs
-
-Then complete:
-
-- `swiftui-core`
-- `ai-slop`
-- `alfred`
+- deterministic rule infrastructure
+- syntax-first governance rules
+- reporting and validation
+- documentation hardening
 
 V1 uses built-in packs only; external pack surfaces are rejected by default.
 
@@ -425,6 +422,7 @@ Explicitly prohibited:
 - transitive closure analysis
 - cycle resolution engines
 - graph optimization systems
+- persistent graph infrastructure
 
 ## 15. Detection Strategy
 
@@ -614,7 +612,7 @@ The following items are explicitly rejected for V1:
 The following implementation details remain open:
 
 - exact shape of `SourceRange`
-- whether `ReferenceIndex` is required in V1 or deferred to later packs
+- whether reference records are required in V1 or deferred to later packs
 - whether `Yams` or an equivalent YAML parser is chosen
 - exact glob engine and its failure modes
 
@@ -625,7 +623,7 @@ V1 is complete only when:
 - the CLI executable is available through the Swift package
 - config validation is enforced
 - project discovery is deterministic
-- syntax and declaration indexing are in place
+- syntax and declaration records are in place
 - the rule engine runs configured rules consistently
 - the required V1 packs are implemented
 - reporters and exit codes match the documented contract

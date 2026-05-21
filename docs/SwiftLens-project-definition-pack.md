@@ -2,7 +2,7 @@
 title: SwiftLens Project Definition Pack
 status: draft
 createdAt: 2026-04-27T00:00:00-03:00
-lastModifiedAt: 2026-04-27T00:00:00-03:00
+lastModifiedAt: 2026-05-21T00:00:00-03:00
 ---
 
 # SwiftLens Project Definition Pack
@@ -60,7 +60,32 @@ The following are explicitly deferred and not part of V1:
 - build-system integration beyond CLI execution
 - semantic architecture reconstruction
 
-## 4. Forbidden Architectural Directions
+## 4. Repository-Governed Implementation Doctrine
+
+- Repository docs govern implementation.
+- Prompts only initiate work.
+- Prompts cannot redefine architecture.
+- Prompts cannot bypass the phase contract.
+- The authoritative phase contract lives in [SwiftLens-project-action-plan.md](./SwiftLens-project-action-plan.md).
+- If a prompt conflicts with repository docs, the docs win.
+
+## 5. Phase Transition Rules
+
+1. A phase begins only when the previous phase has met its exit criteria.
+2. A phase does not authorize capabilities outside its allowed scope.
+3. Later phases do not retroactively justify earlier-phase shortcuts.
+4. Semantic analysis, plugin systems, platform ambitions, and compiler infrastructure remain rejected unless a later phase explicitly and narrowly permits them.
+5. Any new abstraction must be justified by repeated operational need, not speculative future use.
+
+## 6. Complexity Escalation Policy
+
+- Start with direct orchestration.
+- Avoid premature abstractions.
+- Avoid protocol hierarchies unless they remove operational duplication or enforce a real invariant.
+- Defer sophistication until repetition proves that a shared abstraction is worth the maintenance cost.
+- Keep the simplest concrete implementation that satisfies the current phase.
+
+## 7. Forbidden Architectural Directions
 
 SwiftLens must not move toward:
 
@@ -76,7 +101,7 @@ SwiftLens must not move toward:
 - source rewriting
 - architecture auto-fix systems
 
-## 5. Feature Admission Criteria
+## 8. Feature Admission Criteria
 
 A feature is rejected unless it is:
 
@@ -88,7 +113,7 @@ A feature is rejected unless it is:
 - explainable via stable findings
 - implementable without compiler infrastructure
 
-## 6. Governance Philosophy
+## 9. Governance Philosophy
 
 SwiftLens reports governance signals, not architectural truth.
 
@@ -104,7 +129,7 @@ A finding does NOT imply:
 - runtime correctness
 - architectural invalidity
 
-## 7. Positioning
+## 10. Positioning
 
 | Tool Category | SwiftLens Position |
 | --- | --- |
@@ -114,7 +139,7 @@ A finding does NOT imply:
 | Xcode Analyzer | Compiler/static bug diagnostics |
 | SwiftLens | SwiftUI governance findings from syntax-tree analysis |
 
-## 8. Target Users
+## 11. Target Users
 
 | User | Need |
 | --- | --- |
@@ -123,7 +148,7 @@ A finding does NOT imply:
 | AI-heavy teams | Reduce code-review fatigue from boilerplate and overengineering |
 | Alfred team | Enforce AppRouter, state ownership, localization, icon, and preview invariants |
 
-## 9. V1 Goals
+## 12. V1 Goals
 
 1. Detect SwiftUI architectural drift.
 2. Detect overengineering and boilerplate patterns using deterministic heuristics.
@@ -131,7 +156,7 @@ A finding does NOT imply:
 4. Output compact machine-readable reports for CI and AI agents.
 5. Provide human-readable Markdown reports on demand.
 
-## 10. V1 Non-Goals
+## 13. V1 Non-Goals
 
 | Non-Goal | Reason |
 | --- | --- |
@@ -146,7 +171,7 @@ A finding does NOT imply:
 | Provide hosted or SaaS services | V1 is local and CI-driven |
 | Built-in packs only in V1 | External pack surfaces are deferred |
 
-## 11. Product Name
+## 14. Product Name
 
 **SwiftLens**
 
@@ -158,176 +183,3 @@ Rationale:
 - supports OSS-realistic positioning
 
 Alternative internal name: **Alfred Lens** for Alfred-specific governance pack only.
-
----
-
-# SwiftLens PRD v1
-
-## 1. Objective
-
-Build a deterministic, CLI-first SwiftUI governance tool that analyzes projects for architectural drift and configurable governance violations.
-
-## 2. Primary Use Cases
-
-| Use Case | Description |
-| --- | --- |
-| Local preflight | Developer runs SwiftLens before committing |
-| CI enforcement | Pull requests fail on hard governance errors |
-| Machine consumption | Agents receive compact deterministic findings |
-| Architecture review | Reviewer receives compact report of structural risks |
-| Alfred validation | Alfred-specific policy pack proves the model in a real codebase |
-
-## 3. V1 User Stories
-
-### 3.1 Developer
-
-As a SwiftUI developer, I want SwiftLens to tell me when code violates governance boundaries so I can fix the issue before review.
-
-Acceptance criteria:
-
-- command exits non-zero on `error` violations
-- report identifies file, range, rule, reason, and fix pattern
-- output is readable without opening the full project manually
-
-### 3.2 AI Agent
-
-As an AI coding agent, I want compact JSON/YAML findings so I can fix only the relevant files and avoid wasting tokens on broad exploration.
-
-Acceptance criteria:
-
-- JSON/YAML output is deterministic
-- every finding has a stable rule ID
-- each finding includes precise file/range metadata
-
-### 3.3 Reviewer
-
-As a reviewer, I want a Markdown summary of architecture risks so I can focus review effort on meaningful issues.
-
-Acceptance criteria:
-
-- Markdown report groups findings by severity and rule pack
-- report includes project summary counts
-- report avoids essay-style commentary unless explicitly requested
-
-### 3.4 Project Maintainer
-
-As a maintainer, I want to map human governance rules into executable config without hardcoding them into the tool.
-
-Acceptance criteria:
-
-- `.swiftlens.yml` defines project policy
-- governance docs remain the human source of truth
-- SwiftLens does not attempt automatic natural-language parsing of docs
-
-## 4. Precision Philosophy
-
-SwiftLens intentionally prefers transparent heuristics over opaque semantic analysis.
-
-False precision is more dangerous than incomplete detection.
-
-## 5. V1 Rule Packs
-
-| Pack | Purpose | V1 Status |
-| --- | --- | --- |
-| `swiftui-core` | Generic SwiftUI architecture rules | Required |
-| `ai-slop` | Overengineering, boilerplate, defensive-code, and comment noise rules | Required |
-| `architecture` | Feature boundaries, ownership, dependency direction | Required |
-| `alfred` | Alfred-specific governance rules | Required for Alfred validation |
-
-## 5.1 V1 Completion Criteria
-
-V1 is complete only when all required packs are implemented and validated:
-
-- `swiftui-core`
-- `ai-slop`
-- `architecture`
-- `alfred`
-
-## 6. V1 Mandatory Rules
-
-### 6.1 SwiftUI Core Pack
-
-| Rule | Severity Default | Description |
-| --- | --- | --- |
-| `MassiveSwiftUIView` | warning | Flags SwiftUI views exceeding configured size or complexity thresholds |
-| `NestedBodyComplexity` | warning | Flags overly complex `body` trees |
-| `StateOwnershipDrift` | warning | Flags suspicious local state ownership in child views |
-| `ViewModelBusinessLogicLeak` | warning | Flags business logic embedded in SwiftUI views |
-
-### 6.2 AI Slop Pack
-
-| Rule | Severity Default | Description |
-| --- | --- | --- |
-| `SingleUseProtocol` | advisory | Flags protocols with one implementation and no clear seam need |
-| `PassThroughWrapper` | advisory | Flags functions or types that only forward calls without behavior |
-| `EmptyAbstraction` | warning | Flags Manager, Provider, or Service shells with no meaningful logic |
-| `CommentRestatesCode` | advisory | Flags comments that describe syntax rather than intent |
-| `RedundantDefensiveGuard` | advisory | Flags defensive checks against impossible or already-enforced states |
-
-### 6.3 Architecture Pack
-
-| Rule | Severity Default | Description |
-| --- | --- | --- |
-| `CrossFeatureImport` | warning | Flags feature-to-feature imports outside allowed boundaries |
-| `OrphanRoute` | warning | Flags route declarations with no reachable navigation path |
-| `FeatureBoundaryViolation` | error | Flags ownership leakage across configured roots |
-| `DuplicateOwnership` | error | Flags multiple owners for the same state domain when configured |
-
-### 6.4 Alfred Pack
-
-| Rule | Severity Default | Description |
-| --- | --- | --- |
-| `AppRouterOnly` | error | Navigation must flow through `AppRouter` |
-| `SingleSourceOfTruth` | error | Prevent duplicated ownership of Home, Idea, or Recommendation state |
-| `NoHardcodedUserStrings` | error | User-facing strings must use localization |
-| `AlfredIconsOnly` | error | Production icons must go through `AlfredIcons` |
-| `DebugOnlyPreviewData` | error | Preview and mock data must remain debug-only |
-| `CallbackChildViews` | warning | Child views should expose callbacks instead of owning routing |
-| `SendableDTOs` | warning | Touched DTOs should conform to `Sendable` where applicable |
-
-## 7. Output Modes
-
-| Mode | Purpose |
-| --- | --- |
-| `json` | CI and AI-agent consumption |
-| `yaml` | AI-agent and human-readable structured output |
-| `markdown` | PR/review summaries |
-| `compact` | Minimal terminal summary |
-
-## 8. Example Machine Output
-
-```yaml
-tool: swiftlens
-status: failed
-summary:
-  errors: 1
-  warnings: 2
-  advisories: 1
-violations:
-  - rule: AppRouterOnly
-    pack: alfred
-    severity: error
-    file: Alfred/Presentation/Features/Dashboard/DashboardView.swift
-    range: "122:9-128:5"
-    reason: Direct navigation mutation outside AppRouter-owned flow.
-    fixPattern: Route through AppRouter.openIdeaRecommendations(...).
-```
-
-## 9. Success Metrics
-
-| Priority | Metric |
-| --- | --- |
-| 1 | Prevents architecture regressions |
-| 2 | Finds stale or dead architectural flows |
-| 3 | Reduces PR review time |
-| 4 | Reduces AI-agent token usage |
-
-## 10. Distribution
-
-V1 distribution:
-
-```text
-Swift Package executable
-```
-
-Later distribution is intentionally undefined until V1 is complete.

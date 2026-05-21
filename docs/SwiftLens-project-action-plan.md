@@ -1,41 +1,330 @@
 # SwiftLens Action Plan
 
+## Execution Doctrine
+
+- Repository docs govern implementation.
+- Prompts only initiate work.
+- Prompts cannot redefine architecture.
+- Prompts cannot bypass the phase contract.
+- Current phase must be identified before implementation starts.
+- Out-of-phase requests are rejected, not deferred.
+- Complexity escalates only when repetition justifies it.
+- Speculative future-proofing is rejected by default.
+
+## Phase Transition Rules
+
+1. A phase starts only after the prior phase exits cleanly and its deliverables are documented in the repository.
+2. A prompt cannot authorize a later phase if the repository docs do not allow it.
+3. Later phases do not backfill earlier-phase shortcuts.
+4. Semantic analysis, plugin ecosystems, platform ambitions, and compiler infrastructure remain rejected unless a later phase explicitly and narrowly authorizes them.
+5. New abstractions must be justified by repeated operational need, not by hypothetical future use.
+
 ## Phase 1 - CLI Bootstrap
 
-- create the executable Swift package
-- wire `swiftlens scan`, `validate-config`, `version`, and `help`
-- add config loading
-- add SwiftSyntax traversal
-- add file discovery
+### Objective
+
+Ship the smallest deterministic CLI surface that can parse Swift syntax, evaluate one rule, and return machine-readable results with stable exit codes.
+
+### Allowed Capabilities
+
+- executable Swift package
+- `swiftlens scan`
+- `swiftlens validate-config`
+- `swiftlens version`
+- `swiftlens help`
+- config loading
+- SwiftSyntax parsing and traversal
+- file discovery
+- one deterministic rule
+- JSON output
+- exit codes
+- fixture tests
+
+### Forbidden Capabilities
+
+- semantic analysis
+- graph systems
+- plugins
+- async infrastructure
+- caching
+- indexing
+- autofix
+
+### Allowed Abstractions
+
+- direct CLI orchestration
+- a minimal config model
+- a single rule evaluator
+- a compact violation model
+- fixture-backed test helpers
+
+### Required Deliverables
+
+- executable Swift package
+- documented CLI commands
+- config loader
+- SwiftSyntax parsing path
+- one deterministic rule
+- JSON reporter
+- exit-code mapping
+- fixture tests covering success and failure paths
+
+### Exit Criteria
+
+- the CLI runs end to end on fixtures
+- the single rule produces deterministic JSON
+- config failures return the documented config exit code
+- rule failures return the documented findings exit code
+- no forbidden capability is required to complete the phase
+
+### Explicit Non-Goals
+
+- semantic reconstruction
+- architecture graphs
+- plugin loading
+- daemon or background execution
+- persistent caches or indexes
+- autofix generation
+- YAML, Markdown, or compact reporters if they are not needed to complete the phase
+
+### Architectural Constraints
+
+- syntax-tree-first
+- single-process
+- deterministic
+- no hidden state
+- no compiler infrastructure
+- no speculative abstraction layer
+- no platform boundary expansion
 
 ## Phase 2 - Rule Infrastructure
 
-- add a deterministic rule registry
-- assign stable rule IDs
-- implement the rule execution pipeline
-- keep rule ordering explicit and reproducible
+### Objective
+
+Turn the single rule into a deterministic rule system with stable registration, ordering, and configuration precedence.
+
+### Allowed Capabilities
+
+- explicit rule registration
+- stable rule identifiers
+- deterministic rule ordering
+- rule enablement and severity overrides
+- shared violation serialization
+- reusable fixture helpers
+
+### Forbidden Capabilities
+
+- semantic inference
+- graph closure
+- transitive dependency reasoning
+- plugins
+- caching
+- indexing
+- autofix
+- async execution as a design requirement
+
+### Allowed Abstractions
+
+- a small rule registry
+- a rule descriptor type
+- a deterministic execution pipeline
+- minimal shared formatting helpers
+
+### Required Deliverables
+
+- rule registry
+- stable rule IDs
+- rule execution pipeline
+- config precedence handling
+- tests for rule order and override behavior
+
+### Exit Criteria
+
+- rule execution is deterministic across repeated runs
+- rule IDs are stable and documented
+- rule ordering is explicit
+- configuration precedence is reproducible in tests
+
+### Explicit Non-Goals
+
+- generalized analysis framework
+- semantic truth reconstruction
+- plugin surfaces
+- hosted or distributed rule execution
+
+### Architectural Constraints
+
+- keep orchestration direct
+- only extract abstractions that remove real duplication
+- do not introduce protocol hierarchies unless operationally necessary
+- preserve syntax-first evaluation
 
 ## Phase 3 - Syntax-First Governance Rules
 
-- add syntax/path/import governance rules
-- add ownership mapping heuristics
-- add shallow dependency checks
-- keep all checks limited to declared, lightweight relationships
+### Objective
+
+Add the initial governance rules that operate on syntax, imports, paths, and declared ownership only.
+
+### Allowed Capabilities
+
+- syntax/path/import governance rules
+- ownership mapping heuristics
+- shallow dependency checks
+- declared-route detection
+- rule-specific fixture tests
+
+### Forbidden Capabilities
+
+- semantic type analysis
+- whole-program reasoning
+- runtime inspection
+- transitive dependency inference
+- inferred ownership graphs
+- plugins
+- caching
+- indexing layers that outgrow the phase need
+
+### Allowed Abstractions
+
+- small shared selectors
+- rule-local helpers
+- explicitly configured ownership maps
+- narrowly scoped reusable checks
+
+### Required Deliverables
+
+- core governance rules
+- fixture coverage for each rule
+- deterministic findings for representative repositories
+
+### Exit Criteria
+
+- the rules pass on real fixture repositories
+- each rule remains explainable without semantic reconstruction
+- no rule depends on forbidden analysis depth
+
+### Explicit Non-Goals
+
+- architecture reconstruction
+- semantic correctness guarantees
+- broad dependency intelligence
+- generalized code-quality expansion
+
+### Architectural Constraints
+
+- preserve deterministic syntax-tree-first analysis
+- prefer declared relationships over inferred relationships
+- keep rule logic shallow and reviewable
+- add shared abstractions only after repeated duplication appears
 
 ## Phase 4 - Reporting and Validation
 
-- add JSON and YAML reporters
-- add CI exit codes
-- add fixture-based testing
-- verify deterministic output across repeated runs
+### Objective
+
+Stabilize machine output, CI gating, and regression coverage without changing the analysis model.
+
+### Allowed Capabilities
+
+- JSON reporter
+- YAML reporter
+- Markdown reporter
+- compact terminal summary
+- CI exit codes
+- fixture-based regression testing
+- deterministic output verification
+
+### Forbidden Capabilities
+
+- interactive UI
+- dashboard systems
+- remote services
+- daemonized execution
+- background indexing
+- autofix
+- plugin ecosystems
+
+### Allowed Abstractions
+
+- shared reporter serialization
+- common formatting helpers
+- test fixtures for output snapshots
+
+### Required Deliverables
+
+- stable reporter outputs
+- documented exit codes
+- regression tests for repeated runs
+- fixture coverage for output formatting
+
+### Exit Criteria
+
+- identical input yields identical output
+- CI can gate on documented exit codes
+- output formats stay stable across repeated runs
+
+### Explicit Non-Goals
+
+- platformization
+- hosted workflows
+- speculative export formats
+- editor integration
+
+### Architectural Constraints
+
+- output must not change rule semantics
+- formatting must remain deterministic
+- reporter code must stay simple enough to audit
 
 ## Phase 5 - Documentation Hardening
 
-- stabilize the governance pack
-- remove ambiguous language from docs
-- keep OSS maintenance expectations realistic
-- keep built-in packs only in V1
-- reject any scope that requires compiler infrastructure or hosted-service behavior
+### Objective
+
+Make the repository documentation self-sufficient so implementation guidance lives in the repo, not in prompts.
+
+### Allowed Capabilities
+
+- clarify ambiguous wording
+- align doctrine across docs
+- tighten maintenance expectations
+- document phase transitions and rejection rules
+
+### Forbidden Capabilities
+
+- new product capabilities
+- scope expansion
+- platformization
+- plugin ecosystems
+- speculative future-proofing
+
+### Allowed Abstractions
+
+- document-level grouping
+- repository-level policy statements
+
+### Required Deliverables
+
+- aligned README, PRD, TAD, definition pack, action plan, and work plan
+- explicit repository-governed implementation doctrine
+- explicit rejection language for out-of-phase work
+
+### Exit Criteria
+
+- the repository docs can govern implementation without prompt rewriting
+- the phase contract is readable and enforceable
+- no document invites scope drift or abstraction drift
+
+### Explicit Non-Goals
+
+- new features
+- future-proofing
+- enterprise platform language
+- speculative architecture
+
+### Architectural Constraints
+
+- documentation must preserve deterministic, syntax-tree-first scope
+- documentation must preserve OSS maintainability posture
+- documentation must reject semantic and platform ambitions
 
 ## Scope Rejection Gate
 
@@ -57,3 +346,4 @@ SwiftLens must not evolve into:
 - compiler infrastructure
 - a generalized architecture analysis framework
 - a distributed governance service
+- a hosted control plane
