@@ -164,6 +164,12 @@ Run tests:
 CLANG_MODULE_CACHE_PATH=/private/tmp/swiftlens-cache swift test
 ```
 
+Run SwiftLint:
+
+```bash
+swiftlint lint
+```
+
 SwiftLens development is:
 
 - governance-driven

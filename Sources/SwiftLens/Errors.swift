@@ -25,4 +25,3 @@ enum SwiftLensError: Error, Equatable {
         }
     }
 }
-

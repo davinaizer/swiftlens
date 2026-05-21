@@ -187,7 +187,7 @@ struct SwiftLensPhase2Tests {
             "--config",
             configURL(fixtureName).path,
             "--format",
-            "json",
+            "json"
         ])
     }
 
@@ -226,7 +226,7 @@ struct SwiftLensPhase2Tests {
             "swiftlens",
             "validate-config",
             "--config",
-            configURL("ScanSuccess").path,
+            configURL("ScanSuccess").path
         ])
 
         #expect(result.exitCode == 0)
@@ -240,7 +240,7 @@ struct SwiftLensPhase2Tests {
             "swiftlens",
             "validate-config",
             "--config",
-            configURL("InvalidPack").path,
+            configURL("InvalidPack").path
         ])
 
         #expect(result.exitCode == 2)
@@ -282,7 +282,7 @@ struct SwiftLensPhase2Tests {
         let config = SwiftLensConfig(
             project: ProjectConfiguration(path: ".", include: [], exclude: []),
             packs: [
-                "architecture": PackConfiguration(enabled: true, severityOverrides: [:]),
+                "architecture": PackConfiguration(enabled: true, severityOverrides: [:])
             ],
             rules: [:]
         )
