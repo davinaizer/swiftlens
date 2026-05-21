@@ -2,18 +2,25 @@
 
 ## Purpose
 
-Define the shared workflow rules that keep SwiftLens repository-governed, phase-gated, syntax-tree-first, and deterministic.
+Define the shared workflow rules that keep SwiftLens phase-gated, deterministic, and repository-governed.
 
 ## Baseline Rules
 
 - Start from `docs/README.md` and `docs/governance/README.md` before changing scope or workflow.
-- Keep one owner per workstream.
-- Keep the active task state in `PLANS.md` or the owning handoff/backlog document when work changes hands.
+- Identify the active phase in `docs/SwiftLens-project-action-plan.md` before implementation or doc changes that affect behavior.
+- Keep one owner per workstream and record the active state in `PLANS.md`.
 - Use small, reversible changes.
-- Do not begin implementation if `docs/prd.md` or `docs/tad.md` is missing or undefined.
 - Keep execution syntax-tree-first, deterministic, and CI-relevant.
-- Do not introduce semantic analysis, plugin ecosystems, platform/SaaS drift, or other out-of-phase capabilities.
+- Do not introduce semantic analysis, plugin ecosystems, dashboards, distributed services, or other out-of-phase capabilities.
 - Resolve undefined workflow details in governance first instead of in task chatter.
+
+## Agent Workflow Rules
+
+- The repository docs are the source of truth; prompts only initiate work.
+- If a prompt conflicts with canonical docs, reject the prompt and follow the docs.
+- Do not bypass a selector, diagnostic, or architecture review stage.
+- Update `PLANS.md` when the active work changes hands or the closure state changes.
+- Keep handoff text short, explicit, and generated from the current state.
 
 ## TDD Standard
 
@@ -49,6 +56,7 @@ Define the shared workflow rules that keep SwiftLens repository-governed, phase-
 - Reject implementation work that changes config parsing without invalid-case coverage.
 - Reject implementation work that weakens deterministic output.
 - Reject implementation work that relies on manual validation only.
+- Reject implementation work that attempts to move into the next phase without the current phase closing cleanly.
 
 ## Test Constraints
 
@@ -56,8 +64,3 @@ Define the shared workflow rules that keep SwiftLens repository-governed, phase-
 - Avoid network, clock, randomness, external services, and machine-local state in tests.
 - Tests validate externally observable deterministic behavior, not implementation structure.
 - Verify stable rule IDs, finding shape, ordering, and exit codes where applicable.
-
-## Usage
-
-- Read this document alongside `WORKFLOW_RULES.md`.
-- Treat `WORKFLOW_RULES.md` as the operational companion and this file as the shared contract.

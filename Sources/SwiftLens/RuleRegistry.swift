@@ -51,7 +51,7 @@ struct RuleRegistry: Sendable {
         self.descriptors = descriptors
     }
 
-    static let `default` = RuleRegistry(descriptors: [ForbiddenImportRule.descriptor, FoundationImportRule.descriptor])
+    static let `default` = RuleRegistry(descriptors: [ForbiddenImportRule.descriptor])
 
     func descriptor(for ruleID: String) -> RuleDescriptor? {
         descriptors.first { $0.id == ruleID }

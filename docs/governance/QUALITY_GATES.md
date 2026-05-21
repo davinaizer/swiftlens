@@ -2,10 +2,25 @@
 
 ## Purpose
 
-Define the minimum checks required before implementation or release.
+Define the minimum checks required before merge, phase closure, or release.
 
-## Baseline Rules
+## Required Gates
 
-- Do not bypass validation silently.
-- Require the first implementation slice to pass review and test gates before expansion.
-- Treat unresolved exceptions as release blockers unless explicitly documented.
+- `docs/prd.md` and `docs/tad.md` must remain canonical and internally consistent.
+- The active phase must be explicit in `PLANS.md` before implementation begins.
+- Phase 2 and later work must follow TDD by default.
+- Relevant tests must fail first, then pass after the smallest code change.
+- `swift test` must pass before merge, phase closure, rule additions, config changes, and reporter changes.
+- Fixture-backed tests must cover file- or project-dependent behavior.
+- No Phase 3 behavior may land while Phase 2 closure is unresolved.
+- No placeholder or scaffold-only docs may remain in the canonical doc set.
+
+## Release and Closure Rules
+
+- Unresolved exceptions are blockers unless the governing doc names the exception and its removal plan.
+- Reported findings, exit codes, and config validation behavior must remain deterministic across repeated runs.
+- Any change to rules, precedence, or output requires the matching test updates before merge.
+
+## Exception Rule
+
+- If a gate cannot be met, document the blocker in `PLANS.md` and do not widen scope until the blocker is removed.

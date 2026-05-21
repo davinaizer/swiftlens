@@ -210,4 +210,4 @@ The authoritative phase contract lives in [docs/SwiftLens-project-action-plan.md
 
 ## Current Status
 
-The project is still in the planning and bootstrap stage. The docs define the V1 contract, but the CLI implementation is not complete yet.
+Phase 2 rule infrastructure is implemented, and Phase 3 remains blocked until explicit phase-transition authorization is granted.

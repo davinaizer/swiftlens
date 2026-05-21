@@ -2,17 +2,17 @@
 
 ## Current Objective
 
-Phase 2 rule infrastructure is complete and verified with `swift test`.
+Phase 2 closure verified; no active implementation work remains.
 
 ## Current Phase
 
-- Current phase is Phase 1 - CLI Bootstrap.
+- Current phase is Phase 2 - Rule Infrastructure.
 - The active phase is the one defined in [docs/SwiftLens-project-action-plan.md](docs/SwiftLens-project-action-plan.md).
 - If the phase is undefined or disputed, resolve the docs first.
 
 ## Active Work
 
-1. None. Phase 2 deliverables are complete.
+1. None.
 
 ## Rejection Rules
 

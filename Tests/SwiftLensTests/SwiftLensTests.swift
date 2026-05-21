@@ -160,15 +160,47 @@ struct SwiftLensPhase2Tests {
         #expect(result.stderr.contains("Unknown pack key"))
     }
 
-    @Test("scan preserves registry order in output")
-    func scanPreservesRegistryOrderInOutput() throws {
-        let result = scanResult(for: "RegistryOrder")
+    @Test("rule engine preserves descriptor order")
+    func ruleEnginePreservesDescriptorOrder() throws {
+        func descriptor(id: String) -> RuleDescriptor {
+            RuleDescriptor(
+                id: id,
+                pack: "architecture",
+                defaultSeverity: .warning,
+                defaultConfidence: .high,
+                defaultEnabled: true,
+                evaluate: { context in
+                    [
+                        Violation(
+                            rule: context.descriptor.id,
+                            pack: context.descriptor.pack,
+                            severity: context.settings.severity,
+                            confidence: context.settings.confidence,
+                            file: "fixture.swift",
+                            range: SourceRange(
+                                start: SourceLocation(line: 1, column: 1),
+                                end: SourceLocation(line: 1, column: 1)
+                            ),
+                            reason: "Test rule \(context.descriptor.id).",
+                            fixPattern: nil
+                        )
+                    ]
+                }
+            )
+        }
 
-        #expect(result.exitCode == 1)
-        #expect(result.stderr.isEmpty)
+        let registry = RuleRegistry(descriptors: [descriptor(id: "AlphaRule"), descriptor(id: "BetaRule")])
+        let engine = RuleEngine(registry: registry)
+        let config = SwiftLensConfig(
+            project: ProjectConfiguration(path: ".", include: [], exclude: []),
+            packs: [
+                "architecture": PackConfiguration(enabled: true, severityOverrides: [:]),
+            ],
+            rules: [:]
+        )
 
-        let decoder = JSONDecoder()
-        let report = try decoder.decode(ScanReport.self, from: Data(result.stdout.utf8))
-        #expect(report.violations.map(\.rule) == ["ForbiddenImportRule", "FoundationImportRule"])
+        let violations = engine.evaluate(config: config, files: [])
+
+        #expect(violations.map(\.rule) == ["AlphaRule", "BetaRule"])
     }
 }
