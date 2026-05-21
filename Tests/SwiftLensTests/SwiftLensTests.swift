@@ -71,3 +71,104 @@ struct SwiftLensPhase1Tests {
         #expect(result.stderr.contains("Unknown flag `--verbose`"))
     }
 }
+
+@Suite("SwiftLens Phase 2")
+struct SwiftLensPhase2Tests {
+    private var fixtureRoot: URL {
+        URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .appendingPathComponent("Fixtures", isDirectory: true)
+    }
+
+    private func configURL(_ fixtureName: String) -> URL {
+        fixtureRoot
+            .appendingPathComponent(fixtureName, isDirectory: true)
+            .appendingPathComponent(".swiftlens.yml")
+    }
+
+    private func scanResult(for fixtureName: String) -> CLIExecutionResult {
+        SwiftLensCLI.execute(
+            arguments: [
+                "swiftlens",
+                "scan",
+                "--config",
+                configURL(fixtureName).path,
+                "--format",
+                "json",
+            ]
+        )
+    }
+
+    @Test("scan honors pack severity overrides")
+    func scanHonorsPackSeverityOverrides() throws {
+        let result = scanResult(for: "PackSeverityOverride")
+
+        #expect(result.exitCode == 1)
+        #expect(result.stderr.isEmpty)
+        #expect(result.stdout.contains("\"rule\":\"ForbiddenImportRule\""))
+        #expect(result.stdout.contains("\"severity\":\"warning\""))
+    }
+
+    @Test("scan lets rule severity override pack severity overrides")
+    func scanLetsRuleSeverityOverrideWin() throws {
+        let result = scanResult(for: "RuleSeverityOverride")
+
+        #expect(result.exitCode == 1)
+        #expect(result.stderr.isEmpty)
+        #expect(result.stdout.contains("\"rule\":\"ForbiddenImportRule\""))
+        #expect(result.stdout.contains("\"severity\":\"error\""))
+    }
+
+    @Test("scan disables a rule when its configuration turns it off")
+    func scanDisablesRuleWhenDisabled() throws {
+        let result = scanResult(for: "RuleDisabled")
+
+        #expect(result.exitCode == 0)
+        #expect(result.stderr.isEmpty)
+        #expect(result.stdout.contains("\"violations\":[]"))
+    }
+
+    @Test("validate-config accepts the phase 2 config schema")
+    func validateConfigAcceptsPhase2Schema() throws {
+        let result = SwiftLensCLI.execute(
+            arguments: [
+                "swiftlens",
+                "validate-config",
+                "--config",
+                configURL("ScanSuccess").path,
+            ]
+        )
+
+        #expect(result.exitCode == 0)
+        #expect(result.stderr.isEmpty)
+        #expect(result.stdout.contains("Configuration valid."))
+    }
+
+    @Test("validate-config rejects unknown pack names")
+    func validateConfigRejectsUnknownPackNames() throws {
+        let result = SwiftLensCLI.execute(
+            arguments: [
+                "swiftlens",
+                "validate-config",
+                "--config",
+                configURL("InvalidPack").path,
+            ]
+        )
+
+        #expect(result.exitCode == 2)
+        #expect(result.stdout.isEmpty)
+        #expect(result.stderr.contains("Unknown pack key"))
+    }
+
+    @Test("scan preserves registry order in output")
+    func scanPreservesRegistryOrderInOutput() throws {
+        let result = scanResult(for: "RegistryOrder")
+
+        #expect(result.exitCode == 1)
+        #expect(result.stderr.isEmpty)
+
+        let decoder = JSONDecoder()
+        let report = try decoder.decode(ScanReport.self, from: Data(result.stdout.utf8))
+        #expect(report.violations.map(\.rule) == ["ForbiddenImportRule", "FoundationImportRule"])
+    }
+}

@@ -2,13 +2,19 @@ import Foundation
 
 struct ScanEngine {
     private let fileManager: FileManager
+    private let registry: RuleRegistry
 
     init(fileManager: FileManager = .default) {
+        self.init(fileManager: fileManager, registry: .default)
+    }
+
+    init(fileManager: FileManager = .default, registry: RuleRegistry) {
         self.fileManager = fileManager
+        self.registry = registry
     }
 
     func scan(options: ScanOptions) throws -> ScanReport {
-        let loadedConfiguration = try ConfigLoader(fileManager: fileManager).load(
+        let loadedConfiguration = try ConfigLoader(fileManager: fileManager, registry: registry).load(
             configPath: options.configPath,
             projectPathOverride: options.path
         )
@@ -21,7 +27,7 @@ struct ScanEngine {
 
         let parser = SwiftSyntaxParserService()
         let parsedFiles = try files.map { try parser.parseFile(at: $0) }
-        let violations = ForbiddenImportRule().evaluate(config: loadedConfiguration.config, files: parsedFiles)
+        let violations = RuleEngine(registry: registry).evaluate(config: loadedConfiguration.config, files: parsedFiles)
         let summary = ScanSummary(filesScanned: parsedFiles.count, violations: violations.count)
 
         return ScanReport(
@@ -33,7 +39,7 @@ struct ScanEngine {
     }
 
     func validateConfig(options: ValidationOptions) throws {
-        try ConfigLoader(fileManager: fileManager).validate(configPath: options.configPath)
+        try ConfigLoader(fileManager: fileManager, registry: registry).validate(configPath: options.configPath)
     }
 
     private func discoverSwiftFiles(root: URL, include: [String], exclude: [String]) throws -> [URL] {

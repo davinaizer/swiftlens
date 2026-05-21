@@ -6,12 +6,9 @@ packs:
   architecture:
     enabled: true
     severityOverrides:
-      ForbiddenImportRule: warning
 rules:
   ForbiddenImportRule:
-    enabled: true
+    enabled: false
     config:
       forbiddenImports:
         - UIKit
-unexpected:
-  value: true

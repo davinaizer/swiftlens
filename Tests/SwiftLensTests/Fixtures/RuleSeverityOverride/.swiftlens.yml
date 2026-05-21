@@ -10,8 +10,7 @@ packs:
 rules:
   ForbiddenImportRule:
     enabled: true
+    severity: error
     config:
       forbiddenImports:
         - UIKit
-unexpected:
-  value: true

@@ -6,7 +6,7 @@ private struct YAMLLine {
     let content: String
 }
 
-enum YAMLValue: Equatable {
+indirect enum YAMLValue: Equatable, Sendable {
     case string(String)
     case bool(Bool)
     case array([YAMLValue])

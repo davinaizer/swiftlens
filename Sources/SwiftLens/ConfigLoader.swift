@@ -2,9 +2,11 @@ import Foundation
 
 struct ConfigLoader {
     private let fileManager: FileManager
+    private let registry: RuleRegistry
 
-    init(fileManager: FileManager = .default) {
+    init(fileManager: FileManager = .default, registry: RuleRegistry = .default) {
         self.fileManager = fileManager
+        self.registry = registry
     }
 
     func load(configPath: String?, projectPathOverride: String?) throws -> LoadedConfiguration {
@@ -64,7 +66,7 @@ struct ConfigLoader {
             throw SwiftLensError.configuration("Config at \(configURL.path) must be a mapping.")
         }
 
-        let allowedTopLevelKeys: Set<String> = ["project", "rules"]
+        let allowedTopLevelKeys: Set<String> = ["project", "packs", "rules"]
         guard Set(topLevel.keys).isSubset(of: allowedTopLevelKeys) else {
             let unexpected = Set(topLevel.keys).subtracting(allowedTopLevelKeys).sorted()
             throw SwiftLensError.configuration("Unknown top-level key(s): \(unexpected.joined(separator: ", ")).")
@@ -73,13 +75,17 @@ struct ConfigLoader {
         guard let projectValue = topLevel["project"] else {
             throw SwiftLensError.configuration("Missing required `project` section.")
         }
+        guard let packsValue = topLevel["packs"] else {
+            throw SwiftLensError.configuration("Missing required `packs` section.")
+        }
         guard let rulesValue = topLevel["rules"] else {
             throw SwiftLensError.configuration("Missing required `rules` section.")
         }
 
         let project = try parseProject(projectValue)
-        let forbiddenImportRule = try parseForbiddenImportRule(rulesValue)
-        return SwiftLensConfig(project: project, forbiddenImportRule: forbiddenImportRule)
+        let packs = try parsePacks(packsValue)
+        let rules = try parseRules(rulesValue)
+        return SwiftLensConfig(project: project, packs: packs, rules: rules)
     }
 
     private func parseProject(_ value: YAMLValue) throws -> ProjectConfiguration {
@@ -102,52 +108,130 @@ struct ConfigLoader {
         return ProjectConfiguration(path: path, include: include, exclude: exclude)
     }
 
-    private func parseForbiddenImportRule(_ value: YAMLValue) throws -> ForbiddenImportRuleConfiguration {
+    private func parsePacks(_ value: YAMLValue) throws -> [String: PackConfiguration] {
+        guard case .mapping(let mapping) = value else {
+            throw SwiftLensError.configuration("`packs` must be a mapping.")
+        }
+
+        let allowedPackNames = Set(registry.descriptors.map { $0.pack })
+        guard Set(mapping.keys).isSubset(of: allowedPackNames) else {
+            let unexpected = Set(mapping.keys).subtracting(allowedPackNames).sorted()
+            throw SwiftLensError.configuration("Unknown pack key(s): \(unexpected.joined(separator: ", ")).")
+        }
+
+        var packs: [String: PackConfiguration] = [:]
+        for (packName, packValue) in mapping {
+            guard case .mapping(let packMapping) = packValue else {
+                throw SwiftLensError.configuration("`packs.\(packName)` must be a mapping.")
+            }
+
+            let allowedKeys: Set<String> = ["enabled", "severityOverrides"]
+            guard Set(packMapping.keys).isSubset(of: allowedKeys) else {
+                let unexpected = Set(packMapping.keys).subtracting(allowedKeys).sorted()
+                throw SwiftLensError.configuration("Unknown `packs.\(packName)` key(s): \(unexpected.joined(separator: ", ")).")
+            }
+
+            let enabled = boolValue(packMapping["enabled"]) ?? true
+            let severityOverrides = try parseSeverityOverrides(
+                packMapping["severityOverrides"],
+                packName: packName
+            )
+
+            packs[packName] = PackConfiguration(enabled: enabled, severityOverrides: severityOverrides)
+        }
+
+        return packs
+    }
+
+    private func parseSeverityOverrides(_ value: YAMLValue?, packName: String) throws -> [String: Severity] {
+        guard let value else {
+            return [:]
+        }
+
+        guard case .mapping(let mapping) = value else {
+            throw SwiftLensError.configuration("`packs.\(packName).severityOverrides` must be a mapping.")
+        }
+
+        let allowedRuleIDs = Set(registry.descriptors(inPack: packName).map { $0.id })
+        guard Set(mapping.keys).isSubset(of: allowedRuleIDs) else {
+            let unexpected = Set(mapping.keys).subtracting(allowedRuleIDs).sorted()
+            throw SwiftLensError.configuration("Unknown `packs.\(packName).severityOverrides` key(s): \(unexpected.joined(separator: ", ")).")
+        }
+
+        var overrides: [String: Severity] = [:]
+        for (ruleID, value) in mapping {
+            guard let severity = severityValue(value) else {
+                throw SwiftLensError.configuration("`packs.\(packName).severityOverrides.\(ruleID)` must be `advisory`, `warning`, or `error`.")
+            }
+            overrides[ruleID] = severity
+        }
+
+        return overrides
+    }
+
+    private func parseRules(_ value: YAMLValue) throws -> [String: RuleConfiguration] {
         guard case .mapping(let mapping) = value else {
             throw SwiftLensError.configuration("`rules` must be a mapping.")
         }
 
-        let allowedKeys: Set<String> = ["ForbiddenImportRule"]
-        guard Set(mapping.keys).isSubset(of: allowedKeys) else {
-            let unexpected = Set(mapping.keys).subtracting(allowedKeys).sorted()
+        let allowedRuleIDs = Set(registry.descriptors.map { $0.id })
+        guard Set(mapping.keys).isSubset(of: allowedRuleIDs) else {
+            let unexpected = Set(mapping.keys).subtracting(allowedRuleIDs).sorted()
             throw SwiftLensError.configuration("Unknown rule key(s): \(unexpected.joined(separator: ", ")).")
         }
 
-        guard let ruleValue = mapping["ForbiddenImportRule"] else {
-            throw SwiftLensError.configuration("Missing `ForbiddenImportRule` configuration.")
+        var rules: [String: RuleConfiguration] = [:]
+        for (ruleID, ruleValue) in mapping {
+            guard let descriptor = registry.descriptor(for: ruleID) else {
+                continue
+            }
+
+            guard case .mapping(let ruleMapping) = ruleValue else {
+                throw SwiftLensError.configuration("`rules.\(ruleID)` must be a mapping.")
+            }
+
+            let allowedKeys: Set<String> = ["enabled", "severity", "config"]
+            guard Set(ruleMapping.keys).isSubset(of: allowedKeys) else {
+                let unexpected = Set(ruleMapping.keys).subtracting(allowedKeys).sorted()
+                throw SwiftLensError.configuration("Unknown `rules.\(ruleID)` key(s): \(unexpected.joined(separator: ", ")).")
+            }
+
+            let enabled = boolValue(ruleMapping["enabled"])
+            let severity = severityValue(ruleMapping["severity"])
+            if ruleMapping["severity"] != nil, severity == nil {
+                throw SwiftLensError.configuration("`rules.\(ruleID).severity` must be `advisory`, `warning`, or `error`.")
+            }
+
+            let config: [String: YAMLValue]
+            if let configValue = ruleMapping["config"] {
+                guard case .mapping(let configMapping) = configValue else {
+                    throw SwiftLensError.configuration("`rules.\(ruleID).config` must be a mapping.")
+                }
+
+                if !descriptor.configKeys.isEmpty && configMapping.isEmpty {
+                    throw SwiftLensError.configuration("Missing `rules.\(ruleID).config` configuration.")
+                }
+
+                guard Set(configMapping.keys).isSubset(of: descriptor.configKeys) else {
+                    let unexpected = Set(configMapping.keys).subtracting(descriptor.configKeys).sorted()
+                    throw SwiftLensError.configuration("Unknown `rules.\(ruleID).config` key(s): \(unexpected.joined(separator: ", ")).")
+                }
+
+                if descriptor.configKeys.isEmpty && !configMapping.isEmpty {
+                    throw SwiftLensError.configuration("`rules.\(ruleID).config` must be empty.")
+                }
+
+                config = configMapping
+            } else if descriptor.configKeys.isEmpty {
+                config = [:]
+            } else {
+                throw SwiftLensError.configuration("Missing `rules.\(ruleID).config` configuration.")
+            }
+
+            rules[ruleID] = RuleConfiguration(enabled: enabled, severity: severity, config: config)
         }
 
-        guard case .mapping(let ruleMapping) = ruleValue else {
-            throw SwiftLensError.configuration("`rules.ForbiddenImportRule` must be a mapping.")
-        }
-
-        let allowedRuleKeys: Set<String> = ["enabled", "config"]
-        guard Set(ruleMapping.keys).isSubset(of: allowedRuleKeys) else {
-            let unexpected = Set(ruleMapping.keys).subtracting(allowedRuleKeys).sorted()
-            throw SwiftLensError.configuration("Unknown `ForbiddenImportRule` key(s): \(unexpected.joined(separator: ", ")).")
-        }
-
-        let enabled = boolValue(ruleMapping["enabled"]) ?? true
-        guard let configValue = ruleMapping["config"] else {
-            throw SwiftLensError.configuration("`rules.ForbiddenImportRule.config` is required.")
-        }
-
-        guard case .mapping(let configMapping) = configValue else {
-            throw SwiftLensError.configuration("`rules.ForbiddenImportRule.config` must be a mapping.")
-        }
-
-        let allowedConfigKeys: Set<String> = ["forbiddenImports"]
-        guard Set(configMapping.keys).isSubset(of: allowedConfigKeys) else {
-            let unexpected = Set(configMapping.keys).subtracting(allowedConfigKeys).sorted()
-            throw SwiftLensError.configuration("Unknown `ForbiddenImportRule.config` key(s): \(unexpected.joined(separator: ", ")).")
-        }
-
-        let forbiddenImports = try stringArrayValue(configMapping["forbiddenImports"], field: "rules.ForbiddenImportRule.config.forbiddenImports")
-        if enabled, forbiddenImports.isEmpty {
-            throw SwiftLensError.configuration("`rules.ForbiddenImportRule.config.forbiddenImports` must contain at least one import.")
-        }
-
-        return ForbiddenImportRuleConfiguration(enabled: enabled, forbiddenImports: forbiddenImports)
+        return rules
     }
 
     private func stringValue(_ value: YAMLValue?) -> String? {
@@ -182,6 +266,19 @@ struct ConfigLoader {
             }
             return nil
         case .array, .mapping:
+            return nil
+        }
+    }
+
+    private func severityValue(_ value: YAMLValue?) -> Severity? {
+        guard let value else {
+            return nil
+        }
+
+        switch value {
+        case .string(let string):
+            return Severity(rawValue: string)
+        case .bool, .array, .mapping:
             return nil
         }
     }
