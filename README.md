@@ -22,6 +22,7 @@ SwiftLens intentionally stops short of compiler-grade architectural analysis.
 - a plugin platform
 - a SaaS governance product
 - an architecture visualization platform
+- an IDE integration
 
 ## Repository-Governed Development Model
 
@@ -136,6 +137,30 @@ Expected output formats:
 
 Phase 1 only implements the `json` reporter. Other formats remain deferred until the phase contract explicitly admits them.
 
+## Local Developer DX
+
+SwiftLens includes a narrow local-only execution path for deterministic day-to-day use.
+
+Examples:
+
+```bash
+swiftlens
+swiftlens scan
+swiftlens scan --config .swiftlens.yml --format json
+swiftlens validate-config --config .swiftlens.yml
+```
+
+Behavior:
+
+- `swiftlens` defaults to `scan .`
+- `swiftlens scan` defaults to `.`
+- omitted `--config` resolves `.swiftlens.yml` from the current working directory only
+- explicit `--config` overrides local lookup
+- omitted `--format` defaults to `json`
+- missing config exits with code `2`
+
+This is local deterministic DX, not IDE integration, platform integration, workspace discovery, or autofix.
+
 ## Phase 1 Usage
 
 ```bash
@@ -210,4 +235,4 @@ The authoritative phase contract lives in [docs/SwiftLens-project-action-plan.md
 
 ## Current Status
 
-Phase 2 rule infrastructure is implemented, and Phase 3 remains blocked until explicit phase-transition authorization is granted.
+Phase 2 rule infrastructure is implemented, Phase 3A local developer DX is the current admitted phase, and Phase 4 remains blocked until explicit phase-transition authorization is granted.

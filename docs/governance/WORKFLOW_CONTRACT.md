@@ -11,6 +11,7 @@ Define the shared workflow rules that keep SwiftLens phase-gated, deterministic,
 - Keep one owner per workstream and record the active state in `PLANS.md`.
 - Use small, reversible changes.
 - Keep execution syntax-tree-first, deterministic, and CI-relevant.
+- Local developer DX changes must remain deterministic, cwd-local, and phase-gated.
 - Do not introduce semantic analysis, plugin ecosystems, dashboards, distributed services, or other out-of-phase capabilities.
 - Resolve undefined workflow details in governance first instead of in task chatter.
 
@@ -31,6 +32,7 @@ Define the shared workflow rules that keep SwiftLens phase-gated, deterministic,
 - Run the relevant test target before widening scope.
 - Refactor only after tests pass.
 - Preserve deterministic behavior throughout the cycle.
+- Local developer DX changes stay under the same TDD requirement and must not add hierarchy logic or non-deterministic config lookup.
 
 ## Phase-Gated Test Requirements
 

@@ -16,9 +16,11 @@ Define the immutable repo rules that constrain scope, phase work, and document o
 
 - SwiftLens is a standalone Swift package repository.
 - Current work must stay inside the active phase contract.
-- Phase 2 is the last admitted phase until governance cleanup is complete and reviewed.
-- Phase 3 work is rejected until the phase contract explicitly authorizes it.
+- Phase 3A is the last admitted phase until governance cleanup is complete and reviewed.
+- Phase 3A work is limited to local developer DX and remains phase-gated.
+- Phase 4 work is rejected until the phase contract explicitly authorizes it.
 - Any request that introduces semantic analysis, plugin ecosystems, distributed services, GUI surfaces, or auto-fix behavior is out of scope unless a governing doc explicitly allows it.
+- Local developer DX must remain deterministic and cwd-local.
 
 ## Document Rules
 

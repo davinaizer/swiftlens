@@ -64,6 +64,7 @@ SwiftLens provides the missing enforcement layer between code changes and merge:
 - Enforce project-specific governance through configurable policy packs.
 - Produce compact machine-readable reports for CI and AI agents.
 - Produce human-readable Markdown reports on demand.
+- Provide deterministic local execution ergonomics for single-repo CLI use.
 - Prefer deterministic heuristics over deep inference.
 - Built-in packs only in V1.
 
@@ -87,6 +88,7 @@ SwiftLens provides the missing enforcement layer between code changes and merge:
 - Provide a GUI or dashboard.
 - Provide runtime instrumentation.
 - Provide IDE integration.
+- Provide workspace discovery as a local configuration mechanism.
 - Provide distributed governance.
 
 ## 6. Incremental Delivery Philosophy
@@ -241,6 +243,19 @@ V1 uses built-in packs only; external pack surfaces are deferred.
 - per-rule enablement
 - per-rule severity overrides
 - per-rule configuration parameters
+
+### 13.4 Local Developer DX
+
+SwiftLens supports a narrow local-only execution path for deterministic day-to-day use.
+
+- `swiftlens` defaults to `scan .`
+- `swiftlens scan` defaults to `.`
+- omitted `--config` resolves `.swiftlens.yml` from the current working directory only
+- explicit `--config` overrides local lookup
+- omitted `--format` defaults to `json`
+- missing config exits with code `2`
+
+This is local deterministic DX only. It does not authorize parent-directory traversal, nested configs, config inheritance, remote configs, global user configs, environment-aware config resolution, workspace discovery, IDE integration, SwiftPM plugins, Xcode plugins, or autofix/autocorrect.
 
 ## 14. Output Modes
 

@@ -2,11 +2,12 @@
 
 ## Current Objective
 
-Phase 2 closure verified; no active implementation work remains.
+Canonical docs updated for Phase 3A local developer DX and phase renumbering; implementation remains not started.
 
 ## Current Phase
 
-- Current phase is Phase 2 - Rule Infrastructure.
+- Current Authorized Phase: Phase 3A - Local Developer DX.
+- Current Implementation Status: Documentation Complete / Implementation Not Started.
 - The active phase is the one defined in [docs/SwiftLens-project-action-plan.md](docs/SwiftLens-project-action-plan.md).
 - If the phase is undefined or disputed, resolve the docs first.
 

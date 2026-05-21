@@ -37,8 +37,10 @@ Pipeline:
 
 ```text
 CLI Entry
-→ Project Discovery
+→ Command Defaults
+→ ConfigResolution
 → Config Loader
+→ Project Discovery
 → SwiftSyntax Traversal
 → Direct Rule Evaluation
 → Reporter
@@ -63,6 +65,7 @@ CLI Entry
 | Implementation language | Swift | Native SwiftSyntax integration and same-language analysis |
 | Parsing | SwiftSyntax | AST parsing and traversal |
 | Config parsing | Yams or equivalent | YAML config loading |
+| Config resolution | Deterministic cwd-only lookup | Local execution ergonomics without hierarchy logic |
 | Project discovery | filesystem inspection plus optional `swift package describe` and `xcodebuild` metadata | Lightweight discovery limited to local metadata |
 | Output | JSON, YAML, Markdown, compact terminal | Supports CI, humans, and AI agents |
 
@@ -87,6 +90,7 @@ swiftlens/
 | Module | Responsibility |
 | --- | --- |
 | `SwiftLensCLI` | Argument parsing, command routing, exit code |
+| `ConfigResolution` | Resolve the effective config path from explicit input or cwd-only lookup |
 | `ProjectDiscovery` | Detect package, project, workspace, and source roots |
 | `ConfigLoader` | Load `.swiftlens.yml` and validate policy |
 | `SyntaxRecords` | Deferred shared syntax metadata store, introduced only when repeated rule needs justify it |
@@ -115,6 +119,11 @@ Flags:
 
 CLI scope:
 
+- `swiftlens` defaults to `scan .`
+- `swiftlens scan` defaults to `.`
+- omitted `--config` resolves `.swiftlens.yml` from the current working directory only
+- explicit `--config` overrides local lookup
+- omitted `--format` defaults to `json`
 - flags influence execution scope and reporter selection
 - flags do not override rule severity or rule config
 - CLI execution remains single-process and deterministic
@@ -145,12 +154,33 @@ Configuration MUST NOT:
 - support embedded expressions
 - support custom evaluators
 - support user-defined traversal semantics
+- support parent-directory traversal or recursive config search
+- support nested config hierarchy logic
+- support remote, global user, or environment-aware config resolution
+
+### 8.1 Config Resolution
+
+When `--config` is omitted, SwiftLens resolves `.swiftlens.yml` from the current working directory only.
+
+Config resolution must:
+
+- check only the current working directory
+- remain deterministic
+- avoid parent-directory traversal
+- avoid recursive search
+- avoid hierarchy or inheritance logic
+- avoid workspace discovery
+- avoid IDE-aware lookup
+
+An explicit `--config` path always overrides local lookup.
+
+Missing config returns exit code `2`.
 
 ## 9. Config Model
 
 `.swiftlens.yml` is the policy contract.
 
-### 8.1 Minimum Shape
+### 9.1 Minimum Shape
 
 ```yaml
 project:
@@ -168,7 +198,7 @@ rules:
     config: {}
 ```
 
-### 8.2 Project Fields
+### 9.2 Project Fields
 
 | Field | Type | Required | Notes |
 | --- | --- | --- | --- |
@@ -182,7 +212,7 @@ rules:
 | `project.localizationFiles` | string array | no | Localization resources for string rules |
 | `project.debugPreviewPaths` | string array | no | Debug-only preview locations |
 
-### 8.3 Pack and Rule Fields
+### 9.3 Pack and Rule Fields
 
 | Field | Type | Required | Notes |
 | --- | --- | --- | --- |
@@ -192,7 +222,7 @@ rules:
 | `rules.<rule>.severity` | enum | no | Rule severity override |
 | `rules.<rule>.config` | map | no | Rule-specific parameters |
 
-### 8.4 Validation Rules
+### 9.4 Validation Rules
 
 Validation must reject:
 
@@ -207,7 +237,7 @@ Validation must reject:
 
 Config failures return exit code `2`.
 
-### 8.5 Precedence
+### 9.5 Precedence
 
 1. Built-in rule defaults define the baseline.
 2. Pack-level severity overrides apply next.
@@ -219,7 +249,7 @@ Config failures return exit code `2`.
 
 Discovery must resolve the project type and source roots before parsing.
 
-### 9.1 Discovery Rules
+### 10.1 Discovery Rules
 
 1. If `Package.swift` exists, treat the repository as an SPM project and use Swift Package metadata first.
 2. If an `.xcodeproj` or `.xcworkspace` exists, use `xcodebuild` discovery.
@@ -228,7 +258,7 @@ Discovery must resolve the project type and source roots before parsing.
 5. Apply include and exclude scope filters after discovery.
 6. Do not build a persistent or background discovery index.
 
-### 9.2 Discovery Inputs
+### 10.2 Discovery Inputs
 
 | Command | Purpose |
 | --- | --- |
@@ -236,7 +266,7 @@ Discovery must resolve the project type and source roots before parsing.
 | `xcodebuild -list` | Discover schemes and targets |
 | `xcodebuild -showBuildSettings` | Resolve source roots and build settings |
 
-### 9.3 Discovery Output
+### 10.3 Discovery Output
 
 Discovery should produce:
 

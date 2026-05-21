@@ -12,7 +12,7 @@ Define the minimum checks required before merge, phase closure, or release.
 - Relevant tests must fail first, then pass after the smallest code change.
 - `swift test` must pass before merge, phase closure, rule additions, config changes, and reporter changes.
 - Fixture-backed tests must cover file- or project-dependent behavior.
-- No Phase 3 behavior may land while Phase 2 closure is unresolved.
+- No Phase 3A behavior may land while Phase 2 closure is unresolved.
 - No placeholder or scaffold-only docs may remain in the canonical doc set.
 
 ## Release and Closure Rules

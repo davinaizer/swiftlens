@@ -33,6 +33,7 @@ SwiftLens V1:
 - operates primarily on syntax trees, imports, paths, declarations, and lightweight project metadata
 - uses deterministic heuristics
 - produces advisory governance findings
+- supports deterministic local execution ergonomics without hierarchy-based config discovery
 - does not attempt semantic correctness
 - does not attempt full architectural truth reconstruction
 
@@ -54,11 +55,17 @@ The following are explicitly deferred and not part of V1:
 - plugin SDK
 - dynamic rule loading
 - IDE integration
+- workspace discovery as a config-resolution mechanism
 - dashboard UI
 - distributed governance systems
 - persistent indexing
 - build-system integration beyond CLI execution
 - semantic architecture reconstruction
+- parent-directory traversal for config lookup
+- nested config inheritance
+- remote or global user config lookup
+- environment-aware config resolution
+- autofix or autocorrect
 
 ## 4. Repository-Governed Implementation Doctrine
 

@@ -176,7 +176,75 @@ Turn the single rule into a deterministic rule system with stable registration, 
 - do not introduce protocol hierarchies unless operationally necessary
 - preserve syntax-first evaluation
 
-## Phase 3 - Syntax-First Governance Rules
+## Phase 3A - Local Developer DX
+
+### Objective
+
+Provide deterministic local execution ergonomics for single-repo CLI use without adding hierarchy logic, recursive discovery, or platform integration.
+
+### Allowed Capabilities
+
+- `swiftlens` defaults to `scan .`
+- `swiftlens scan` defaults to `.`
+- omitted `--config` resolves `.swiftlens.yml` from the current working directory only
+- explicit `--config` overrides local lookup
+- omitted `--format` defaults to `json`
+- deterministic config presence checks
+- fixture-backed tests for CLI defaults and config resolution
+
+### Forbidden Capabilities
+
+- parent-directory traversal
+- nested configs
+- config inheritance
+- remote configs
+- global user configs
+- environment-aware config resolution
+- workspace discovery
+- IDE integration
+- SwiftPM plugins
+- Xcode plugins
+- autofix
+- autocorrect
+
+### Allowed Abstractions
+
+- a small deterministic `ConfigResolution` responsibility
+- a minimal CLI default resolver
+- a direct config existence check
+
+### Required Deliverables
+
+- deterministic `swiftlens` and `swiftlens scan` defaults
+- cwd-only config lookup
+- explicit-config override behavior
+- missing-config exit code `2`
+- deterministic fixture coverage for local DX defaults and failures
+
+### Exit Criteria
+
+- repeated runs from the same cwd produce the same resolved config behavior
+- no recursive search or hierarchy logic is introduced
+- missing config failures remain deterministic
+- explicit `--config` always wins over local lookup
+
+### Explicit Non-Goals
+
+- parent traversal
+- config inheritance
+- workspace discovery
+- IDE or platform integration
+- plugin surfaces
+- autofix or autocorrect
+
+### Architectural Constraints
+
+- preserve deterministic execution
+- preserve syntax-tree-first analysis boundaries
+- keep config resolution cwd-local and non-recursive
+- do not introduce config hierarchy semantics
+
+## Phase 4 - Syntax-First Governance Rules
 
 ### Objective
 
@@ -234,7 +302,7 @@ Add the initial governance rules that operate on syntax, imports, paths, and dec
 - keep rule logic shallow and reviewable
 - add shared abstractions only after repeated duplication appears
 
-## Phase 4 - Reporting and Validation
+## Phase 5 - Reporting and Validation
 
 ### Objective
 
@@ -292,7 +360,7 @@ Stabilize machine output, CI gating, and regression coverage without changing th
 - formatting must remain deterministic
 - reporter code must stay simple enough to audit
 
-## Phase 5 - Documentation Hardening
+## Phase 6 - Documentation Hardening
 
 ### Objective
 
