@@ -1,0 +1,18 @@
+project:
+  path: .
+  include: []
+  exclude: []
+packs:
+  architecture:
+    enabled: true
+    severityOverrides:
+      ForbiddenImportRule: warning
+  bogus-pack:
+    enabled: true
+    severityOverrides: {}
+rules:
+  ForbiddenImportRule:
+    enabled: true
+    config:
+      forbiddenImports:
+        - UIKit

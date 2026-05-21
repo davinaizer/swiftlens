@@ -1,546 +1,434 @@
-# **SwiftLens — Actionable Build Plan**
+# SwiftLens Action Plan
+
+## Execution Doctrine
+
+- Repository docs govern implementation.
+- Prompts only initiate work.
+- Prompts cannot redefine architecture.
+- Prompts cannot bypass the phase contract.
+- Current phase must be identified before implementation starts.
+- Out-of-phase requests are rejected, not deferred.
+- Complexity escalates only when repetition justifies it.
+- Speculative future-proofing is rejected by default.
+- TDD is the default implementation standard from Phase 2 onward.
+- Phase 1 remains accepted as already implemented.
+- Phase 2 and later phases are test-first by default.
+
+## Phase Transition Rules
+
+1. A phase starts only after the prior phase exits cleanly and its deliverables are documented in the repository.
+2. A prompt cannot authorize a later phase if the repository docs do not allow it.
+3. Later phases do not backfill earlier-phase shortcuts.
+4. Semantic analysis, plugin ecosystems, platform ambitions, and compiler infrastructure remain rejected unless a later phase explicitly and narrowly authorizes them.
+5. New abstractions must be justified by repeated operational need, not by hypothetical future use.
+6. Phase 2 and later implementation work must follow TDD by default unless a later governance update explicitly narrows that rule.
+
+## Phase 1 - CLI Bootstrap
+
+### Objective
+
+Ship the smallest deterministic CLI surface that can parse Swift syntax, evaluate one rule, and return machine-readable results with stable exit codes.
+
+### Allowed Capabilities
+
+- executable Swift package
+- `swiftlens scan`
+- `swiftlens validate-config`
+- `swiftlens version`
+- `swiftlens help`
+- config loading
+- SwiftSyntax parsing and traversal
+- file discovery
+- one deterministic rule
+- JSON output
+- exit codes
+- fixture tests
+
+### Forbidden Capabilities
+
+- semantic analysis
+- graph systems
+- plugins
+- async infrastructure
+- caching
+- indexing
+- autofix
+
+### Allowed Abstractions
+
+- direct CLI orchestration
+- a minimal config model
+- a single rule evaluator
+- a compact violation model
+- fixture-backed test helpers
+
+### Required Deliverables
+
+- executable Swift package
+- documented CLI commands
+- config loader
+- SwiftSyntax parsing path
+- one deterministic rule
+- JSON reporter
+- exit-code mapping
+- fixture tests covering success and failure paths
+
+### Phase 1 Acceptance Note
+
+- Phase 1 remains accepted as already implemented.
+- No retroactive TDD requirement is imposed on the completed Phase 1 implementation.
+
+### Exit Criteria
+
+- the CLI runs end to end on fixtures
+- the single rule produces deterministic JSON
+- config failures return the documented config exit code
+- rule failures return the documented findings exit code
+- no forbidden capability is required to complete the phase
 
-## **Phase 0 — Foundation Decisions**
+### Explicit Non-Goals
+
+- semantic reconstruction
+- architecture graphs
+- plugin loading
+- daemon or background execution
+- persistent caches or indexes
+- autofix generation
+- YAML, Markdown, or compact reporters if they are not needed to complete the phase
+
+### Architectural Constraints
+
+- syntax-tree-first
+- single-process
+- deterministic
+- no hidden state
+- no compiler infrastructure
+- no speculative abstraction layer
+- no platform boundary expansion
+
+## Phase 2 - Rule Infrastructure
+
+### Objective
 
-### **1. Create repository**
+Turn the single rule into a deterministic rule system with stable registration, ordering, and configuration precedence.
+
+### Allowed Capabilities
 
-## **Tasks**
+- explicit rule registration
+- stable rule identifiers
+- deterministic rule ordering
+- rule enablement and severity overrides
+- shared violation serialization
+- reusable fixture helpers
+
+### Forbidden Capabilities
 
-- Create separate Git repository: `swiftlens`
-- Keep independent from Alfred repo
-- Add initial structure:
+- semantic inference
+- graph closure
+- transitive dependency reasoning
+- plugins
+- caching
+- indexing
+- autofix
+- async execution as a design requirement
 
-```text
-swiftlens/
-├── Package.swift
-├── Sources/
-├── Tests/
-├── docs/
-├── examples/
-├── scripts/
-└── README.md
-```
+### Allowed Abstractions
 
-## **Done when**
+- a small rule registry
+- a rule descriptor type
+- a deterministic execution pipeline
+- minimal shared formatting helpers
 
-- repo exists
-- builds empty Swift package
+### Required Deliverables
 
----
+- rule registry
+- stable rule IDs
+- rule execution pipeline
+- config precedence handling
+- tests for rule order and override behavior
 
-### **2. Define governance baseline**
+### TDD Requirements
 
-## **Tasks**
+- Write or update failing tests before implementing Phase 2 behavior.
+- Every new rule requires fixtures before implementation.
+- Every reporter change requires golden-output tests.
+- Every config change requires valid and invalid config tests.
+- Every exit-code change requires explicit exit-code tests.
 
-- Copy finalized PRD/spec docs into:
+### Exit Criteria
 
-```text
-docs/
-```
+- rule execution is deterministic across repeated runs
+- rule IDs are stable and documented
+- rule ordering is explicit
+- configuration precedence is reproducible in tests
 
-Recommended:
+### Explicit Non-Goals
 
-```text
-docs/
-├── prd.md
-├── architecture.md
-├── rule-engine.md
-└── implementation-plan.md
-```
+- generalized analysis framework
+- semantic truth reconstruction
+- plugin surfaces
+- hosted or distributed rule execution
 
-- Freeze V1 scope
-- Explicitly reject scope creep
+### Architectural Constraints
 
-## **Done when**
+- keep orchestration direct
+- only extract abstractions that remove real duplication
+- do not introduce protocol hierarchies unless operationally necessary
+- preserve syntax-first evaluation
 
-- project decisions are durable
-- no architecture ambiguity remains
+## Phase 3A - Local Developer DX
 
----
+### Objective
 
-## **Phase 1 — Swift Package Setup**
+Provide deterministic local execution ergonomics for single-repo CLI use without adding hierarchy logic, recursive discovery, or platform integration.
 
-### **3. Create executable Swift package**
+### Allowed Capabilities
 
-## **Tasks**
+- `swiftlens` defaults to `scan .`
+- `swiftlens scan` defaults to `.`
+- omitted `--config` resolves `.swiftlens.yml` from the current working directory only
+- explicit `--config` overrides local lookup
+- omitted `--format` defaults to `json`
+- deterministic config presence checks
+- fixture-backed tests for CLI defaults and config resolution
 
-Run:
+### Forbidden Capabilities
 
-```bash
-swift package init --type executable
-```
+- parent-directory traversal
+- nested configs
+- config inheritance
+- remote configs
+- global user configs
+- environment-aware config resolution
+- workspace discovery
+- IDE integration
+- SwiftPM plugins
+- Xcode plugins
+- autofix
+- autocorrect
 
-Refactor into:
+### Allowed Abstractions
 
-```text
-Sources/
-└── SwiftLensCLI/
-```
+- a small deterministic `ConfigResolution` responsibility
+- a minimal CLI default resolver
+- a direct config existence check
 
-Add test target:
+### Required Deliverables
 
-```text
-Tests/
-└── SwiftLensTests/
-```
+- deterministic `swiftlens` and `swiftlens scan` defaults
+- cwd-only config lookup
+- explicit-config override behavior
+- missing-config exit code `2`
+- deterministic fixture coverage for local DX defaults and failures
 
-Declare an executable product named `swiftlens` that targets `SwiftLensCLI` so `swift run swiftlens --help` is the canonical launch path.
+### Exit Criteria
 
-## **Done when**
+- repeated runs from the same cwd produce the same resolved config behavior
+- no recursive search or hierarchy logic is introduced
+- missing config failures remain deterministic
+- explicit `--config` always wins over local lookup
 
-```bash
-swift run swiftlens --help
-```
+### Explicit Non-Goals
 
-works
+- parent traversal
+- config inheritance
+- workspace discovery
+- IDE or platform integration
+- plugin surfaces
+- autofix or autocorrect
 
----
+### Architectural Constraints
 
-### **4. Add package dependencies**
+- preserve deterministic execution
+- preserve syntax-tree-first analysis boundaries
+- keep config resolution cwd-local and non-recursive
+- do not introduce config hierarchy semantics
 
-## **Tasks**
+## Phase 4 - Syntax-First Governance Rules
 
-Add only:
+### Objective
 
-| **Dependency**       | **Purpose**         |
-| -------------------- | ------------------- |
-| SwiftSyntax          | AST parsing         |
-| Yams (or equivalent) | YAML config parsing |
+Add the initial governance rules that operate on syntax, imports, paths, and declared ownership only.
 
-Avoid extra dependencies.
+### Allowed Capabilities
 
-## **Done when**
+- syntax/path/import governance rules
+- ownership mapping heuristics
+- shallow dependency checks
+- declared-route detection
+- rule-specific fixture tests
 
-- package resolves cleanly
-- no unnecessary libraries added
+### Forbidden Capabilities
 
----
+- semantic type analysis
+- whole-program reasoning
+- runtime inspection
+- transitive dependency inference
+- inferred ownership graphs
+- plugins
+- caching
+- indexing layers that outgrow the phase need
 
-### **5. Create CLI command structure**
+### Allowed Abstractions
 
-## **Tasks**
+- small shared selectors
+- rule-local helpers
+- explicitly configured ownership maps
+- narrowly scoped reusable checks
 
-Initial commands:
+### Required Deliverables
 
-```text
-swiftlens scan
-swiftlens validate-config
-swiftlens version
-swiftlens help
-```
+- core governance rules
+- fixture coverage for each rule
+- deterministic findings for representative repositories
 
-Support flags:
+### Exit Criteria
 
-```text
---config
---format
---path
---verbose
-```
+- the rules pass on real fixture repositories
+- each rule remains explainable without semantic reconstruction
+- no rule depends on forbidden analysis depth
 
-## **Done when**
+### Explicit Non-Goals
 
-CLI contract is stable
+- architecture reconstruction
+- semantic correctness guarantees
+- broad dependency intelligence
+- generalized code-quality expansion
 
----
+### Architectural Constraints
 
-## **Phase 2 — Config + Project Discovery**
+- preserve deterministic syntax-tree-first analysis
+- prefer declared relationships over inferred relationships
+- keep rule logic shallow and reviewable
+- add shared abstractions only after repeated duplication appears
 
-###
+## Phase 5 - Reporting and Validation
 
-###
+### Objective
 
-### **6. Create**
+Stabilize machine output, CI gating, and regression coverage without changing the analysis model.
 
-**`.swiftlens.yml`**
+### Allowed Capabilities
 
-**schema**
+- JSON reporter
+- YAML reporter
+- Markdown reporter
+- compact terminal summary
+- CI exit codes
+- fixture-based regression testing
+- deterministic output verification
 
-## **Tasks**
+### Forbidden Capabilities
 
-Implement a deterministic config schema with explicit precedence:
+- interactive UI
+- dashboard systems
+- remote services
+- daemonized execution
+- background indexing
+- autofix
+- plugin ecosystems
 
-```yaml
-project:
-packs:
-rules:
-```
+### Allowed Abstractions
 
-Validation required for:
+- shared reporter serialization
+- common formatting helpers
+- test fixtures for output snapshots
 
-- missing fields
-- invalid severity
-- bad paths
-- invalid rule config
-- unknown keys
-- invalid pack names
-- invalid rule IDs
+### Required Deliverables
 
-Minimum schema shape:
+- stable reporter outputs
+- documented exit codes
+- regression tests for repeated runs
+- fixture coverage for output formatting
 
-- `project.path`: repo root or scan root
-- `project.include`: optional glob list
-- `project.exclude`: optional glob list
-- `packs.<pack>.enabled`: boolean
-- `packs.<pack>.severityOverrides`: optional rule severity map
-- `rules.<rule>.enabled`: boolean
-- `rules.<rule>.severity`: optional override
-- `rules.<rule>.config`: rule-specific parameters
+### Exit Criteria
 
-Precedence rules:
+- identical input yields identical output
+- CI can gate on documented exit codes
+- output formats stay stable across repeated runs
 
-- built-in rule defaults provide the base severity and rule config
-- `packs.<pack>.severityOverrides` overrides the built-in severity for rules in that pack
-- `rules.<rule>.severity` overrides both built-in severity and any pack-level override
-- `rules.<rule>.config` merges over built-in rule config; unknown keys fail validation
-- CLI flags only affect execution scope and reporter selection, not rule severity or rule config
+### Explicit Non-Goals
 
-## **Done when**
+- platformization
+- hosted workflows
+- speculative export formats
+- editor integration
 
-bad config exits:
+### Architectural Constraints
 
-```text
-exit code 2
-```
+- output must not change rule semantics
+- formatting must remain deterministic
+- reporter code must stay simple enough to audit
 
----
+## Phase 6 - Documentation Hardening
 
-### **7. Build project discovery layer**
+### Objective
 
-## **Tasks**
+Make the repository documentation self-sufficient so implementation guidance lives in the repo, not in prompts.
 
-Support:
+### Allowed Capabilities
 
-- Xcode projects
-- Swift Packages
-- source root detection
-- include/exclude patterns
+- clarify ambiguous wording
+- align doctrine across docs
+- tighten maintenance expectations
+- document phase transitions and rejection rules
 
-Use:
+### Forbidden Capabilities
 
-```bash
-xcodebuild -list
-xcodebuild -showBuildSettings
-swift package describe
-```
+- new product capabilities
+- scope expansion
+- platformization
+- plugin ecosystems
+- speculative future-proofing
 
-Discovery rules:
+### Allowed Abstractions
 
-- if `Package.swift` exists, treat the repository as an SPM project and use Swift Package metadata first
-- if an `.xcodeproj` or `.xcworkspace` exists, use `xcodebuild` discovery
-- if both exist, prefer the configured `project.path` in `.swiftlens.yml`
+- document-level grouping
+- repository-level policy statements
 
-## **Done when**
+### Required Deliverables
 
-tool can reliably locate Swift files
+- aligned README, PRD, TAD, definition pack, action plan, and work plan
+- explicit repository-governed implementation doctrine
+- explicit rejection language for out-of-phase work
 
----
+### Exit Criteria
 
-## **Phase 3 — Parser + Syntax Index**
+- the repository docs can govern implementation without prompt rewriting
+- the phase contract is readable and enforceable
+- no document invites scope drift or abstraction drift
 
-### **8. Build SwiftSyntax parser**
+### Explicit Non-Goals
 
-## **Tasks**
+- new features
+- future-proofing
+- enterprise platform language
+- speculative architecture
 
-Detect:
+### Architectural Constraints
 
-- `struct X: View`
-- `body`
-- protocols
-- classes
-- functions
-- imports
-- comments
-- navigation patterns
+- documentation must preserve deterministic, syntax-tree-first scope
+- documentation must preserve OSS maintainability posture
+- documentation must reject semantic and platform ambitions
 
-Store:
+## Scope Rejection Gate
 
-- file path
-- source ranges
-- declaration metadata
+Before implementing any feature, reject it unless it is:
 
-## **Done when**
+- deterministic
+- syntax-first
+- CI-relevant
+- fixture-testable
+- low-maintenance
+- explainable without semantic reconstruction
 
-AST model is queryable
+## Anti-Platformization Constraints
 
----
+SwiftLens must not evolve into:
 
-### **9. Create symbol/declaration index**
-
-## **Tasks**
-
-Build:
-
-- declaration index
-- file ownership map
-- feature root ownership
-- reference prep for future V2
-
-## **Done when**
-
-rules can query project structure
-
----
-
-## **Phase 4 — First Rules**
-
-### **10. Implement rule engine core**
-
-## **Tasks**
-
-Create:
-
-```swift
-protocol SwiftLensRule
-```
-
-and:
-
-```swift
-Violation
-RuleContext
-Severity
-Confidence
-FixPattern
-```
-
-`Violation` must carry:
-
-- stable rule ID
-- pack name
-- severity
-- confidence
-- file path
-- source range
-- reason
-- `fixPattern`
-- reporter output must use `fixPattern` as the canonical public field name
-
-## **Done when**
-
-rules can execute consistently
-
----
-
-### **11. Ship first 3 rules only**
-
-## **Tasks**
-
-Start with:
-
-| **Rule**             | **Why**                   |
-| -------------------- | ------------------------- |
-| `AppRouterOnly`      | highest Alfred value      |
-| `MassiveSwiftUIView` | generic + easy validation |
-| `SingleUseProtocol`  | first AI-slop detector    |
-
-Do not build all rules first.
-
-## **Done when**
-
-real findings appear in Alfred
-
-### **11.1 Add remaining required architecture-pack rules**
-
-## **Tasks**
-
-After the first three rules are trusted, implement the remaining V1 `architecture` pack rules:
-
-- `CrossFeatureImport`
-- `OrphanRoute`
-- `FeatureBoundaryViolation`
-- `DuplicateOwnership`
-
-## **Done when**
-
-the required architecture pack is complete for V1
-
-### **11.2 Complete the remaining required packs**
-
-## **Tasks**
-
-After the architecture pack is complete, finish the remaining V1 required packs:
-
-- `swiftui-core`
-- `ai-slop`
-- `alfred`
-
-## **Done when**
-
-all V1 required packs are implemented or explicitly deferred with a documented rationale
-
----
-
-### **12. Validate against Alfred repo**
-
-## **Tasks**
-
-Run against Alfred.
-
-Fix:
-
-- false positives
-- rule ambiguity
-- weak detection
-
-Do not optimize before real usage.
-
-## **Done when**
-
-findings are trusted
-
----
-
-## **Phase 5 — Reporting**
-
-### **13. Implement output reporters**
-
-## **Tasks**
-
-Support:
-
-| **Format**       | **Priority** |
-| ---------------- | ------------ |
-| JSON             | highest      |
-| YAML             | high         |
-| compact terminal | high         |
-| Markdown         | high         |
-
-## **Done when**
-
-AI agents can consume results directly
-
----
-
-### **14. Add exit-code policy**
-
-## **Tasks**
-
-Implement:
-
-| **Condition**    | **Exit** |
-| ---------------- | -------- |
-| success          | 0        |
-| advisory only    | 0        |
-| error            | 1        |
-| config issue     | 2        |
-| internal failure | 3        |
-
-## **Done when**
-
-CI behavior is deterministic
-
----
-
-## **Phase 6 — Alfred Integration**
-
-### **15. Create Alfred wrapper**
-
-## **Tasks**
-
-Add:
-
-```text
-./tools/swiftlens.sh
-```
-
-Wrapper should call:
-
-```bash
-swiftlens scan
-```
-
-and preserve Alfred workflow.
-
-## **Done when**
-
-works like:
-
-```bash
-./tools/swiftlens.sh
-```
-
----
-
-### **16. Create Alfred policy pack**
-
-## **Tasks**
-
-Implement:
-
-- `AppRouterOnly`
-- `SingleSourceOfTruth`
-- `NoHardcodedUserStrings`
-- `AlfredIconsOnly`
-- `DebugOnlyPreviewData`
-
-## **Done when**
-
-governance becomes executable
-
----
-
-## **Phase 7 — OSS Preparation**
-
-### **17. Create example project**
-
-## **Tasks**
-
-Add:
-
-```text
-examples/
-```
-
-with sample SwiftUI app
-
-Used for:
-
-- docs
-- testing
-- OSS onboarding
-
-## **Done when**
-
-works without Alfred dependency
-
----
-
-### **18. Prepare public release**
-
-## **Tasks**
-
-Create:
-
-- README
-- installation docs
-- rule docs
-- CI examples
-- GitHub Action sample
-
-## **Done when**
-
-project is understandable without explanation
-
----
-
-# **Critical Rule**
-
-## **Do Not Do This**
-
-```text
-build every rule first
-```
-
-Wrong.
-
-Do this:
-
-```text
-ship 3 strong rules
-→ validate
-→ improve trust
-→ expand
-```
-
-That is the correct execution model.
+- a governance platform
+- a plugin ecosystem
+- compiler infrastructure
+- a generalized architecture analysis framework
+- a distributed governance service
+- a hosted control plane
