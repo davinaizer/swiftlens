@@ -10,6 +10,9 @@
 - Out-of-phase requests are rejected, not deferred.
 - Complexity escalates only when repetition justifies it.
 - Speculative future-proofing is rejected by default.
+- TDD is the default implementation standard from Phase 2 onward.
+- Phase 1 remains accepted as already implemented.
+- Phase 2 and later phases are test-first by default.
 
 ## Phase Transition Rules
 
@@ -18,6 +21,7 @@
 3. Later phases do not backfill earlier-phase shortcuts.
 4. Semantic analysis, plugin ecosystems, platform ambitions, and compiler infrastructure remain rejected unless a later phase explicitly and narrowly authorizes them.
 5. New abstractions must be justified by repeated operational need, not by hypothetical future use.
+6. Phase 2 and later implementation work must follow TDD by default unless a later governance update explicitly narrows that rule.
 
 ## Phase 1 - CLI Bootstrap
 
@@ -68,6 +72,11 @@ Ship the smallest deterministic CLI surface that can parse Swift syntax, evaluat
 - JSON reporter
 - exit-code mapping
 - fixture tests covering success and failure paths
+
+### Phase 1 Acceptance Note
+
+- Phase 1 remains accepted as already implemented.
+- No retroactive TDD requirement is imposed on the completed Phase 1 implementation.
 
 ### Exit Criteria
 
@@ -137,6 +146,14 @@ Turn the single rule into a deterministic rule system with stable registration, 
 - rule execution pipeline
 - config precedence handling
 - tests for rule order and override behavior
+
+### TDD Requirements
+
+- Write or update failing tests before implementing Phase 2 behavior.
+- Every new rule requires fixtures before implementation.
+- Every reporter change requires golden-output tests.
+- Every config change requires valid and invalid config tests.
+- Every exit-code change requires explicit exit-code tests.
 
 ### Exit Criteria
 

@@ -33,6 +33,23 @@ SwiftLens intentionally stops short of compiler-grade architectural analysis.
 - Current phase identification is required before implementation.
 - Out-of-phase requests are rejected, not reprioritized.
 
+## Testing Doctrine
+
+- TDD is the default implementation standard from Phase 2 onward.
+- Phase 1 remains accepted as already implemented.
+- Write or update failing tests first.
+- Implement the smallest code change.
+- Run the relevant test target.
+- Refactor only after tests pass.
+- Preserve deterministic behavior.
+- New rules require fixtures before implementation.
+- Reporter changes require golden-output tests.
+- Config changes require valid and invalid config tests.
+- Exit-code changes require explicit exit-code tests.
+- Tests must remain fixture-backed for file- or project-dependent behavior.
+- Tests must avoid network, clock, randomness, external services, and machine-local state.
+- Tests must verify stable rule IDs, finding shape, ordering, and exit codes where applicable.
+
 ## Phased Implementation Philosophy
 
 - Start with the smallest deterministic surface.
@@ -106,6 +123,19 @@ Expected output formats:
 - `yaml`
 - `markdown`
 - `compact`
+
+Phase 1 only implements the `json` reporter. Other formats remain deferred until the phase contract explicitly admits them.
+
+## Phase 1 Usage
+
+```bash
+swiftlens scan --config .swiftlens.yml --format json
+swiftlens validate-config --config .swiftlens.yml
+swiftlens version
+swiftlens help
+```
+
+`scan` returns exit code `1` when `ForbiddenImportRule` emits a violation, `2` for configuration or usage errors, and `3` for internal failures.
 
 ## Configuration
 

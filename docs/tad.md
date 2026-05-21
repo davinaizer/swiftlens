@@ -513,6 +513,26 @@ Validation must cover:
 - reporter formatting
 - exit-code mapping
 
+### 18.1 TDD Standard From Phase 2 Onward
+
+- Phase 1 remains accepted as already implemented.
+- From Phase 2 onward, implementation work must be test-first by default.
+- Write or update failing tests before changing behavior.
+- Implement the smallest code change that satisfies the test.
+- Run the relevant test target before widening scope.
+- Refactor only after tests pass.
+- Preserve deterministic behavior throughout the workflow.
+
+### 18.2 Test Constraints
+
+- New rules require fixture-backed tests before implementation.
+- Reporter changes require golden-output tests.
+- Config changes require valid and invalid config tests.
+- Exit-code changes require explicit exit-code tests.
+- Tests must remain fixture-backed where behavior is file- or project-dependent.
+- Tests must avoid network, clock, randomness, external services, and machine-local state.
+- Tests must verify stable rule IDs, finding shape, ordering, and exit codes where applicable.
+
 ### 17.1 Trust-Building Rule Validation
 
 Rules should not be optimized before they are exercised on a real codebase.

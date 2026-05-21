@@ -1,0 +1,11 @@
+project:
+  path: .
+  include: []
+  exclude: []
+rules:
+  ForbiddenImportRule:
+    enabled: true
+    config:
+      forbiddenImports:
+        - UIKit
+
