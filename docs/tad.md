@@ -15,6 +15,14 @@ Define the technical shape of SwiftLens so the CLI, config model, discovery pipe
 
 The design priority is correctness and traceability, not extensibility at the cost of ambiguity.
 
+## 1.1 Architectural Constraints
+
+- SwiftSyntax AST inspection is the primary analysis layer
+- the rule engine operates on syntax-derived structures only
+- analysis remains single-process and deterministic
+- rule evaluation avoids compiler infrastructure dependencies
+- findings are advisory governance signals, not semantic guarantees
+
 ## 2. System Overview
 
 Pipeline:
@@ -23,8 +31,8 @@ Pipeline:
 CLI Entry
 → Project Discovery
 → Config Loader
-→ SwiftSyntax Parser
-→ Symbol / Structure Index
+→ SwiftSyntax Traversal
+→ Syntax / Structure Index
 → Rule Engine
 → Reporter
 → Exit Policy
@@ -38,6 +46,7 @@ CLI Entry
 4. Emit findings with stable IDs, precise ranges, and explicit fix patterns.
 5. Avoid auto-fix behavior in V1.
 6. Keep machine output compact and stable across runs.
+7. Prefer shallow declared relationships over inferred architecture.
 
 ## 4. Technology Choices
 
@@ -46,7 +55,7 @@ CLI Entry
 | Implementation language | Swift | Native SwiftSyntax integration and same-language analysis |
 | Parsing | SwiftSyntax | AST parsing and traversal |
 | Config parsing | Yams or equivalent | YAML config loading |
-| Project discovery | `swift package describe`, `xcodebuild -list`, `xcodebuild -showBuildSettings` | Native discovery of package and Xcode metadata |
+| Project discovery | filesystem inspection plus optional `swift package describe` and `xcodebuild` metadata | Lightweight discovery limited to local metadata |
 | Output | JSON, YAML, Markdown, compact terminal | Supports CI, humans, and AI agents |
 
 ## 5. Package Structure
@@ -75,7 +84,7 @@ swiftlens/
 | `SyntaxIndex` | Parse files and expose declaration and structure data |
 | `RuleEngine` | Execute configured rules |
 | `RulesSwiftUICore` | Generic SwiftUI rules |
-| `RulesAISlop` | AI-slop detection rules |
+| `RulesAISlop` | Heuristic overengineering rules |
 | `RulesArchitecture` | Boundary and ownership rules |
 | `RulesAlfred` | Alfred governance pack |
 | `Reporter` | JSON, YAML, Markdown, compact outputs |
@@ -100,12 +109,40 @@ CLI scope:
 
 - flags influence execution scope and reporter selection
 - flags do not override rule severity or rule config
+- CLI execution remains single-process and deterministic
 
-## 7. Config Model
+## 7. Forbidden Technical Directions
+
+The following are prohibited in V1:
+
+- SourceKit dependency for core governance
+- compiler plugin architecture
+- semantic type graph reconstruction
+- whole-program analysis
+- transitive architecture inference
+- persistent indexing databases
+- incremental daemon infrastructure
+- distributed analysis services
+- Bazel-like dependency governance
+- generalized static analysis ambitions
+
+## 8. Configuration Constraints
+
+Configuration is declarative only.
+
+Configuration MUST NOT:
+
+- define executable logic
+- support scripting
+- support embedded expressions
+- support custom evaluators
+- support user-defined traversal semantics
+
+## 9. Config Model
 
 `.swiftlens.yml` is the policy contract.
 
-### 7.1 Minimum Shape
+### 8.1 Minimum Shape
 
 ```yaml
 project:
@@ -123,7 +160,7 @@ rules:
     config: {}
 ```
 
-### 7.2 Project Fields
+### 8.2 Project Fields
 
 | Field | Type | Required | Notes |
 | --- | --- | --- | --- |
@@ -137,7 +174,7 @@ rules:
 | `project.localizationFiles` | string array | no | Localization resources for string rules |
 | `project.debugPreviewPaths` | string array | no | Debug-only preview locations |
 
-### 7.3 Pack and Rule Fields
+### 8.3 Pack and Rule Fields
 
 | Field | Type | Required | Notes |
 | --- | --- | --- | --- |
@@ -147,7 +184,7 @@ rules:
 | `rules.<rule>.severity` | enum | no | Rule severity override |
 | `rules.<rule>.config` | map | no | Rule-specific parameters |
 
-### 7.4 Validation Rules
+### 8.4 Validation Rules
 
 Validation must reject:
 
@@ -162,7 +199,7 @@ Validation must reject:
 
 Config failures return exit code `2`.
 
-### 7.5 Precedence
+### 8.5 Precedence
 
 1. Built-in rule defaults define the baseline.
 2. Pack-level severity overrides apply next.
@@ -170,18 +207,20 @@ Config failures return exit code `2`.
 4. Rule-level config merges over built-in config.
 5. CLI flags never mutate rule semantics.
 
-## 8. Project Discovery
+## 10. Project Discovery
 
 Discovery must resolve the project type and source roots before parsing.
 
-### 8.1 Discovery Rules
+### 9.1 Discovery Rules
 
 1. If `Package.swift` exists, treat the repository as an SPM project and use Swift Package metadata first.
 2. If an `.xcodeproj` or `.xcworkspace` exists, use `xcodebuild` discovery.
 3. If both exist, prefer the configured `project.path` in `.swiftlens.yml`.
-4. Apply include and exclude scope filters after discovery.
+4. Resolve only declared or static route references; do not infer app flow.
+5. Apply include and exclude scope filters after discovery.
+6. Do not build a persistent or background discovery index.
 
-### 8.2 Discovery Inputs
+### 9.2 Discovery Inputs
 
 | Command | Purpose |
 | --- | --- |
@@ -189,7 +228,7 @@ Discovery must resolve the project type and source roots before parsing.
 | `xcodebuild -list` | Discover schemes and targets |
 | `xcodebuild -showBuildSettings` | Resolve source roots and build settings |
 
-### 8.3 Discovery Output
+### 9.3 Discovery Output
 
 Discovery should produce:
 
@@ -199,7 +238,7 @@ Discovery should produce:
 - feature roots
 - file candidates for parsing
 
-## 9. Syntax and Structure Model
+## 11. Syntax and Structure Model
 
 SwiftSyntax parsing should detect:
 
@@ -212,16 +251,16 @@ SwiftSyntax parsing should detect:
 - comments
 - navigation patterns
 
-### 9.1 Core Indexes
+### 10.1 Core Indexes
 
 | Index | Responsibility |
 | --- | --- |
-| Declaration index | Track symbols, declaration kinds, and ranges |
+| Declaration index | Track declarations, kinds, and ranges |
 | File ownership map | Associate files with feature or domain ownership |
 | Feature root ownership | Record which root owns which declaration set |
-| Reference index | Support future navigation and reachability checks |
+| Reference index | Support shallow declared relationship checks only |
 
-### 9.2 Stored Metadata
+### 10.2 Stored Metadata
 
 For each source file, store:
 
@@ -230,11 +269,31 @@ For each source file, store:
 - declaration metadata
 - imports
 - comments
-- symbol relationships needed by rules
+- declared relationships needed by rules
 
-## 10. Rule Engine
+## 12. Rule Engine
 
-### 10.1 Rule Interface
+### 11.1 Rule Engine Constraints
+
+Rules must:
+
+- be deterministic
+- use stable IDs
+- produce explainable findings
+- avoid hidden state
+- avoid probabilistic behavior
+- avoid ML or AI inference
+
+Rules must not:
+
+- mutate source
+- auto-fix architecture
+- infer semantic correctness
+- depend on build execution
+
+A rule must justify its governance value relative to implementation complexity.
+
+### 11.2 Rule Interface
 
 ```swift
 protocol SwiftLensRule {
@@ -246,7 +305,7 @@ protocol SwiftLensRule {
 }
 ```
 
-### 10.2 Supporting Types
+### 11.3 Supporting Types
 
 ```swift
 struct RuleContext {
@@ -288,7 +347,7 @@ struct Violation: Codable {
 }
 ```
 
-### 10.3 Required Violation Fields
+### 11.4 Required Violation Fields
 
 Every violation must include:
 
@@ -303,7 +362,7 @@ Every violation must include:
 
 `fixPattern` is the canonical public field name.
 
-### 10.4 Evaluation Strategy
+### 11.5 Evaluation Strategy
 
 1. Load config.
 2. Resolve project scope.
@@ -315,9 +374,9 @@ Every violation must include:
 8. Report findings.
 9. Map final severity state to exit code.
 
-## 11. Rule-Pack Strategy
+## 13. Rule-Pack Strategy
 
-### 11.1 Initial Rule Priorities
+### 12.1 Initial Rule Priorities
 
 The first three rules to ship are:
 
@@ -325,13 +384,7 @@ The first three rules to ship are:
 - `MassiveSwiftUIView`
 - `SingleUseProtocol`
 
-Reason:
-
-- `AppRouterOnly` has the highest Alfred value
-- `MassiveSwiftUIView` is generic and easy to validate
-- `SingleUseProtocol` is a low-risk AI-slop detector
-
-### 11.2 Remaining V1 Architecture Rules
+### 12.2 Remaining V1 Architecture Rules
 
 After the first three rules are trusted, implement:
 
@@ -340,7 +393,7 @@ After the first three rules are trusted, implement:
 - `FeatureBoundaryViolation`
 - `DuplicateOwnership`
 
-### 11.3 Remaining Required Packs
+### 12.3 Remaining Required Packs
 
 Then complete:
 
@@ -348,9 +401,34 @@ Then complete:
 - `ai-slop`
 - `alfred`
 
-## 12. Detection Strategy
+V1 uses built-in packs only; external pack surfaces are rejected by default.
 
-### 12.1 SwiftUI Core
+## 14. Graph Analysis Limits
+
+SwiftLens graph analysis is deliberately shallow.
+
+Allowed depth:
+
+- maximum depth: 1-2 declared relationships
+
+Allowed edges:
+
+- imports
+- configured ownership
+- route declarations
+- lightweight module references
+
+Explicitly prohibited:
+
+- inferred ownership graphs
+- runtime dependency graphs
+- transitive closure analysis
+- cycle resolution engines
+- graph optimization systems
+
+## 15. Detection Strategy
+
+### 14.1 SwiftUI Core
 
 | Rule | Signal |
 | --- | --- |
@@ -359,7 +437,7 @@ Then complete:
 | `StateOwnershipDrift` | Suspicious local state ownership in child views |
 | `ViewModelBusinessLogicLeak` | Domain logic embedded in a SwiftUI view body or action path |
 
-### 12.2 AI Slop
+### 14.2 AI Slop
 
 | Rule | Signal |
 | --- | --- |
@@ -369,7 +447,7 @@ Then complete:
 | `CommentRestatesCode` | Comment text mirrors syntax instead of intent |
 | `RedundantDefensiveGuard` | Guard or if check protects an impossible or already-enforced state |
 
-### 12.3 Architecture
+### 14.3 Architecture
 
 | Rule | Signal |
 | --- | --- |
@@ -378,7 +456,7 @@ Then complete:
 | `FeatureBoundaryViolation` | Ownership leaks across configured roots |
 | `DuplicateOwnership` | More than one owner exists for the same state domain |
 
-### 12.4 Alfred
+### 14.4 Alfred
 
 | Rule | Signal |
 | --- | --- |
@@ -390,9 +468,9 @@ Then complete:
 | `CallbackChildViews` | Child view owns routing instead of exposing callbacks |
 | `SendableDTOs` | Touched DTOs lack `Sendable` where applicable |
 
-## 13. Reporting
+## 16. Reporting
 
-### 13.1 Report Formats
+### 15.1 Report Formats
 
 | Format | Priority | Purpose |
 | --- | --- | --- |
@@ -401,7 +479,7 @@ Then complete:
 | Markdown | high | PR and review summaries |
 | Compact | high | Terminal summary |
 
-### 13.2 Output Requirements
+### 15.2 Output Requirements
 
 Reports should include:
 
@@ -415,18 +493,18 @@ Reports should include:
 
 Default machine output should avoid long-form commentary.
 
-## 14. Exit Policy
+## 17. Exit Policy
 
 | Highest Finding | Exit Code |
 | --- | --- |
 | none | 0 |
 | advisory only | 0 |
-| warning only | 0 by default, configurable if needed later |
+| warning only | 0 |
 | error | 1 |
 | config error | 2 |
 | internal failure | 3 |
 
-## 15. Validation Strategy
+## 18. Validation Strategy
 
 Validation must cover:
 
@@ -437,7 +515,7 @@ Validation must cover:
 - reporter formatting
 - exit-code mapping
 
-### 15.1 Trust-Building Rule Validation
+### 17.1 Trust-Building Rule Validation
 
 Rules should not be optimized before they are exercised on a real codebase.
 
@@ -447,9 +525,9 @@ For Alfred validation:
 - fix rule ambiguity
 - tighten weak detections
 
-## 16. Repository Integration
+## 19. Repository Integration
 
-### 16.1 Alfred Wrapper
+### 18.1 Alfred Wrapper
 
 An Alfred wrapper script should call:
 
@@ -463,7 +541,7 @@ Suggested location:
 ./tools/swiftlens.sh
 ```
 
-### 16.2 CI Contract
+### 18.2 CI Contract
 
 CI should run:
 
@@ -473,7 +551,7 @@ swiftlens scan --config .swiftlens.yml --format json
 
 This gives deterministic machine output for gating and bot consumption.
 
-## 17. Directory and Artifact Strategy
+## 20. Directory and Artifact Strategy
 
 Recommended repo-level artifacts:
 
@@ -485,7 +563,31 @@ Recommended repo-level artifacts:
 - `examples/`
 - `scripts/`
 
-## 18. Performance and Reliability Constraints
+## 21. Performance Constraints
+
+SwiftLens prioritizes deterministic execution predictability over maximum analytical depth.
+
+V1 targets:
+
+- single-process execution
+- bounded memory growth
+- file-local analysis where possible
+- no persistent indexing
+- no background caching daemons
+
+## 22. Complexity Ceiling
+
+SwiftLens intentionally rejects analyses whose correctness depends on:
+
+- compiler state
+- runtime state
+- inferred symbol graphs
+- transitive semantic reconstruction
+- whole-program reasoning
+
+If a rule requires those capabilities, the rule is out of scope for V1.
+
+## 23. Reliability Constraints
 
 The tool should:
 
@@ -494,18 +596,29 @@ The tool should:
 - remain CLI-first
 - report config errors cleanly and early
 - avoid speculative inference when a structural signal is missing
+- avoid transitive or semantic reconstruction
 
-## 19. Open Technical Decisions
+## 24. Open Technical Decisions
 
 These are intentionally deferred until implementation proves the shape:
+
+The following items are explicitly rejected for V1:
+
+- semantic architecture reconstruction
+- inferred ownership graphs
+- runtime dependency graphs
+- persistent graph infrastructure
+- semantic route inference
+- ownership topology engines
+
+The following implementation details remain open:
 
 - exact shape of `SourceRange`
 - whether `ReferenceIndex` is required in V1 or deferred to later packs
 - whether `Yams` or an equivalent YAML parser is chosen
 - exact glob engine and its failure modes
-- whether `warning` should ever become non-zero in CI via explicit configuration
 
-## 20. V1 Completion Definition
+## 25. V1 Completion Definition
 
 V1 is complete only when:
 

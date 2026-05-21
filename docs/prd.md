@@ -11,15 +11,30 @@
 
 ## 1. Product Summary
 
-SwiftLens is a standalone Swift CLI that audits SwiftUI codebases for architectural drift, AI-generated code slop, and project-governance violations before review or CI.
+SwiftLens is a standalone deterministic Swift CLI that audits SwiftUI codebases for architectural drift and project-governance violations before review or CI.
 
-It is not a formatter, style linter, dead-code analyzer, code generator, or GUI dashboard.
+It is CLI-first, CI-compatible, and optimized for machine-readable output.
+
+## 1.1 Product Exclusions
+
+SwiftLens V1 is not:
+
+- a SaaS product
+- a hosted control plane
+- a web dashboard dependency
+- a real-time architecture visualization tool
+- an AI-assisted remediation system
+- a conversational workflow system
+- an auto-generated fixes system
+- a plugin platform
+- a generalized static analyzer
+- a compiler toolchain replacement
 
 ## 2. Problem Statement
 
-Modern SwiftUI teams, especially AI-heavy teams, can generate code faster than they can preserve architecture.
+Modern SwiftUI teams can generate code faster than they can preserve architecture.
 
-The failure mode is not usually a compiler error. It is:
+The failure mode is usually not a compiler error. It is:
 
 - navigation bypassing the owning router
 - duplicated state ownership
@@ -32,10 +47,10 @@ SwiftLens exists to make these violations explicit, deterministic, and machine-a
 
 ## 3. Product Thesis
 
-SwiftLens provides the missing enforcement layer between code generation and merge:
+SwiftLens provides the missing enforcement layer between code changes and merge:
 
-1. AI or a developer writes code.
-2. SwiftLens audits structure and governance.
+1. Code changes are written.
+2. SwiftLens audits syntax-derived structure and governance.
 3. The tool emits compact findings with stable rule IDs and precise file/range metadata.
 4. Developers, reviewers, and agents fix only the relevant surfaces.
 5. CI blocks regressions when a hard rule is violated.
@@ -45,10 +60,12 @@ SwiftLens provides the missing enforcement layer between code generation and mer
 ### 4.1 V1 Goals
 
 - Detect SwiftUI architectural drift.
-- Detect AI-generated overengineering and boilerplate patterns.
+- Detect overengineering and boilerplate patterns using deterministic heuristics.
 - Enforce project-specific governance through configurable policy packs.
 - Produce compact machine-readable reports for CI and AI agents.
 - Produce human-readable Markdown reports on demand.
+- Prefer deterministic heuristics over deep inference.
+- Built-in packs only in V1.
 
 ### 4.2 Business Goals
 
@@ -62,31 +79,46 @@ SwiftLens provides the missing enforcement layer between code generation and mer
 - Replace SwiftFormat.
 - Replace Periphery.
 - Replace the compiler or Xcode static analysis.
+- Provide semantic correctness guarantees.
+- Reconstruct full architecture truth.
 - Auto-fix architecture in V1.
 - Generate code.
 - Parse governance prose automatically with NLP.
 - Provide a GUI or dashboard.
+- Provide runtime instrumentation.
+- Provide IDE integration.
+- Provide distributed governance.
 
-## 6. Target Users
+## 6. Governance Doctrine
+
+Features that require semantic reconstruction, inferred architectural truth, runtime understanding, or persistent graph infrastructure are out of scope for SwiftLens V1 and should be rejected by default.
+
+## 7. Precision Philosophy
+
+SwiftLens intentionally prefers transparent heuristics over opaque semantic analysis.
+
+False precision is more dangerous than incomplete detection.
+
+## 8. Target Users
 
 | User | Need |
 | --- | --- |
-| Indie SwiftUI developers | Prevent messy AI-generated architecture |
+| Indie SwiftUI developers | Prevent architectural drift |
 | iOS teams | Enforce feature boundaries and navigation ownership |
 | AI-heavy teams | Reduce review fatigue from boilerplate and overengineering |
 | Alfred team | Enforce AppRouter, state ownership, localization, icon, and preview invariants |
 
-## 7. Primary Use Cases
+## 9. Primary Use Cases
 
 | Use Case | Description |
 | --- | --- |
 | Local preflight | A developer runs SwiftLens before committing |
-| AI coding guardrail | An agent receives exact rule violations instead of broad repo context |
 | CI enforcement | Pull requests fail on hard governance errors |
+| AI coding guardrail | An agent receives exact rule violations instead of broad repo context |
 | Architecture review | A reviewer receives a compact report of structural risks |
 | Alfred validation | Alfred-specific policy pack validates the model on a real codebase |
 
-## 8. Success Criteria
+## 10. Success Criteria
 
 SwiftLens v1 is successful if:
 
@@ -95,11 +127,11 @@ SwiftLens v1 is successful if:
 - it blocks hard violations in CI with deterministic exit codes
 - it reduces manual review effort by surfacing targeted, actionable issues
 
-## 9. User Stories
+## 11. User Stories
 
-### 9.1 Developer
+### 10.1 Developer
 
-As a SwiftUI developer, I want SwiftLens to tell me when AI-generated code violates the architecture so I can fix the issue before review.
+As a SwiftUI developer, I want SwiftLens to tell me when code violates the architecture so I can fix the issue before review.
 
 Acceptance criteria:
 
@@ -107,7 +139,7 @@ Acceptance criteria:
 - each finding identifies file, range, rule, reason, and fix pattern
 - output is readable without opening the full project manually
 
-### 9.2 AI Agent
+### 10.2 AI Agent
 
 As an AI coding agent, I want compact JSON or YAML findings so I can fix only the relevant files and avoid wasting tokens on broad exploration.
 
@@ -117,7 +149,7 @@ Acceptance criteria:
 - every finding has a stable rule ID
 - every finding includes precise file and range metadata
 
-### 9.3 Reviewer
+### 10.3 Reviewer
 
 As a reviewer, I want a Markdown summary of architecture risks so I can focus review effort on meaningful issues.
 
@@ -127,7 +159,7 @@ Acceptance criteria:
 - reports include project summary counts
 - reports avoid essay-style commentary unless explicitly requested
 
-### 9.4 Project Maintainer
+### 10.4 Project Maintainer
 
 As a maintainer, I want to map governance rules into executable config without hardcoding them into the tool.
 
@@ -137,9 +169,9 @@ Acceptance criteria:
 - governance docs remain the human source of truth
 - SwiftLens does not infer rules from prose in V1
 
-## 10. Product Scope
+## 12. Product Scope
 
-### 10.1 Required Rule Packs
+### 11.1 Required Rule Packs
 
 | Pack | Purpose | V1 Status |
 | --- | --- | --- |
@@ -148,7 +180,9 @@ Acceptance criteria:
 | `architecture` | Feature boundaries, ownership, dependency direction | Required |
 | `alfred` | Alfred-specific governance rules | Required for Alfred validation |
 
-### 10.2 Mandatory V1 Rules
+V1 uses built-in packs only; external pack surfaces are deferred.
+
+### 12.2 Mandatory V1 Rules
 
 #### SwiftUI Core
 
@@ -190,7 +224,7 @@ Acceptance criteria:
 | `CallbackChildViews` | warning | Child views should expose callbacks instead of owning routing |
 | `SendableDTOs` | warning | Touched DTOs should conform to `Sendable` where applicable |
 
-### 10.3 Configurable Scope
+### 12.3 Configurable Scope
 
 - project root or scan root
 - include and exclude glob patterns
@@ -199,7 +233,7 @@ Acceptance criteria:
 - per-rule severity overrides
 - per-rule configuration parameters
 
-## 11. Output Modes
+## 13. Output Modes
 
 | Mode | Purpose |
 | --- | --- |
@@ -208,7 +242,7 @@ Acceptance criteria:
 | `markdown` | PR and review summaries |
 | `compact` | Minimal terminal summary |
 
-## 12. Exit-Code Contract
+## 14. Exit-Code Contract
 
 | Condition | Exit Code |
 | --- | --- |
@@ -218,7 +252,7 @@ Acceptance criteria:
 | Config issue | 2 |
 | Internal failure | 3 |
 
-## 13. Configuration Contract
+## 15. Configuration Contract
 
 `.swiftlens.yml` is the executable policy source. Governance prose is not parsed in V1.
 
@@ -240,7 +274,7 @@ Precedence:
 4. `rules.<rule>.config` merges over built-in rule config; unknown keys fail validation.
 5. CLI flags affect execution scope and reporter selection only.
 
-## 14. Release Criteria
+## 16. Release Criteria
 
 SwiftLens v1 is releasable when:
 
@@ -250,7 +284,7 @@ SwiftLens v1 is releasable when:
 - exit codes match the contract
 - the tool has been validated on Alfred or an equivalent real SwiftUI codebase
 
-## 15. Risks
+## 17. Risks
 
 | Risk | Impact | Mitigation |
 | --- | --- | --- |
@@ -258,15 +292,3 @@ SwiftLens v1 is releasable when:
 | Weak architecture inference | Missed violations | Use project-specific config and declaration/index data |
 | Scope creep | Delayed release | Freeze V1 scope and reject auto-fix / NLP / GUI work |
 | Overfitting to Alfred | Poor generalization | Keep generic packs separate from Alfred-specific policy |
-| Reporter bloat | Harder AI consumption | Keep machine output compact and stable |
-
-## 16. V1 Boundary Statement
-
-V1 is not complete until the required pack set is available:
-
-- `swiftui-core`
-- `ai-slop`
-- `architecture`
-- `alfred`
-
-Implementation order may be staged, but product completeness depends on the full set.

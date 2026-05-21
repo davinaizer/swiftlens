@@ -1,13 +1,54 @@
 # SwiftLens
 
-SwiftLens is a standalone Swift package CLI for auditing SwiftUI architecture, governance rules, and AI-generated code slop before changes reach review or CI.
+SwiftLens is a deterministic SwiftUI governance CLI for detecting architectural drift before changes reach review or CI.
 
-It is not a formatter, SwiftLint replacement, Periphery clone, or code generator.
+It is syntax-tree-first, CI-compatible, and designed for machine-readable findings.
+
+SwiftLens intentionally stops short of compiler-grade architectural analysis.
+
+## What SwiftLens Is
+
+- a deterministic SwiftUI governance CLI
+- a syntax-tree-first analysis tool
+- a governance drift detector
+- a CI-compatible machine-readable reporter
+
+## What SwiftLens Is Not
+
+- an AI coding assistant
+- a Copilot competitor
+- a generalized Swift linter
+- a semantic compiler tool
+- a plugin platform
+- a SaaS governance product
+- an architecture visualization platform
+
+## Governance Doctrine
+
+Features that require semantic reconstruction, inferred architectural truth, runtime understanding, or persistent graph infrastructure are out of scope for SwiftLens V1 and should be rejected by default.
+
+## Design Philosophy
+
+- deterministic over intelligent
+- heuristics over semantic reconstruction
+- maintainability over completeness
+- explicit constraints over extensibility
+- OSS realism over enterprise ambition
+
+## Non-Goals
+
+- semantic correctness guarantees
+- full architecture reconstruction
+- code generation
+- auto-remediation
+- deep dependency intelligence
+- enterprise workflow orchestration
+- runtime instrumentation
 
 ## What it does
 
 - Detects SwiftUI architectural drift
-- Flags AI-slop patterns such as overengineering, boilerplate, and redundant defensive code
+- Flags governance drift using deterministic heuristics
 - Enforces project-specific governance through configurable rule packs
 - Produces deterministic machine-readable output for CI and AI agents
 - Emits Markdown summaries for reviewers when requested
@@ -22,6 +63,7 @@ SwiftLens V1 treats these packs as required:
 - `alfred`
 
 V1 is complete only when all required packs are implemented and validated.
+V1 uses built-in packs only; external pack surfaces are deferred.
 
 ## V1 command contract
 
@@ -70,6 +112,10 @@ Documented config behavior:
 - `rules.<rule>.config` merges over built-in rule config
 - unknown keys fail validation
 - CLI flags affect scope and reporter selection only
+- findings are advisory deterministic signals, not semantic guarantees
+- rules should prefer low-complexity heuristics over deep inference
+- route discovery is limited to declared or static routes only
+- ownership mapping is explicit-config only
 
 ## Reporter contract
 
@@ -101,48 +147,37 @@ swiftlens/
 
 ## Roadmap
 
-Phase 0:
-
-- create repository structure
-- freeze V1 governance baseline
-
 Phase 1:
 
-- create executable Swift package
-- add SwiftSyntax and YAML parsing dependencies
-- wire the CLI command structure
+- CLI bootstrap
+- config loading
+- SwiftSyntax traversal
+- file discovery
 
 Phase 2:
 
-- define `.swiftlens.yml`
-- implement project discovery for Xcode projects and Swift Packages
+- deterministic rule registry
+- stable rule IDs
+- rule execution pipeline
 
 Phase 3:
 
-- build the SwiftSyntax parser
-- build the declaration and ownership index
+- syntax/path/import governance rules
+- ownership mapping heuristics
+- shallow dependency checks
 
 Phase 4:
 
-- implement the first three rules:
-  - `AppRouterOnly`
-  - `MassiveSwiftUIView`
-  - `SingleUseProtocol`
+- JSON/YAML reporters
+- CI exit codes
+- fixture-based testing
 
 Phase 5:
 
-- add JSON, YAML, compact, and Markdown reporting
-- enforce exit-code policy
-
-Phase 6:
-
-- add Alfred-specific integration and the Alfred policy pack
-
-Phase 7:
-
-- prepare OSS documentation and examples
+- documentation hardening
+- governance pack stabilization
+- OSS maintenance readiness
 
 ## Current status
 
 The project is still in the planning and bootstrap stage. The docs define the V1 contract, but the CLI implementation is not complete yet.
-
