@@ -2,12 +2,12 @@
 
 ## Current Objective
 
-Canonical docs updated for Phase 3A local developer DX and phase renumbering; implementation remains not started.
+Phase 3A closed; Phase 4 authorized within the governed phase contract.
 
 ## Current Phase
 
-- Current Authorized Phase: Phase 3A - Local Developer DX.
-- Current Implementation Status: Documentation Complete / Implementation Not Started.
+- Current Authorized Phase: Phase 4 - Syntax-First Governance Rules.
+- Current Implementation Status: Authorized / Not Started.
 - The active phase is the one defined in [docs/SwiftLens-project-action-plan.md](docs/SwiftLens-project-action-plan.md).
 - If the phase is undefined or disputed, resolve the docs first.
 

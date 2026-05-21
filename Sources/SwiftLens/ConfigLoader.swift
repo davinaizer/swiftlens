@@ -31,7 +31,12 @@ struct ConfigLoader {
     private func resolveConfigURL(configPath: String?) throws -> URL {
         let base = URL(fileURLWithPath: fileManager.currentDirectoryPath, isDirectory: true)
         if let configPath {
-            let url = URL(fileURLWithPath: configPath, relativeTo: base).standardizedFileURL
+            let url: URL
+            if configPath.hasPrefix("/") {
+                url = URL(fileURLWithPath: configPath).standardizedFileURL
+            } else {
+                url = URL(fileURLWithPath: configPath, relativeTo: base).standardizedFileURL
+            }
             guard fileManager.fileExists(atPath: url.path) else {
                 throw SwiftLensError.configuration("Config file not found at \(url.path).")
             }

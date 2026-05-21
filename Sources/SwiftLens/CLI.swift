@@ -27,7 +27,7 @@ enum SwiftLensCLI {
 
     private static func parse(arguments: [String]) throws -> CLICommand {
         guard arguments.count >= 2 else {
-            return .help
+            return .scan(ScanOptions(path: "."))
         }
 
         let commandName = arguments[1]
@@ -48,7 +48,7 @@ enum SwiftLensCLI {
     }
 
     private static func parseScanOptions(_ flags: [String]) throws -> ScanOptions {
-        var options = ScanOptions()
+        var options = ScanOptions(path: ".")
         var iterator = flags.makeIterator()
         while let flag = iterator.next() {
             switch flag {
@@ -72,6 +72,10 @@ enum SwiftLensCLI {
             default:
                 throw SwiftLensError.usage("Unknown flag `\(flag)`.")
             }
+        }
+
+        if options.configPath != nil, options.path == "." {
+            options.path = nil
         }
 
         if options.format != "json" {
