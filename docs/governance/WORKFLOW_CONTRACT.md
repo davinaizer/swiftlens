@@ -31,6 +31,16 @@ Define the shared workflow rules that keep SwiftLens repository-governed, phase-
 - Every reporter change requires golden-output tests.
 - Every config change requires valid and invalid config tests.
 - Every exit-code change requires explicit exit-code tests.
+- Every CLI parsing change requires argument validation tests.
+- `swift test` must pass before merge, phase closure, rule additions, config changes, and reporter changes.
+
+| Change Type | Required Test |
+| --- | --- |
+| New rule | New fixtures plus a failing test first |
+| Reporter change | Golden-output test |
+| Config schema change | Valid and invalid config tests |
+| Exit-code change | Explicit exit-code test |
+| CLI parsing change | Argument validation tests |
 
 ## Rejection Rules
 
@@ -44,6 +54,7 @@ Define the shared workflow rules that keep SwiftLens repository-governed, phase-
 
 - Keep tests fixture-backed where behavior is file- or project-dependent.
 - Avoid network, clock, randomness, external services, and machine-local state in tests.
+- Tests validate externally observable deterministic behavior, not implementation structure.
 - Verify stable rule IDs, finding shape, ordering, and exit codes where applicable.
 
 ## Usage

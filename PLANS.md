@@ -2,7 +2,7 @@
 
 ## Current Objective
 
-Update repository governance so TDD is the default implementation standard from Phase 2 onward, while preserving Phase 1 as already accepted.
+Update repository governance so TDD is the default implementation standard from Phase 2 onward, while preserving Phase 1 as already accepted and codifying deterministic test gates for repo changes.
 
 ## Current Phase
 
@@ -15,6 +15,7 @@ Update repository governance so TDD is the default implementation standard from 
 1. Add TDD workflow rules to the governance docs.
 2. Phase-gate test-first requirements starting in Phase 2.
 3. Keep the repository scope unchanged.
+4. Document the required `swift test` gate and change-type test matrix.
 
 ## Rejection Rules
 

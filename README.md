@@ -42,6 +42,7 @@ SwiftLens intentionally stops short of compiler-grade architectural analysis.
 - Run the relevant test target.
 - Refactor only after tests pass.
 - Preserve deterministic behavior.
+- Tests validate externally observable deterministic behavior, not implementation structure.
 - New rules require fixtures before implementation.
 - Reporter changes require golden-output tests.
 - Config changes require valid and invalid config tests.
@@ -49,6 +50,15 @@ SwiftLens intentionally stops short of compiler-grade architectural analysis.
 - Tests must remain fixture-backed for file- or project-dependent behavior.
 - Tests must avoid network, clock, randomness, external services, and machine-local state.
 - Tests must verify stable rule IDs, finding shape, ordering, and exit codes where applicable.
+- `swift test` must pass before merge, phase closure, rule additions, config changes, and reporter changes.
+
+| Change Type | Required Test |
+| --- | --- |
+| New rule | New fixtures plus a failing test first |
+| Reporter change | Golden-output test |
+| Config schema change | Valid and invalid config tests |
+| Exit-code change | Explicit exit-code test |
+| CLI parsing change | Argument validation tests |
 
 ## Phased Implementation Philosophy
 
