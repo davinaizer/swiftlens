@@ -62,6 +62,10 @@ struct ProjectConfiguration: Equatable, Sendable {
     let exclude: [String]
 }
 
+struct IgnoreConfiguration: Equatable, Sendable {
+    let paths: [String]
+}
+
 struct PackConfiguration: Equatable, Sendable {
     let enabled: Bool
     let severityOverrides: [String: Severity]
@@ -77,6 +81,22 @@ struct SwiftLensConfig: Equatable, Sendable {
     let project: ProjectConfiguration
     let packs: [String: PackConfiguration]
     let rules: [String: RuleConfiguration]
+    let ruleOrder: [String]
+    let ignore: IgnoreConfiguration
+
+    init(
+        project: ProjectConfiguration,
+        packs: [String: PackConfiguration] = [:],
+        rules: [String: RuleConfiguration] = [:],
+        ruleOrder: [String] = [],
+        ignore: IgnoreConfiguration = IgnoreConfiguration(paths: [])
+    ) {
+        self.project = project
+        self.packs = packs
+        self.rules = rules
+        self.ruleOrder = ruleOrder
+        self.ignore = ignore
+    }
 }
 
 struct LoadedConfiguration: Equatable, Sendable {
@@ -92,6 +112,7 @@ struct ParsedImport: Equatable, Sendable {
 
 struct ParsedSwiftFile: Equatable, Sendable {
     let url: URL
+    let relativePath: String
     let imports: [ParsedImport]
 }
 

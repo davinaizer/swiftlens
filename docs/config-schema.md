@@ -20,16 +20,16 @@ project:
   path: .
   include: []
   exclude: []
-packs:
-  architecture:
-    enabled: true
-    severityOverrides:
 rules:
-  ForbiddenImportRule:
-    enabled: true
-    config:
-      forbiddenImports:
+  - architecture.forbidden-import
+architecture:
+  forbiddenImports:
+    -
+      from: Features/
+      imports:
         - UIKit
+ignore:
+  paths: []
 ```
 
 ## 2. Supported Top-Level Keys
@@ -37,6 +37,8 @@ rules:
 - `project`
 - `packs`
 - `rules`
+- `architecture`
+- `ignore`
 
 Unknown top-level keys are rejected by the validator.
 
@@ -83,13 +85,20 @@ The current parser does not accept inline `{}` for this field.
 
 | Field | Type | Required | Notes |
 | --- | --- | --- | --- |
-| `rules.<rule>.enabled` | boolean | yes | Enables or disables a rule |
-| `rules.<rule>.severity` | enum | no | Rule severity override |
-| `rules.<rule>.config` | map | no | Rule-specific parameters |
+| `rules` | string array | no | Ordered enablement list for canonical rule IDs |
+| `rules.<rule>.enabled` | boolean | yes | Legacy alias path for compatibility |
+| `rules.<rule>.severity` | enum | no | Legacy alias path for compatibility |
+| `rules.<rule>.config` | map | no | Legacy alias path for compatibility |
 
 The current built-in rule is:
 
-- `ForbiddenImportRule`
+- `architecture.forbidden-import`
+
+The current canonical rule-family config lives under:
+
+- `architecture.forbiddenImports`
+
+The legacy `ForbiddenImportRule` rule-config shape remains accepted as a compatibility alias.
 
 ## 6. Example
 
@@ -102,14 +111,15 @@ project:
     - .swiftlens-bin/**
     - dist/**
     - DerivedData/**
-packs:
-  architecture:
-    enabled: true
-    severityOverrides:
 rules:
-  ForbiddenImportRule:
-    enabled: true
-    config:
-      forbiddenImports:
+  - architecture.forbidden-import
+architecture:
+  forbiddenImports:
+    -
+      from: Features/
+      imports:
         - UIKit
+ignore:
+  paths:
+    - DerivedData/
 ```

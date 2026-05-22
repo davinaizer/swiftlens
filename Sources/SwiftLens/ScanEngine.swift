@@ -23,11 +23,12 @@ struct ScanEngine {
         let files = try discoverSwiftFiles(
             root: loadedConfiguration.projectRootURL,
             include: loadedConfiguration.config.project.include,
-            exclude: loadedConfiguration.config.project.exclude
+            exclude: loadedConfiguration.config.project.exclude,
+            ignore: loadedConfiguration.config.ignore.paths
         )
 
         let parser = SwiftSyntaxParserService()
-        let parsedFiles = try files.map { try parser.parseFile(at: $0) }
+        let parsedFiles = try files.map { try parser.parseFile(at: $0.url, relativePath: $0.relativePath) }
         let violations = RuleEngine(registry: registry).evaluate(
             config: loadedConfiguration.config, files: parsedFiles)
         let summary = ScanSummary(filesScanned: parsedFiles.count, violations: violations.count)
@@ -45,7 +46,17 @@ struct ScanEngine {
             configPath: options.configPath)
     }
 
-    private func discoverSwiftFiles(root: URL, include: [String], exclude: [String]) throws -> [URL] {
+    private struct DiscoveredSwiftFile {
+        let url: URL
+        let relativePath: String
+    }
+
+    private func discoverSwiftFiles(
+        root: URL,
+        include: [String],
+        exclude: [String],
+        ignore: [String]
+    ) throws -> [DiscoveredSwiftFile] {
         guard fileManager.fileExists(atPath: root.path) else {
             throw SwiftLensError.configuration("Project path not found at \(root.path).")
         }
@@ -55,11 +66,13 @@ struct ScanEngine {
             includingPropertiesForKeys: [.isDirectoryKey],
             options: [.skipsHiddenFiles]
         )
-        var results: [URL] = []
+        var results: [DiscoveredSwiftFile] = []
         while let url = enumerator?.nextObject() as? URL {
             let resourceValues = try url.resourceValues(forKeys: [.isDirectoryKey])
+            let relativePath = canonicalRelativePath(for: url, root: root)
             if resourceValues.isDirectory == true {
-                if shouldSkipDirectory(url.lastPathComponent) {
+                if shouldSkipDirectory(url.lastPathComponent)
+                    || ignore.contains(where: { pathMatchesPrefixBoundary(relativePath, prefix: $0) }) {
                     enumerator?.skipDescendants()
                 }
                 continue
@@ -69,42 +82,25 @@ struct ScanEngine {
                 continue
             }
 
-            let relativePath = relativePathString(for: url, root: root)
-            if !include.isEmpty,
-                !include.contains(where: { matchesScope(relativePath, pattern: $0) }) {
+            if ignore.contains(where: { pathMatchesPrefixBoundary(relativePath, prefix: $0) }) {
                 continue
             }
-            if exclude.contains(where: { matchesScope(relativePath, pattern: $0) }) {
+            if !include.isEmpty,
+                !include.contains(where: { pathMatchesPrefixBoundary(relativePath, prefix: $0) }) {
+                continue
+            }
+            if exclude.contains(where: { pathMatchesPrefixBoundary(relativePath, prefix: $0) }) {
                 continue
             }
 
-            results.append(url.standardizedFileURL)
+            results.append(DiscoveredSwiftFile(url: url.standardizedFileURL, relativePath: relativePath))
         }
 
-        return results.sorted { $0.path < $1.path }
+        return results.sorted { $0.relativePath < $1.relativePath }
     }
 
     private func shouldSkipDirectory(_ name: String) -> Bool {
         [".build", ".git", ".swiftpm", "DerivedData", "SourcePackages"].contains(name)
     }
 
-    private func relativePathString(for fileURL: URL, root: URL) -> String {
-        let rootPath = root.standardizedFileURL.path
-        let filePath = fileURL.standardizedFileURL.path
-        guard filePath.hasPrefix(rootPath) else {
-            return filePath
-        }
-
-        let suffix = filePath.dropFirst(rootPath.count)
-        return String(suffix.trimmingCharacters(in: CharacterSet(charactersIn: "/")))
-    }
-
-    private func matchesScope(_ relativePath: String, pattern: String) -> Bool {
-        let normalized = pattern.trimmingCharacters(in: .whitespacesAndNewlines).trimmingCharacters(
-            in: CharacterSet(charactersIn: "/"))
-        guard !normalized.isEmpty else {
-            return false
-        }
-        return relativePath == normalized || relativePath.hasPrefix(normalized + "/")
-    }
 }

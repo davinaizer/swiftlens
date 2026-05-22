@@ -64,7 +64,7 @@ struct SwiftLensPhase1Tests {
 
         #expect(result.exitCode == 1)
         #expect(result.stderr.isEmpty)
-        #expect(result.stdout.contains("ForbiddenImportRule"))
+        #expect(result.stdout.contains("architecture.forbidden-import"))
         #expect(result.stdout.contains("\"violations\":"))
     }
 
@@ -135,7 +135,7 @@ struct SwiftLensPhase2Tests {
 
         #expect(result.exitCode == 1)
         #expect(result.stderr.isEmpty)
-        #expect(result.stdout.contains("\"rule\":\"ForbiddenImportRule\""))
+        #expect(result.stdout.contains("\"rule\":\"architecture.forbidden-import\""))
         #expect(result.stdout.contains("\"severity\":\"warning\""))
     }
 
@@ -145,7 +145,7 @@ struct SwiftLensPhase2Tests {
 
         #expect(result.exitCode == 1)
         #expect(result.stderr.isEmpty)
-        #expect(result.stdout.contains("\"rule\":\"ForbiddenImportRule\""))
+        #expect(result.stdout.contains("\"rule\":\"architecture.forbidden-import\""))
         #expect(result.stdout.contains("\"severity\":\"error\""))
     }
 
@@ -222,11 +222,12 @@ struct SwiftLensPhase2Tests {
             packs: [
                 "architecture": PackConfiguration(enabled: true, severityOverrides: [:])
             ],
-            rules: [:]
+            rules: [:],
+            ruleOrder: ["AlphaRule", "BetaRule"]
         )
 
         let violations = engine.evaluate(config: config, files: [])
 
-        #expect(violations.map(\.rule) == ["AlphaRule", "BetaRule"])
+        #expect(violations.map { $0.rule } == ["AlphaRule", "BetaRule"])
     }
 }

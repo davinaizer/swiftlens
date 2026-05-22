@@ -2,7 +2,7 @@ import Foundation
 
 struct ForbiddenImportRule {
     static let descriptor = RuleDescriptor(
-        id: "ForbiddenImportRule",
+        id: "architecture.forbidden-import",
         pack: "architecture",
         defaultSeverity: .error,
         defaultConfidence: .high,
@@ -14,30 +14,38 @@ struct ForbiddenImportRule {
                 return []
             }
 
-            let forbidden = Set(forbiddenImports)
-            return context.files.flatMap { file in
-                file.imports.compactMap { imported in
-                    guard forbidden.contains(imported.module) else {
-                        return nil
+            var violations: [Violation] = []
+            for file in context.files {
+                for scope in forbiddenImports where pathMatchesPrefixBoundary(file.relativePath, prefix: scope.from) {
+                    let scopeLabel = scope.from.isEmpty ? "<root>" : scope.from
+                    for imported in file.imports where scope.imports.contains(imported.module) {
+                        violations.append(
+                            Violation(
+                                rule: context.descriptor.id,
+                                pack: context.descriptor.pack,
+                                severity: context.settings.severity,
+                                confidence: context.settings.confidence,
+                                file: file.url.path,
+                                range: imported.range,
+                                reason: "Forbidden import `\(imported.module)` found in `\(scopeLabel)`.",
+                                fixPattern:
+                                    "Remove the forbidden import or move the code into an allowed module."
+                            )
+                        )
                     }
-
-                    return Violation(
-                        rule: context.descriptor.id,
-                        pack: context.descriptor.pack,
-                        severity: context.settings.severity,
-                        confidence: context.settings.confidence,
-                        file: file.url.path,
-                        range: imported.range,
-                        reason: "Forbidden import `\(imported.module)` found.",
-                        fixPattern:
-                            "Remove the forbidden import or move the code into an allowed module."
-                    )
                 }
             }
+
+            return violations
         }
     )
 
-    private static func forbiddenImports(from config: [String: YAMLValue]) -> [String] {
+    private struct ForbiddenImportScope {
+        let from: String
+        let imports: [String]
+    }
+
+    private static func forbiddenImports(from config: [String: YAMLValue]) -> [ForbiddenImportScope] {
         guard let value = config["forbiddenImports"] else {
             return []
         }
@@ -46,11 +54,38 @@ struct ForbiddenImportRule {
             return []
         }
 
-        return items.compactMap { item in
-            guard case .string(let string) = item else {
-                return nil
+        var scopes: [ForbiddenImportScope] = []
+        for item in items {
+            guard case .mapping(let mapping) = item else {
+                return []
             }
-            return string
+
+            guard let from = mapping["from"]?.stringValue else {
+                return []
+            }
+
+            let scope = normalizeRelativePath(from)
+            let imports: [String]
+            do {
+                imports = try ConfigValueDecoder().stringArrayValue(
+                    mapping["imports"],
+                    field: "architecture.forbiddenImports.imports"
+                )
+            } catch {
+                return []
+            }
+            scopes.append(ForbiddenImportScope(from: scope, imports: imports))
         }
+
+        return scopes
+    }
+}
+
+private extension YAMLValue {
+    var stringValue: String? {
+        guard case .string(let string) = self else {
+            return nil
+        }
+        return string
     }
 }

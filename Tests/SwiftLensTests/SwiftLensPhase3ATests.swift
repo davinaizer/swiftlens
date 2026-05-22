@@ -159,8 +159,8 @@ struct SwiftLensPhase3ATests {
 
         #expect(bareResult.exitCode == 1)
         #expect(scanResult.exitCode == 1)
-        #expect(bareResult.stdout.contains("ForbiddenImportRule"))
-        #expect(scanResult.stdout.contains("ForbiddenImportRule"))
+        #expect(bareResult.stdout.contains("architecture.forbidden-import"))
+        #expect(scanResult.stdout.contains("architecture.forbidden-import"))
     }
 
     @Test("swiftlens scan rejects trailing positional arguments")

@@ -145,6 +145,8 @@ Supported top-level keys:
 - `project`
 - `packs`
 - `rules`
+- `architecture`
+- `ignore`
 
 Supported `project` fields:
 
@@ -157,10 +159,18 @@ Supported `packs.architecture` fields:
 - `enabled`
 - `severityOverrides`
 
-Supported `rules.ForbiddenImportRule` fields:
+Supported `rules` forms:
 
-- `enabled`
-- `config.forbiddenImports`
+- ordered enablement list, for example `rules: [architecture.forbidden-import]`
+- legacy keyed rule configuration, including `ForbiddenImportRule` as a compatibility alias
+
+Supported `architecture` fields:
+
+- `forbiddenImports`
+
+Supported `ignore` fields:
+
+- `paths`
 
 Example configuration:
 
@@ -173,17 +183,17 @@ project:
     - .swiftlens-bin/**
     - dist/**
     - DerivedData/**
-packs:
-  architecture:
-    enabled: true
-    severityOverrides:
-      # leave empty unless overriding rule severities
 rules:
-  ForbiddenImportRule:
-    enabled: true
-    config:
-      forbiddenImports:
+  - architecture.forbidden-import
+architecture:
+  forbiddenImports:
+    -
+      from: Features/
+      imports:
         - UIKit
+ignore:
+  paths:
+    - DerivedData/
 ```
 
 For the full schema and validation contract, see:

@@ -3,7 +3,7 @@ import SwiftParser
 import SwiftSyntax
 
 struct SwiftSyntaxParserService {
-    func parseFile(at url: URL) throws -> ParsedSwiftFile {
+    func parseFile(at url: URL, relativePath: String) throws -> ParsedSwiftFile {
         let source: String
         do {
             source = try String(contentsOf: url, encoding: .utf8)
@@ -30,7 +30,7 @@ struct SwiftSyntaxParserService {
             imports.append(ParsedImport(module: module, range: range))
         }
 
-        return ParsedSwiftFile(url: url, imports: imports)
+        return ParsedSwiftFile(url: url, relativePath: normalizeRelativePath(relativePath), imports: imports)
     }
 
     private func importedModuleName(from importDecl: ImportDeclSyntax) -> String {

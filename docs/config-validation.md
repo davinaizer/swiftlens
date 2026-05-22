@@ -43,6 +43,9 @@ Config failures return exit code `2`.
 - unknown `project` keys are rejected
 - unknown pack names are rejected
 - unknown rule IDs are rejected
+- `rules` may be either a canonical ordered list or the legacy keyed alias shape
+- `architecture.forbiddenImports` is validated deterministically and path-bound with prefix/boundary matching
+- `ignore.paths` is applied before parsing discovered files
 - `packs.<pack>.severityOverrides` must be a mapping when provided
 - `rules.<rule>.config` must be a mapping when provided
 - `rules.<rule>.severity` must be one of `advisory`, `warning`, or `error`

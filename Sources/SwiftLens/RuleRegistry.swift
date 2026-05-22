@@ -46,11 +46,32 @@ struct RuleEvaluationContext: Sendable {
 
 struct RuleRegistry: Sendable {
     let descriptors: [RuleDescriptor]
+    let aliases: [String: String]
 
-    static let `default` = RuleRegistry(descriptors: [ForbiddenImportRule.descriptor])
+    init(descriptors: [RuleDescriptor], aliases: [String: String] = [:]) {
+        self.descriptors = descriptors
+        self.aliases = aliases
+    }
+
+    static let `default` = RuleRegistry(
+        descriptors: [ForbiddenImportRule.descriptor],
+        aliases: ["ForbiddenImportRule": ForbiddenImportRule.descriptor.id]
+    )
+
+    func canonicalRuleID(for ruleID: String) -> String? {
+        if descriptors.contains(where: { $0.id == ruleID }) {
+            return ruleID
+        }
+
+        return aliases[ruleID]
+    }
 
     func descriptor(for ruleID: String) -> RuleDescriptor? {
-        descriptors.first { $0.id == ruleID }
+        guard let canonicalID = canonicalRuleID(for: ruleID) else {
+            return nil
+        }
+
+        return descriptors.first { $0.id == canonicalID }
     }
 
     func descriptors(inPack pack: String) -> [RuleDescriptor] {
@@ -68,7 +89,11 @@ struct RuleEngine {
     func evaluate(config: SwiftLensConfig, files: [ParsedSwiftFile]) -> [Violation] {
         var violations: [Violation] = []
 
-        for descriptor in registry.descriptors {
+        for ruleID in config.ruleOrder {
+            guard let descriptor = registry.descriptor(for: ruleID) else {
+                continue
+            }
+
             let settings = resolveSettings(for: descriptor, config: config)
             guard settings.enabled else {
                 continue
