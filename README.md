@@ -1,6 +1,12 @@
-# SwiftLens
+<p align="center">
+  <picture >
+    <source media="(prefers-color-scheme: dark)" srcset="docs/swiftlens-logo-horizontal-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="docs/swiftlens-logo-horizontal-light.png">
+    <img alt="Fallback image description" src="docs/swiftlens-logo-horizontal-light.png">
+  </picture>
+</p>
 
-SwiftLens detects SwiftUI architectural drift before it reaches code review or CI.
+**SwiftLens** detects SwiftUI architectural drift before it reaches code review or CI.
 
 It uses deterministic syntax-tree heuristics instead of full semantic compiler analysis.
 
