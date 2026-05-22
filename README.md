@@ -60,6 +60,8 @@ Requirements:
 curl -fsSL https://raw.githubusercontent.com/davinaizer/swiftlens/main/scripts/install.sh | sh
 ```
 
+This installs the release version defined in `Sources/SwiftLens/Version.generated.swift` by default. Set `SWIFTLENS_INSTALL_VERSION` if you need a different release.
+
 ```bash
 swiftlens version
 ```
@@ -245,6 +247,8 @@ To verify the upload flow first:
 ```bash
 ./scripts/upload-release.sh vX.Y.Z --dry-run
 ```
+
+Publish the GitHub release as a normal release, not a pre-release, so the installer URL resolves correctly.
 
 4. Installers can then fetch the asset with:
 

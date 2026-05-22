@@ -13,7 +13,7 @@ Phase 3A closed; Phase 4 authorized within the governed phase contract.
 
 ## Active Work
 
-1. Generate a single source-of-truth version file for the CLI and release packaging.
+1. Stabilize the macOS release installer so it resolves the published release from the generated version source and fails with a useful message when no GitHub release asset is available.
 
 ## Rejection Rules
 
