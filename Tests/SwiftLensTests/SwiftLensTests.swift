@@ -93,6 +93,15 @@ struct SwiftLensPhase1Tests {
         #expect(result.stdout.isEmpty)
         #expect(result.stderr.contains("Unknown flag `--verbose`"))
     }
+
+    @Test("version reports the generated release version")
+    func versionReportsGeneratedReleaseVersion() throws {
+        let result = runCLI(["swiftlens", "version"])
+
+        #expect(result.exitCode == 0)
+        #expect(result.stderr.isEmpty)
+        #expect(result.stdout == "SwiftLens v0.1.0\n")
+    }
 }
 
 @Suite("SwiftLens Phase 3A")

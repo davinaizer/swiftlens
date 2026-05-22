@@ -5,6 +5,7 @@ set -eu
 repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 dist_dir="$repo_root/dist"
 arm64_archive="$dist_dir/swiftlens-macos-arm64.tar.gz"
+version_file="$repo_root/Sources/SwiftLens/Version.generated.swift"
 
 cleanup() {
     if [ -n "${tmpdirs:-}" ]; then
@@ -31,9 +32,17 @@ command -v swift >/dev/null 2>&1 || fail 'swift is required.'
 command -v tar >/dev/null 2>&1 || fail 'tar is required.'
 command -v mktemp >/dev/null 2>&1 || fail 'mktemp is required.'
 
+release_version=$(git -C "$repo_root" describe --tags --exact-match 2>/dev/null || true)
+[ -n "$release_version" ] || fail 'release packaging requires an exact git tag.'
+
+generated_version=$(sed -n 's/^    static let current = "\(.*\)"$/\1/p' "$version_file")
+[ -n "$generated_version" ] || fail "missing generated version in $version_file"
+[ "$generated_version" = "$release_version" ] || fail "version file ($generated_version) does not match git tag ($release_version)"
+
 mkdir -p "$dist_dir"
 rm -f "$dist_dir"/swiftlens-macos-*.tar.gz
 
+log "packing release version: $release_version"
 log 'running swift test'
 CLANG_MODULE_CACHE_PATH=/private/tmp/swiftlens-cache swift test --package-path "$repo_root"
 

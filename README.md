@@ -213,10 +213,13 @@ Prerequisites:
 - `tar`
 - authenticated `gh` (`gh auth login`)
 
-1. Pick the release version and tag it:
+1. Pick the release version, generate the version file, and tag it:
 
 ```bash
-git tag v0.1.0
+./scripts/generate-version-file.sh vX.Y.Z
+git add Sources/SwiftLens/Version.generated.swift
+git commit -m "chore: prepare vX.Y.Z"
+git tag vX.Y.Z
 ```
 
 2. Build and validate the macOS Apple Silicon archive locally:
@@ -234,13 +237,13 @@ SwiftLens release artifacts currently target Apple Silicon macOS only.
 3. Upload the archive to the GitHub release:
 
 ```bash
-./scripts/upload-release.sh v0.1.0
+./scripts/upload-release.sh vX.Y.Z
 ```
 
 To verify the upload flow first:
 
 ```bash
-./scripts/upload-release.sh v0.1.0 --dry-run
+./scripts/upload-release.sh vX.Y.Z --dry-run
 ```
 
 4. Installers can then fetch the asset with:

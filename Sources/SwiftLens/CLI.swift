@@ -8,7 +8,7 @@ enum SwiftLensCLI {
             case .help:
                 return CLIExecutionResult(exitCode: 0, stdout: helpText(), stderr: "")
             case .version:
-                return CLIExecutionResult(exitCode: 0, stdout: "SwiftLens 0.1.0\n", stderr: "")
+                return CLIExecutionResult(exitCode: 0, stdout: "SwiftLens \(SwiftLensVersion.current)\n", stderr: "")
             case .validateConfig(let options):
                 try ScanEngine(fileManager: fileManager).validateConfig(options: options)
                 return CLIExecutionResult(exitCode: 0, stdout: "Configuration valid.\n", stderr: "")
@@ -107,7 +107,7 @@ enum SwiftLensCLI {
 
     private static func helpText() -> String {
         """
-        SwiftLens 0.1.0
+        SwiftLens \(SwiftLensVersion.current)
 
         Commands:
           swiftlens scan [--config PATH] [--format json] [--path PATH] [--verbose]

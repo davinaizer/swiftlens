@@ -4,6 +4,7 @@ set -eu
 
 repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 dist_dir="$repo_root/dist"
+version_file="$repo_root/Sources/SwiftLens/Version.generated.swift"
 
 cd "$repo_root"
 
@@ -48,6 +49,10 @@ for arg in "$@"; do
 done
 
 [ -n "$tag" ] || usage
+
+generated_version=$(sed -n 's/^    static let current = "\(.*\)"$/\1/p' "$version_file")
+[ -n "$generated_version" ] || fail "missing generated version in $version_file"
+[ "$generated_version" = "$tag" ] || fail "version file ($generated_version) does not match release tag ($tag)"
 
 arm64_archive="$dist_dir/swiftlens-macos-arm64.tar.gz"
 
