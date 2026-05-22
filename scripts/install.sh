@@ -39,14 +39,14 @@ esac
 
 arch_name=$(uname -m)
 case "$arch_name" in
-    arm64|x86_64)
+    arm64)
         ;;
     *)
-        fail "unsupported architecture: $arch_name"
+        fail "unsupported architecture: $arch_name (SwiftLens releases are arm64-only)"
         ;;
 esac
 
-release_url="https://github.com/$repo_owner/$repo_name/releases/latest/download/swiftlens-macos-$arch_name.tar.gz"
+release_url="https://github.com/$repo_owner/$repo_name/releases/latest/download/swiftlens-macos-arm64.tar.gz"
 
 resolve_install_dir() {
     candidate=$1

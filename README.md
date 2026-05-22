@@ -2,9 +2,11 @@
 
 SwiftLens detects SwiftUI architectural drift before it reaches code review or CI.
 
-It uses deterministic syntax-tree heuristics instead of compiler-grade semantic reconstruction.
+It uses deterministic syntax-tree heuristics instead of full semantic compiler analysis.
 
 SwiftLens is designed for teams that want lightweight governance enforcement with machine-readable output.
+
+SwiftLens currently targets Apple Silicon macOS environments.
 
 ## Why SwiftLens
 
@@ -42,11 +44,19 @@ swiftlens scan Sources --format json
 
 ### Release installer
 
+Requirements:
+
+- macOS
+- Apple Silicon (`arm64`)
+- Swift 6+
+
 ```bash
-curl -fsSL https://raw.githubusercontent.com/davinaizer/swiftlens/develop/scripts/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/davinaizer/swiftlens/main/scripts/install.sh | sh
 ```
 
-If you install to `$HOME/.local/bin`, add that directory to your `PATH`.
+```bash
+swiftlens version
+```
 
 ### Swift Package Manager fallback
 
@@ -54,32 +64,6 @@ If you install to `$HOME/.local/bin`, add that directory to your `PATH`.
 git clone https://github.com/davinaizer/swiftlens.git
 cd swiftlens
 swift build -c release
-```
-
-## Release Packaging
-
-Prerequisites:
-
-- Swift toolchain
-- `tar`
-- authenticated `gh` (`gh auth login`)
-
-Build the release archives locally:
-
-```bash
-./scripts/package-release.sh
-```
-
-Upload them to a GitHub release:
-
-```bash
-./scripts/upload-release.sh v0.1.0
-```
-
-Preview the upload flow without mutating GitHub:
-
-```bash
-./scripts/upload-release.sh v0.1.0 --dry-run
 ```
 
 ## Quick Start
@@ -100,7 +84,7 @@ swiftlens scan Sources --format json
 swiftlens validate-config
 ```
 
-## Current CLI Contract
+## CLI
 
 Supported commands:
 
@@ -121,7 +105,7 @@ Supported flags:
 --verbose
 ```
 
-## Current Behavior
+## Behavior Guarantees
 
 | Capability          | Behavior                                   |
 | ------------------- | ------------------------------------------ |
@@ -148,8 +132,10 @@ SwiftLens focuses on deterministic governance signals:
 
 ```yaml
 project:
-packs:
+  name: Alfred
+
 rules:
+  - architecture.forbidden-import
 ```
 
 ## Architecture Principles
@@ -212,6 +198,50 @@ SwiftLens development is:
 - deterministic by contract
 
 Additional architectural and governance documentation lives in [`docs/`](docs/).
+
+## Maintainer Release Guide
+
+Prerequisites:
+
+- Swift toolchain
+- `tar`
+- authenticated `gh` (`gh auth login`)
+
+1. Pick the release version and tag it:
+
+```bash
+git tag v0.1.0
+```
+
+2. Build and validate the macOS Apple Silicon archive locally:
+
+```bash
+./scripts/package-release.sh
+```
+
+This creates:
+
+- `dist/swiftlens-macos-arm64.tar.gz`
+
+SwiftLens release artifacts currently target Apple Silicon macOS only.
+
+3. Upload the archive to the GitHub release:
+
+```bash
+./scripts/upload-release.sh v0.1.0
+```
+
+To verify the upload flow first:
+
+```bash
+./scripts/upload-release.sh v0.1.0 --dry-run
+```
+
+4. Installers can then fetch the asset with:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/davinaizer/swiftlens/main/scripts/install.sh | sh
+```
 
 ## Repository Layout
 

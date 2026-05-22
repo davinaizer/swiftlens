@@ -50,10 +50,8 @@ done
 [ -n "$tag" ] || usage
 
 arm64_archive="$dist_dir/swiftlens-macos-arm64.tar.gz"
-x86_64_archive="$dist_dir/swiftlens-macos-x86_64.tar.gz"
 
 [ -f "$arm64_archive" ] || fail "missing archive: $arm64_archive"
-[ -f "$x86_64_archive" ] || fail "missing archive: $x86_64_archive"
 
 release_exists=0
 if gh release view "$tag" >/dev/null 2>&1; then
@@ -77,12 +75,12 @@ create_release() {
 
 upload_assets() {
     if [ "$dry_run" -eq 1 ]; then
-        log "dry run: gh release upload $tag $arm64_archive $x86_64_archive --clobber"
+        log "dry run: gh release upload $tag $arm64_archive --clobber"
         return 0
     fi
 
-    log "uploading archives to $tag"
-    gh release upload "$tag" "$arm64_archive" "$x86_64_archive" --clobber
+    log "uploading archive to $tag"
+    gh release upload "$tag" "$arm64_archive" --clobber
 }
 
 create_release

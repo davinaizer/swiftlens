@@ -5,7 +5,6 @@ set -eu
 repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 dist_dir="$repo_root/dist"
 arm64_archive="$dist_dir/swiftlens-macos-arm64.tar.gz"
-x86_64_archive="$dist_dir/swiftlens-macos-x86_64.tar.gz"
 
 cleanup() {
     if [ -n "${tmpdirs:-}" ]; then
@@ -75,6 +74,5 @@ package_archive() {
 }
 
 package_archive arm64 arm64-apple-macosx14.0 "$arm64_archive"
-package_archive x86_64 x86_64-apple-macosx14.0 "$x86_64_archive"
 
-log 'release archives ready in dist/'
+log 'release archive ready in dist/'
