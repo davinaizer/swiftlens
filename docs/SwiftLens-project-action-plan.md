@@ -490,6 +490,65 @@ Provide a deterministic `swiftlens init` flow that writes a minimal local `.swif
 - no hidden state
 - no speculative abstraction layer
 
+## Phase 5F - Explainability UX
+
+### Objective
+
+Provide deterministic, read-only explainability commands for preset discovery and rule auditability.
+
+### Allowed Capabilities
+
+- `swiftlens preset list`
+- `swiftlens preset explain <preset>`
+- `swiftlens rule explain <rule-id>`
+- static explainability metadata for built-in presets and rules
+- deterministic terminal formatting
+- fixture-backed CLI tests
+
+### Forbidden Capabilities
+
+- semantic analysis
+- graph systems
+- plugin/runtime systems
+- remote registries
+- architecture inference
+- interactive TUI flows
+- baseline workflows
+- boundary inspection
+
+### Required Deliverables
+
+- preset listing command
+- preset explanation command
+- rule explanation command
+- deterministic formatting helper
+- help output updates
+- fixture-backed CLI tests for success, failure, and determinism
+- documentation updates for onboarding, schema, validation, and phase status
+
+### Exit Criteria
+
+- preset and rule explanations render identically across repeated runs
+- unknown preset and rule lookups fail with exit code `2`
+- help output exposes the new explainability commands
+- documentation reflects the new discovery workflow
+
+### Explicit Non-Goals
+
+- semantic analysis
+- dependency graphs
+- plugin/runtime systems
+- remote registries
+- architecture auto-detection
+- interactive TUI flows
+
+### Architectural Constraints
+
+- deterministic output only
+- local-only metadata lookup
+- no hidden state
+- no speculative abstraction layer
+
 ## Phase 6 - Documentation Hardening
 
 ### Objective

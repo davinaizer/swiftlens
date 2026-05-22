@@ -195,6 +195,15 @@ struct SwiftLensPhase2Tests {
                 defaultSeverity: .warning,
                 defaultConfidence: .high,
                 defaultEnabled: true,
+                explanation: RuleExplanation(
+                    purpose: ["Test rule."],
+                    detectionMechanism: ["Test rule."],
+                    configShape: ["Test rule."],
+                    deterministicBehavior: ["Test rule."],
+                    limitations: ["Test rule."],
+                    exampleViolation: ["Test rule."],
+                    exampleConfig: ["Test rule."]
+                ),
                 evaluate: { context in
                     [
                         Violation(

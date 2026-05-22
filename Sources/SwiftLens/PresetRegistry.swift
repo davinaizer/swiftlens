@@ -5,9 +5,18 @@ struct PresetExpansion: Equatable, Sendable {
     let ruleOrder: [String]
 }
 
+struct PresetExplanation: Equatable, Sendable {
+    let description: [String]
+    let intendedStructure: [String]
+    let governanceDefaults: [String]
+    let exampleLayout: [String]
+    let notes: [String]
+}
+
 struct PresetDescriptor: Equatable, Sendable {
     let id: String
     let expansion: PresetExpansion
+    let explanation: PresetExplanation
 }
 
 struct PresetRegistry: Sendable {
@@ -21,6 +30,32 @@ struct PresetRegistry: Sendable {
                     ("Domain", ["SwiftUI", "UIKit", "AppKit"]),
                     ("UI", ["Data"])
                 ]
+            ),
+            explanation: PresetExplanation(
+                description: [
+                    "Layered app governance for single-target or lightly modular projects."
+                ],
+                intendedStructure: [
+                    "Use this preset when a project is organized into broad app layers such as App, UI, Domain, Data, "
+                        + "and Shared.",
+                    "Treat App as the composition root and keep the remaining layers explicit."
+                ],
+                governanceDefaults: [
+                    "Domain cannot import SwiftUI, UIKit, or AppKit.",
+                    "UI cannot import Data.",
+                    "The preset stays conservative and does not attempt to infer additional layers."
+                ],
+                exampleLayout: [
+                    "App/",
+                    "UI/",
+                    "Domain/",
+                    "Data/",
+                    "Shared/"
+                ],
+                notes: [
+                    "This preset is path and import based only.",
+                    "It does not inspect ownership graphs or runtime wiring."
+                ]
             )
         ),
         PresetDescriptor(
@@ -30,6 +65,35 @@ struct PresetRegistry: Sendable {
                     ("Core", ["Features"]),
                     ("Features", ["Features"]),
                     ("Shared", ["Features"])
+                ]
+            ),
+            explanation: PresetExplanation(
+                description: [
+                    "Feature-oriented governance for modular SwiftUI applications."
+                ],
+                intendedStructure: [
+                    "Use this preset when application behavior is split into compositional features plus "
+                        + "shared and core support code.",
+                    "App is the composition root and may import feature modules.",
+                    "Sibling feature modules should stay isolated from one another."
+                ],
+                governanceDefaults: [
+                    "Features may not import other Features.* modules.",
+                    "Shared may not import Features.*.",
+                    "Core may not import Features.*.",
+                    "The preset allows App to compose feature modules explicitly."
+                ],
+                exampleLayout: [
+                    "App/",
+                    "Features/",
+                    "  Auth/",
+                    "  Profile/",
+                    "Shared/",
+                    "Core/"
+                ],
+                notes: [
+                    "The preset encodes explicit forbidden-import scopes only.",
+                    "It does not infer feature ownership or module graphs."
                 ]
             )
         ),
@@ -42,6 +106,36 @@ struct PresetRegistry: Sendable {
                     ("Features", ["Features"]),
                     ("Features", ["SwiftUI", "UIKit", "AppKit"]),
                     ("Shared", ["Features"])
+                ]
+            ),
+            explanation: PresetExplanation(
+                description: [
+                    "Governance defaults for reducer-first TCA-style feature architectures."
+                ],
+                intendedStructure: [
+                    "Use this preset when feature state, dependencies, and views are kept in explicit TCA-style "
+                        + "boundaries.",
+                    "Features should remain isolated and dependency clients should stay in approved dependency "
+                        + "zones."
+                ],
+                governanceDefaults: [
+                    "Dependencies may not import Features.*.",
+                    "Dependencies may not import SwiftUI, UIKit, or AppKit.",
+                    "Features may not import other Features.* modules.",
+                    "Features may not import SwiftUI, UIKit, or AppKit directly.",
+                    "Shared may not import Features.*."
+                ],
+                exampleLayout: [
+                    "App/",
+                    "Features/",
+                    "  Auth/",
+                    "  Profile/",
+                    "Shared/",
+                    "Dependencies/"
+                ],
+                notes: [
+                    "This preset remains syntax-first and deterministic.",
+                    "It does not model reducer semantics or dependency injection behavior."
                 ]
             )
         )

@@ -8,6 +8,53 @@ struct ForbiddenImportRule {
         defaultConfidence: .high,
         defaultEnabled: true,
         configKeys: ["forbiddenImports"],
+        explanation: RuleExplanation(
+            purpose: [
+                "Enforce explicit import boundaries declared by path-scoped governance rules."
+            ],
+            detectionMechanism: [
+                "Scan declared `import` statements only.",
+                "Normalize imported module names into path-like segments.",
+                "Match the file path against configured `from` scopes using prefix-boundary checks.",
+                "Compare the imported module against each configured forbidden import prefix.",
+                "Do not resolve symbols, build targets, transitive dependencies, or runtime behavior."
+            ],
+            configShape: [
+                "rules:",
+                "  - architecture.forbidden-import",
+                "architecture:",
+                "  forbiddenImports:",
+                "    -",
+                "      from: Features/",
+                "      imports:",
+                "        - Infrastructure"
+            ],
+            deterministicBehavior: [
+                "Matching is syntax-first and path-bound.",
+                "The same input config and source tree produce the same result on every run.",
+                "No semantic analysis or graph construction is performed."
+            ],
+            limitations: [
+                "Only declared imports are inspected.",
+                "The rule does not infer ownership or resolve module graphs.",
+                "Path and import matching are intentionally conservative."
+            ],
+            exampleViolation: [
+                "File: Features/Auth/AuthFeature.swift",
+                "import Infrastructure",
+                "This violates a scope that forbids `Infrastructure` imports from `Features/`."
+            ],
+            exampleConfig: [
+                "rules:",
+                "  - architecture.forbidden-import",
+                "architecture:",
+                "  forbiddenImports:",
+                "    -",
+                "      from: Features/",
+                "      imports:",
+                "        - Infrastructure"
+            ]
+        ),
         evaluate: { context in
             let forbiddenImports = Self.forbiddenImports(from: context.settings.config)
             guard !forbiddenImports.isEmpty else {

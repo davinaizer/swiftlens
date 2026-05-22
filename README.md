@@ -81,11 +81,15 @@ brew install swiftlens
 ```
 
 ```bash
-swiftlens
+swiftlens init
 ```
 
 ```bash
-swiftlens init
+swiftlens preset list
+```
+
+```bash
+swiftlens preset explain feature-modules
 ```
 
 ```bash
@@ -109,6 +113,9 @@ swiftlens
 swiftlens scan
 swiftlens validate-config
 swiftlens init
+swiftlens preset list
+swiftlens preset explain <PRESET>
+swiftlens rule explain <RULE-ID>
 swiftlens version
 swiftlens help
 ```

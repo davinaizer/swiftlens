@@ -28,6 +28,10 @@ enum SwiftLensCLI {
                     options: options
                 )
                 return CLIExecutionResult(exitCode: 0, stdout: output, stderr: "")
+            case .preset(let presetCommand):
+                return ExplainabilityCLI.executePreset(presetCommand)
+            case .rule(let ruleCommand):
+                return ExplainabilityCLI.executeRule(ruleCommand)
             }
         } catch let error as SwiftLensError {
             return CLIExecutionResult(
@@ -58,6 +62,11 @@ enum SwiftLensCLI {
             return .scan(try parseScanOptions(flags))
         case "init":
             return .initCommand(try parseInitOptions(flags))
+        case "preset", "rule":
+            if let command = try ExplainabilityCLI.parse(commandName: commandName, flags: flags) {
+                return command
+            }
+            throw SwiftLensError.usage("Unknown command `\(commandName)`.")
         default:
             throw SwiftLensError.usage("Unknown command `\(commandName)`.")
         }
@@ -198,6 +207,9 @@ enum SwiftLensCLI {
           swiftlens scan [PATH] [--config PATH] [--format json] [--path PATH] [--verbose]
           swiftlens validate-config [--config PATH]
           swiftlens init [--preset NAME] [--force]
+          swiftlens preset list
+          swiftlens preset explain <PRESET>
+          swiftlens rule explain <RULE-ID>
           swiftlens version
           swiftlens help
 
@@ -227,14 +239,6 @@ enum SwiftLensCLI {
         """
             + "\n"
     }
-}
-
-private enum CLICommand {
-    case help
-    case version
-    case validateConfig(ValidationOptions)
-    case scan(ScanOptions)
-    case initCommand(InitOptions)
 }
 
 @main

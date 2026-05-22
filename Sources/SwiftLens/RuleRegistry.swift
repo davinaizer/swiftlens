@@ -8,6 +8,7 @@ struct RuleDescriptor: Sendable {
     let defaultEnabled: Bool
     let configKeys: Set<String>
     let defaultConfig: [String: YAMLValue]
+    let explanation: RuleExplanation
     let evaluate: @Sendable (RuleEvaluationContext) -> [Violation]
 
     init(
@@ -18,6 +19,7 @@ struct RuleDescriptor: Sendable {
         defaultEnabled: Bool,
         configKeys: [String] = [],
         defaultConfig: [String: YAMLValue] = [:],
+        explanation: RuleExplanation,
         evaluate: @escaping @Sendable (RuleEvaluationContext) -> [Violation]
     ) {
         self.id = id
@@ -27,8 +29,19 @@ struct RuleDescriptor: Sendable {
         self.defaultEnabled = defaultEnabled
         self.configKeys = Set(configKeys)
         self.defaultConfig = defaultConfig
+        self.explanation = explanation
         self.evaluate = evaluate
     }
+}
+
+struct RuleExplanation: Equatable, Sendable {
+    let purpose: [String]
+    let detectionMechanism: [String]
+    let configShape: [String]
+    let deterministicBehavior: [String]
+    let limitations: [String]
+    let exampleViolation: [String]
+    let exampleConfig: [String]
 }
 
 struct ResolvedRuleSettings: Sendable {

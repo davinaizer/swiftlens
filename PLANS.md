@@ -2,18 +2,18 @@
 
 ## Current Objective
 
-Phase 4 closed; Phase 5E authorized within the governed phase contract.
+Phase 4 closed; Phase 5F authorized within the governed phase contract.
 
 ## Current Phase
 
-- Current Authorized Phase: Phase 5E - Init UX.
+- Current Authorized Phase: Phase 5F - Explainability UX.
 - Current Implementation Status: Authorized / In Progress.
 - The active phase is the one defined in [docs/SwiftLens-project-action-plan.md](docs/SwiftLens-project-action-plan.md).
 - If the phase is undefined or disputed, resolve the docs first.
 
 ## Active Work
 
-1. Implement the deterministic `swiftlens init` flow, preset selection, overwrite protection, and minimal config generation.
+1. Implement deterministic explainability commands for preset and rule discovery, explanation, and auditability.
 
 ## Completed Work
 

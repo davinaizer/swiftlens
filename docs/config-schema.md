@@ -31,6 +31,12 @@ When `preset` is present, `project` and `rules` may be omitted because preset de
 
 Explicit configs without `preset` still use the fuller schema documented below.
 
+The built-in preset registry and canonical rule registry are discoverable through:
+
+- `swiftlens preset list`
+- `swiftlens preset explain <preset>`
+- `swiftlens rule explain <rule-id>`
+
 ## 2. Supported Top-Level Keys
 
 - `version`

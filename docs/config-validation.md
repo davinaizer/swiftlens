@@ -35,6 +35,12 @@ Preset resolution is deterministic:
 - preset defaults are expanded before explicit project config is applied
 - explicit project config overrides preset defaults
 
+Explainability lookups use the same built-in registries:
+
+- `swiftlens preset list` and `swiftlens preset explain <preset>` read the preset registry only
+- `swiftlens rule explain <rule-id>` reads the canonical rule registry only
+- unknown preset or rule IDs return exit code `2`
+
 Init UX is deterministic too:
 
 - `swiftlens init` validates `--preset` against the built-in preset registry before writing
