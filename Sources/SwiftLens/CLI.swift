@@ -2,8 +2,7 @@ import Foundation
 
 enum SwiftLensCLI {
     static func execute(arguments: [String], fileManager: FileManager = .default)
-        -> CLIExecutionResult
-    {
+        -> CLIExecutionResult {
         do {
             let command = try parse(arguments: arguments)
             switch command {
@@ -56,52 +55,47 @@ enum SwiftLensCLI {
     private static func parseScanOptions(_ arguments: [String]) throws -> ScanOptions {
         var options = ScanOptions(path: nil)
         var positionalPath: String?
+        var configSpecified = false
         var formatSpecified = false
+        var formatValue: String?
         var pathSpecified = false
         var iterator = arguments.makeIterator()
         while let argument = iterator.next() {
             switch argument {
             case "--config":
-                guard let value = iterator.next() else {
-                    throw SwiftLensError.usage("Missing value for `--config`.")
-                }
-                if options.configPath != nil {
-                    throw SwiftLensError.usage("Duplicate flag `--config`.")
-                }
-                options.configPath = value
+                try consumeUniqueValue(
+                    for: "--config",
+                    into: &options.configPath,
+                    seen: &configSpecified,
+                    iterator: &iterator
+                )
             case "--format":
-                guard let value = iterator.next() else {
-                    throw SwiftLensError.usage("Missing value for `--format`.")
-                }
-                if formatSpecified {
-                    throw SwiftLensError.usage("Duplicate flag `--format`.")
-                }
-                formatSpecified = true
-                options.format = value
+                try consumeUniqueValue(
+                    for: "--format",
+                    into: &formatValue,
+                    seen: &formatSpecified,
+                    iterator: &iterator
+                )
             case "--path":
-                guard let value = iterator.next() else {
-                    throw SwiftLensError.usage("Missing value for `--path`.")
-                }
-                if pathSpecified {
-                    throw SwiftLensError.usage("Duplicate flag `--path`.")
-                }
-                pathSpecified = true
-                options.path = value
+                try consumeUniqueValue(
+                    for: "--path",
+                    into: &options.path,
+                    seen: &pathSpecified,
+                    iterator: &iterator
+                )
             case "--verbose":
                 options.verbose = true
             default:
-                if argument.hasPrefix("-") {
-                    throw SwiftLensError.usage("Unknown flag `\(argument)`.")
-                }
-                if positionalPath != nil {
-                    throw SwiftLensError.usage("Unexpected argument `\(argument)`.")
-                }
-                positionalPath = argument
+                try handlePositionalArgument(argument, positionalPath: &positionalPath)
             }
         }
 
         if !pathSpecified {
             options.path = positionalPath ?? (options.configPath == nil ? "." : nil)
+        }
+
+        if let formatValue {
+            options.format = formatValue
         }
 
         if options.format != "json" {
@@ -129,6 +123,35 @@ enum SwiftLensCLI {
             }
         }
         return configPath
+    }
+
+    private static func consumeUniqueValue<T: IteratorProtocol>(
+        for flag: String,
+        into storage: inout String?,
+        seen: inout Bool,
+        iterator: inout T
+    ) throws where T.Element == String {
+        guard let value = iterator.next() else {
+            throw SwiftLensError.usage("Missing value for `\(flag)`.")
+        }
+        guard !seen else {
+            throw SwiftLensError.usage("Duplicate flag `\(flag)`.")
+        }
+        seen = true
+        storage = value
+    }
+
+    private static func handlePositionalArgument(
+        _ argument: String,
+        positionalPath: inout String?
+    ) throws {
+        if argument.hasPrefix("-") {
+            throw SwiftLensError.usage("Unknown flag `\(argument)`.")
+        }
+        if positionalPath != nil {
+            throw SwiftLensError.usage("Unexpected argument `\(argument)`.")
+        }
+        positionalPath = argument
     }
 
     private static func helpText() -> String {

@@ -83,8 +83,7 @@ struct RuleEngine {
     }
 
     private func resolveSettings(for descriptor: RuleDescriptor, config: SwiftLensConfig)
-        -> ResolvedRuleSettings
-    {
+        -> ResolvedRuleSettings {
         let pack = config.packs[descriptor.pack]
         let rule = config.rules[descriptor.id]
         let enabled =

@@ -45,8 +45,7 @@ struct ScanEngine {
             configPath: options.configPath)
     }
 
-    private func discoverSwiftFiles(root: URL, include: [String], exclude: [String]) throws -> [URL]
-    {
+    private func discoverSwiftFiles(root: URL, include: [String], exclude: [String]) throws -> [URL] {
         guard fileManager.fileExists(atPath: root.path) else {
             throw SwiftLensError.configuration("Project path not found at \(root.path).")
         }
@@ -72,8 +71,7 @@ struct ScanEngine {
 
             let relativePath = relativePathString(for: url, root: root)
             if !include.isEmpty,
-                !include.contains(where: { matchesScope(relativePath, pattern: $0) })
-            {
+                !include.contains(where: { matchesScope(relativePath, pattern: $0) }) {
                 continue
             }
             if exclude.contains(where: { matchesScope(relativePath, pattern: $0) }) {

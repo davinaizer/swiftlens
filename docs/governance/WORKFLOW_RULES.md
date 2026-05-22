@@ -11,7 +11,7 @@ Define the operational sequence for planning, editing, validating, and handing w
 3. Record the current objective in `PLANS.md`.
 4. Make the smallest change that satisfies the current phase contract.
 5. Add or update the matching tests before behavior changes land.
-6. Run `swift test` for the touched behavior.
+6. Run `swiftlint lint` and `swift test` for the touched behavior.
 7. Update the relevant governance or canonical docs if the decision changes scope or workflow.
 
 ## Working Rules

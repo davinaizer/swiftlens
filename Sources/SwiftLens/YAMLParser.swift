@@ -23,8 +23,7 @@ struct YAMLParser {
     private func tokenize(_ source: String) throws -> [YAMLLine] {
         var lines: [YAMLLine] = []
         for (offset, rawLine) in source.split(separator: "\n", omittingEmptySubsequences: false)
-            .enumerated()
-        {
+            .enumerated() {
             let lineNumber = offset + 1
             let stripped = rawLine.trimmingCharacters(in: .whitespacesAndNewlines)
             if stripped.isEmpty || stripped.hasPrefix("#") {
@@ -55,8 +54,7 @@ struct YAMLParser {
     }
 
     private func parseMapping(lines: [YAMLLine], index: inout Int, expectedIndent: Int) throws
-        -> YAMLValue
-    {
+        -> YAMLValue {
         var values: [String: YAMLValue] = [:]
 
         while index < lines.count {
@@ -114,8 +112,7 @@ struct YAMLParser {
     }
 
     private func parseArray(lines: [YAMLLine], index: inout Int, expectedIndent: Int) throws
-        -> YAMLValue
-    {
+        -> YAMLValue {
         var values: [YAMLValue] = []
 
         while index < lines.count {
@@ -165,31 +162,8 @@ struct YAMLParser {
 
     private func parseScalar(_ text: String) -> YAMLValue {
         let trimmed = text.trimmingCharacters(in: .whitespaces)
-        if trimmed == "[]" {
-            return .array([])
-        }
-        if trimmed.hasPrefix("[") && trimmed.hasSuffix("]") {
-            let body = trimmed.dropFirst().dropLast().trimmingCharacters(in: .whitespaces)
-            if body.isEmpty {
-                return .array([])
-            }
-            let items = body.split(separator: ",").map { part -> YAMLValue in
-                let item = part.trimmingCharacters(in: .whitespaces)
-                if item == "true" {
-                    return .bool(true)
-                }
-                if item == "false" {
-                    return .bool(false)
-                }
-                if item.hasPrefix("\""), item.hasSuffix("\""), item.count >= 2 {
-                    return .string(String(item.dropFirst().dropLast()))
-                }
-                if item.hasPrefix("'"), item.hasSuffix("'"), item.count >= 2 {
-                    return .string(String(item.dropFirst().dropLast()))
-                }
-                return .string(item)
-            }
-            return .array(items)
+        if let array = parseInlineArray(trimmed) {
+            return .array(array)
         }
         if trimmed == "true" {
             return .bool(true)
@@ -197,12 +171,47 @@ struct YAMLParser {
         if trimmed == "false" {
             return .bool(false)
         }
-        if trimmed.hasPrefix("\""), trimmed.hasSuffix("\""), trimmed.count >= 2 {
-            return .string(String(trimmed.dropFirst().dropLast()))
-        }
-        if trimmed.hasPrefix("'"), trimmed.hasSuffix("'"), trimmed.count >= 2 {
-            return .string(String(trimmed.dropFirst().dropLast()))
+        if let quoted = quotedStringValue(trimmed) {
+            return .string(quoted)
         }
         return .string(trimmed)
+    }
+
+    private func parseInlineArray(_ text: String) -> [YAMLValue]? {
+        guard text.hasPrefix("[") && text.hasSuffix("]") else {
+            return nil
+        }
+
+        let body = text.dropFirst().dropLast().trimmingCharacters(in: .whitespaces)
+        guard !body.isEmpty else {
+            return []
+        }
+
+        return body.split(separator: ",").map { item in
+            parseInlineScalar(String(item.trimmingCharacters(in: .whitespaces)))
+        }
+    }
+
+    private func parseInlineScalar(_ text: String) -> YAMLValue {
+        if text == "true" {
+            return .bool(true)
+        }
+        if text == "false" {
+            return .bool(false)
+        }
+        if let quoted = quotedStringValue(text) {
+            return .string(quoted)
+        }
+        return .string(text)
+    }
+
+    private func quotedStringValue(_ text: String) -> String? {
+        if text.hasPrefix("\""), text.hasSuffix("\""), text.count >= 2 {
+            return String(text.dropFirst().dropLast())
+        }
+        if text.hasPrefix("'"), text.hasSuffix("'"), text.count >= 2 {
+            return String(text.dropFirst().dropLast())
+        }
+        return nil
     }
 }

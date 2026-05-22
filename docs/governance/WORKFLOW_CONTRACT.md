@@ -22,6 +22,7 @@ Define the shared workflow rules that keep SwiftLens phase-gated, deterministic,
 - Do not bypass a selector, diagnostic, or architecture review stage.
 - Update `PLANS.md` when the active work changes hands or the closure state changes.
 - Keep handoff text short, explicit, and generated from the current state.
+- Run `swiftlint lint` before handoff for any change that touches Swift source or Swift test files, and before any merge or phase closure that would include such changes.
 
 ## TDD Standard
 
@@ -42,6 +43,7 @@ Define the shared workflow rules that keep SwiftLens phase-gated, deterministic,
 - Every exit-code change requires explicit exit-code tests.
 - Every CLI parsing change requires argument validation tests.
 - `swift test` must pass before merge, phase closure, rule additions, config changes, and reporter changes.
+- `swiftlint lint` must pass before merge, phase closure, rule additions, config changes, and reporter changes that touch Swift source or Swift test files.
 
 | Change Type | Required Test |
 | --- | --- |
