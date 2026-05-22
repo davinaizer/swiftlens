@@ -1,118 +1,101 @@
-# SwiftLens
+<p align="center">
+  <picture >
+    <source media="(prefers-color-scheme: dark)" srcset="docs/swiftlens-logo-horizontal-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="docs/swiftlens-logo-horizontal-light.png">
+    <img alt="Fallback image description" src="docs/swiftlens-logo-horizontal-light.png">
+  </picture>
+</p>
 
-SwiftLens is a deterministic SwiftUI governance CLI for detecting architectural drift before changes reach review or CI.
+**SwiftLens** detects SwiftUI architectural drift before it reaches code review or CI.
 
-It is syntax-tree-first, CI-compatible, and designed for machine-readable findings.
+It uses deterministic syntax-tree heuristics instead of full semantic compiler analysis.
 
-SwiftLens intentionally stops short of compiler-grade architectural analysis.
+SwiftLens is designed for teams that want lightweight governance enforcement with machine-readable output.
 
-## What SwiftLens Is
+SwiftLens currently targets Apple Silicon macOS environments.
 
-- a deterministic SwiftUI governance CLI
-- a syntax-tree-first analysis tool
-- a governance drift detector
-- a CI-compatible machine-readable reporter
+## Why SwiftLens
 
-## What SwiftLens Is Not
+Most Swift architecture tooling eventually becomes:
 
-- an AI coding assistant
-- a Copilot competitor
-- a generalized Swift linter
-- a semantic compiler tool
-- a plugin platform
-- a SaaS governance product
-- an architecture visualization platform
-- an IDE integration
+- semantic-heavy
+- difficult to maintain
+- slow to execute
+- tightly coupled to compiler behavior
 
-## Repository-Governed Development Model
+SwiftLens intentionally takes a narrower approach:
 
-- Repository docs govern implementation.
-- Prompts only initiate work.
-- Prompts cannot redefine architecture.
-- Prompts cannot bypass the phase contract.
-- Phase transitions are documented in [docs/SwiftLens-project-action-plan.md](docs/SwiftLens-project-action-plan.md).
-- Current phase identification is required before implementation.
-- Out-of-phase requests are rejected, not reprioritized.
+- syntax-tree-first heuristics
+- deterministic findings
+- CI-friendly JSON output
+- lightweight governance enforcement
+- explicit architectural boundaries
 
-## Testing Doctrine
+## Quick Example
 
-- TDD is the default implementation standard from Phase 2 onward.
-- Phase 1 remains accepted as already implemented.
-- Write or update failing tests first.
-- Implement the smallest code change.
-- Run the relevant test target.
-- Refactor only after tests pass.
-- Preserve deterministic behavior.
-- Tests validate externally observable deterministic behavior, not implementation structure.
-- New rules require fixtures before implementation.
-- Reporter changes require golden-output tests.
-- Config changes require valid and invalid config tests.
-- Exit-code changes require explicit exit-code tests.
-- Tests must remain fixture-backed for file- or project-dependent behavior.
-- Tests must avoid network, clock, randomness, external services, and machine-local state.
-- Tests must verify stable rule IDs, finding shape, ordering, and exit codes where applicable.
-- `swift test` must pass before merge, phase closure, rule additions, config changes, and reporter changes.
+```bash
+swiftlens scan Sources --format json
+```
 
-| Change Type | Required Test |
-| --- | --- |
-| New rule | New fixtures plus a failing test first |
-| Reporter change | Golden-output test |
-| Config schema change | Valid and invalid config tests |
-| Exit-code change | Explicit exit-code test |
-| CLI parsing change | Argument validation tests |
+```json
+{
+  "rule": "architecture.forbidden-import",
+  "severity": "error",
+  "path": "Features/Profile/ProfileView.swift",
+  "reason": "Feature layer imports Infrastructure"
+}
+```
 
-## Phased Implementation Philosophy
+## Installation
 
-- Start with the smallest deterministic surface.
-- Prefer direct orchestration in early phases.
-- Add abstractions only when repetition proves they are operationally necessary.
-- Defer sophistication until the repo demonstrates repeated need.
-- Reject speculative future-proofing.
-- Reject premature extensibility.
+### Release installer
 
-## Complexity Escalation Policy
+Requirements:
 
-- If a concept appears once, keep it concrete.
-- If a concept appears repeatedly across fixtures or modules, consider a small abstraction.
-- Do not introduce protocol hierarchies unless they remove operational duplication or enforce a real invariant.
-- Do not add generalized frameworks to solve a phase-local problem.
+- macOS
+- Apple Silicon (`arm64`)
+- Swift 6+
 
-## Non-Goals
+```bash
+curl -fsSL https://raw.githubusercontent.com/davinaizer/swiftlens/main/scripts/install.sh | sh
+```
 
-- semantic correctness guarantees
-- full architecture reconstruction
-- code generation
-- auto-remediation
-- deep dependency intelligence
-- enterprise workflow orchestration
-- runtime instrumentation
-- platformization
+```bash
+swiftlens version
+```
 
-## What It Does
+### Swift Package Manager fallback
 
-- Detects SwiftUI architectural drift
-- Flags governance drift using deterministic heuristics
-- Enforces project-specific governance through configurable rule packs
-- Produces deterministic machine-readable output for CI and AI agents
-- Emits Markdown summaries for reviewers when requested
+```bash
+git clone https://github.com/davinaizer/swiftlens.git
+cd swiftlens
+swift build -c release
+```
 
-## V1 Rule Packs
+## Quick Start
 
-SwiftLens V1 treats these packs as required:
+```bash
+swiftlens
+```
 
-- `swiftui-core`
-- `ai-slop`
-- `architecture`
-- `alfred`
+```bash
+swiftlens scan
+```
 
-V1 is complete only when all required packs are implemented and validated.
-V1 uses built-in packs only; external pack surfaces are deferred.
+```bash
+swiftlens scan Sources --format json
+```
 
-## V1 Command Contract
+```bash
+swiftlens validate-config
+```
 
-Expected CLI surface:
+## CLI
+
+Supported commands:
 
 ```text
+swiftlens
 swiftlens scan
 swiftlens validate-config
 swiftlens version
@@ -128,111 +111,170 @@ Supported flags:
 --verbose
 ```
 
-Expected output formats:
+## Behavior Guarantees
 
-- `json`
-- `yaml`
-- `markdown`
-- `compact`
+| Capability          | Behavior                                   |
+| ------------------- | ------------------------------------------ |
+| Default scan target | `.`                                        |
+| Default format      | `json`                                     |
+| Config resolution   | cwd-local `.swiftlens.yml` only            |
+| Config precedence   | explicit `--config` overrides local lookup |
+| Exit code `0`       | success                                    |
+| Exit code `1`       | rule violations                            |
+| Exit code `2`       | config or usage error                      |
+| Exit code `3`       | internal failure                           |
 
-Phase 1 only implements the `json` reporter. Other formats remain deferred until the phase contract explicitly admits them.
+## What SwiftLens Detects
 
-## Local Developer DX
+SwiftLens focuses on deterministic governance signals:
 
-SwiftLens includes a narrow local-only execution path for deterministic day-to-day use.
+- path-boundary violations
+- import/domain restrictions
+- SwiftUI naming and location drift
+- lightweight architectural heuristics
+- configurable governance rule packs
 
-Examples:
-
-```bash
-swiftlens
-swiftlens scan
-swiftlens scan --config .swiftlens.yml --format json
-swiftlens validate-config --config .swiftlens.yml
-```
-
-Behavior:
-
-- `swiftlens` defaults to `scan .`
-- `swiftlens scan` defaults to `.`
-- omitted `--config` resolves `.swiftlens.yml` from the current working directory only
-- explicit `--config` overrides local lookup
-- omitted `--format` defaults to `json`
-- missing config exits with code `2`
-
-This is local deterministic DX, not IDE integration, platform integration, workspace discovery, or autofix.
-
-## Phase 1 Usage
-
-```bash
-swiftlens scan --config .swiftlens.yml --format json
-swiftlens validate-config --config .swiftlens.yml
-swiftlens version
-swiftlens help
-```
-
-`scan` returns exit code `1` when `ForbiddenImportRule` emits a violation, `2` for configuration or usage errors, and `3` for internal failures.
-
-## Configuration
-
-SwiftLens reads `.swiftlens.yml`.
-
-Minimum schema shape:
+## Example Configuration
 
 ```yaml
 project:
-packs:
+  name: Alfred
+
 rules:
+  - architecture.forbidden-import
 ```
 
-Documented config behavior:
+## Architecture Principles
 
-- built-in rule defaults provide the base severity and config
-- `packs.<pack>.severityOverrides` overrides built-in severity for rules in that pack
-- `rules.<rule>.severity` overrides both built-in severity and pack-level overrides
-- `rules.<rule>.config` merges over built-in rule config
-- unknown keys fail validation
-- CLI flags affect scope and reporter selection only
-- findings are advisory deterministic signals, not semantic guarantees
-- rules should prefer low-complexity heuristics over deep inference
-- route discovery is limited to declared or static routes only
-- ownership mapping is explicit-config only
+SwiftLens is intentionally:
 
-## Reporter Contract
+- deterministic
+- syntax-tree-first
+- phase-gated
+- CI-compatible
+- lightweight by design
 
-Each violation should include:
+## Non-Goals
 
-- stable rule ID
-- pack name
-- severity
-- confidence
-- file path
-- source range
-- reason
-- `fixPattern`
+SwiftLens is intentionally not:
 
-## Planned Repository Layout
+- a semantic compiler analyzer
+- a generalized Swift linter
+- a plugin platform
+- an IDE automation tool
+- an architecture visualization system
+- an AI coding assistant
+
+## Current Status
+
+| Phase    | Status     |
+| -------- | ---------- |
+| Phase 1  | Complete   |
+| Phase 2  | Complete   |
+| Phase 3A | Complete   |
+| Phase 4  | Authorized |
+
+Current implementation includes:
+
+- deterministic rule registry
+- built-in governance rules
+- fixture-backed tests
+- local-first developer DX
+- machine-readable reporting
+
+## Development
+
+Run tests:
+
+```bash
+CLANG_MODULE_CACHE_PATH=/private/tmp/swiftlens-cache swift test
+```
+
+Run SwiftLint:
+
+```bash
+swiftlint lint
+```
+
+SwiftLens development is:
+
+- governance-driven
+- TDD-enforced
+- phase-gated
+- deterministic by contract
+
+Additional architectural and governance documentation lives in [`docs/`](docs/).
+
+## Maintainer Release Guide
+
+Prerequisites:
+
+- Swift toolchain
+- `tar`
+- authenticated `gh` (`gh auth login`)
+
+1. Pick the release version, generate the version file, and tag it:
+
+```bash
+./scripts/generate-version-file.sh vX.Y.Z
+git add Sources/SwiftLens/Version.generated.swift
+git commit -m "chore: prepare vX.Y.Z"
+git tag vX.Y.Z
+```
+
+2. Build and validate the macOS Apple Silicon archive locally:
+
+```bash
+./scripts/package-release.sh
+```
+
+This creates:
+
+- `dist/swiftlens-macos-arm64.tar.gz`
+
+SwiftLens release artifacts currently target Apple Silicon macOS only.
+
+3. Upload the archive to the GitHub release:
+
+```bash
+./scripts/upload-release.sh vX.Y.Z
+```
+
+To verify the upload flow first:
+
+```bash
+./scripts/upload-release.sh vX.Y.Z --dry-run
+```
+
+4. Installers can then fetch the asset with:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/davinaizer/swiftlens/main/scripts/install.sh | sh
+```
+
+## Repository Layout
 
 ```text
 swiftlens/
-├── Package.swift
 ├── Sources/
-│   └── SwiftLensCLI/
 ├── Tests/
-│   └── SwiftLensTests/
 ├── docs/
 ├── examples/
 ├── scripts/
 └── README.md
 ```
 
-## Phase Summary
+## Contributing
 
-The authoritative phase contract lives in [docs/SwiftLens-project-action-plan.md](docs/SwiftLens-project-action-plan.md).
+Contributions must preserve:
 
-- Phase 1 establishes the CLI bootstrap, SwiftSyntax parsing, one deterministic rule, JSON output, exit codes, and fixture tests.
-- Later phases add only the capabilities explicitly allowed by the repository phase contract.
-- Prompts cannot skip ahead to semantic, platform, compiler, or plugin ambitions.
+- deterministic behavior
+- lightweight architecture
+- syntax-tree-first analysis
+- phase contract compliance
 
-## Current Status
+Review repository governance documents before contributing.
 
-Phase 2 rule infrastructure is implemented, Phase 3A local developer DX is the current admitted phase, and Phase 4 remains blocked until explicit phase-transition authorization is granted.
+## License
+
+MIT

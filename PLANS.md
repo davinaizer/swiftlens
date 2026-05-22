@@ -13,7 +13,7 @@ Phase 3A closed; Phase 4 authorized within the governed phase contract.
 
 ## Active Work
 
-1. None.
+1. Generate a single source-of-truth version file for the CLI and release packaging.
 
 ## Rejection Rules
 

@@ -47,10 +47,6 @@ struct RuleEvaluationContext: Sendable {
 struct RuleRegistry: Sendable {
     let descriptors: [RuleDescriptor]
 
-    init(descriptors: [RuleDescriptor]) {
-        self.descriptors = descriptors
-    }
-
     static let `default` = RuleRegistry(descriptors: [ForbiddenImportRule.descriptor])
 
     func descriptor(for ruleID: String) -> RuleDescriptor? {

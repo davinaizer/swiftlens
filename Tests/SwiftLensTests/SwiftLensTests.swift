@@ -93,6 +93,15 @@ struct SwiftLensPhase1Tests {
         #expect(result.stdout.isEmpty)
         #expect(result.stderr.contains("Unknown flag `--verbose`"))
     }
+
+    @Test("version reports the generated release version")
+    func versionReportsGeneratedReleaseVersion() throws {
+        let result = runCLI(["swiftlens", "version"])
+
+        #expect(result.exitCode == 0)
+        #expect(result.stderr.isEmpty)
+        #expect(result.stdout == "SwiftLens v0.1.0\n")
+    }
 }
 
 @Suite("SwiftLens Phase 3A")
@@ -187,7 +196,7 @@ struct SwiftLensPhase2Tests {
             "--config",
             configURL(fixtureName).path,
             "--format",
-            "json",
+            "json"
         ])
     }
 
@@ -226,7 +235,7 @@ struct SwiftLensPhase2Tests {
             "swiftlens",
             "validate-config",
             "--config",
-            configURL("ScanSuccess").path,
+            configURL("ScanSuccess").path
         ])
 
         #expect(result.exitCode == 0)
@@ -240,7 +249,7 @@ struct SwiftLensPhase2Tests {
             "swiftlens",
             "validate-config",
             "--config",
-            configURL("InvalidPack").path,
+            configURL("InvalidPack").path
         ])
 
         #expect(result.exitCode == 2)
@@ -282,7 +291,7 @@ struct SwiftLensPhase2Tests {
         let config = SwiftLensConfig(
             project: ProjectConfiguration(path: ".", include: [], exclude: []),
             packs: [
-                "architecture": PackConfiguration(enabled: true, severityOverrides: [:]),
+                "architecture": PackConfiguration(enabled: true, severityOverrides: [:])
             ],
             rules: [:]
         )
