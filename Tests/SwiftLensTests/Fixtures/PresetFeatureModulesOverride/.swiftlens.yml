@@ -1,0 +1,12 @@
+version: 1
+preset: feature-modules
+project:
+  path: .
+  include: []
+  exclude: []
+architecture:
+  forbiddenImports:
+    -
+      from: Feature/
+      imports:
+        - Foundation

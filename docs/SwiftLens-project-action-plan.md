@@ -302,6 +302,75 @@ Add the initial governance rules that operate on syntax, imports, paths, and dec
 - keep rule logic shallow and reviewable
 - add shared abstractions only after repeated duplication appears
 
+## Phase 5A - Preset Registry Foundation
+
+### Objective
+
+Introduce a deterministic built-in preset registry and preset expansion layer without changing the analysis model.
+
+### Allowed Capabilities
+
+- built-in preset registry
+- stable preset IDs
+- deterministic preset expansion
+- preset config parsing
+- unknown preset validation
+- fixture-backed preset tests
+
+### Forbidden Capabilities
+
+- semantic analysis
+- dependency graphs
+- rule packs beyond the preset registry layer
+- auto-discovery
+- init commands
+- baseline systems
+- boundary inspection
+- plugin systems
+- runtime downloads
+- graph infrastructure
+
+### Allowed Abstractions
+
+- small static registry
+- explicit preset descriptor types
+- deterministic merge pipeline
+- direct config normalization
+
+### Required Deliverables
+
+- built-in preset registry
+- deterministic preset expansion
+- stable preset identifiers
+- config parsing for `preset: <name>`
+- unknown preset validation with exit code `2`
+- fixture-backed tests for preset resolution and precedence
+
+### Exit Criteria
+
+- known presets resolve deterministically
+- unknown presets fail deterministically
+- preset expansion order is stable
+- explicit config remains authoritative over preset defaults
+- JSON output determinism remains intact
+
+### Explicit Non-Goals
+
+- semantic reconstruction
+- dependency graph generation
+- plugin ecosystems
+- dynamic preset discovery
+- runtime downloads
+- user-defined preset execution
+- architecture inference
+
+### Architectural Constraints
+
+- preserve deterministic execution
+- preserve syntax-first analysis boundaries
+- keep preset resolution local and static
+- do not introduce semantic, graph, or plugin infrastructure
+
 ## Phase 5 - Reporting and Validation
 
 ### Objective

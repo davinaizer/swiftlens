@@ -28,21 +28,31 @@ Validation must reject:
 
 Config failures return exit code `2`.
 
+Preset resolution is deterministic:
+
+- built-in presets are resolved locally from the binary
+- unknown preset names are rejected with exit code `2`
+- preset defaults are expanded before explicit project config is applied
+- explicit project config overrides preset defaults
+
 ## 2. Precedence
 
-1. Built-in rule defaults define the baseline.
-2. Pack-level severity overrides apply next.
-3. Rule-level severity overrides win over pack-level and built-in values.
-4. Rule-level config merges over built-in config.
-5. CLI flags never mutate rule semantics.
+1. Preset defaults define the baseline when `preset` is set.
+2. Built-in rule defaults define the rule baseline.
+3. Pack-level severity overrides apply next.
+4. Rule-level severity overrides win over pack-level and built-in values.
+5. Rule-level config merges over built-in config.
+6. CLI flags never mutate rule semantics.
 
 ## 3. Current Validation Behavior
 
 - `.swiftlens.yml` is resolved from the current working directory only unless `--config` is explicit.
 - unknown top-level keys are rejected
+- `version` and `preset` are accepted top-level keys
 - unknown `project` keys are rejected
 - unknown pack names are rejected
 - unknown rule IDs are rejected
+- unknown preset names are rejected
 - `rules` may be either a canonical ordered list or the legacy keyed alias shape
 - `architecture.forbiddenImports` is validated deterministically and path-bound with prefix/boundary matching
 - `ignore.paths` is applied before parsing discovered files

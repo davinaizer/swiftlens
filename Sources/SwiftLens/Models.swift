@@ -78,6 +78,7 @@ struct RuleConfiguration: Equatable, Sendable {
 }
 
 struct SwiftLensConfig: Equatable, Sendable {
+    let presetID: String?
     let project: ProjectConfiguration
     let packs: [String: PackConfiguration]
     let rules: [String: RuleConfiguration]
@@ -85,12 +86,14 @@ struct SwiftLensConfig: Equatable, Sendable {
     let ignore: IgnoreConfiguration
 
     init(
+        presetID: String? = nil,
         project: ProjectConfiguration,
         packs: [String: PackConfiguration] = [:],
         rules: [String: RuleConfiguration] = [:],
         ruleOrder: [String] = [],
         ignore: IgnoreConfiguration = IgnoreConfiguration(paths: [])
     ) {
+        self.presetID = presetID
         self.project = project
         self.packs = packs
         self.rules = rules

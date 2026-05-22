@@ -16,6 +16,8 @@ For validation behavior, exit codes, and precedence rules, see [config-validatio
 ## 1. Minimum Shape
 
 ```yaml
+version: 1
+preset: feature-modules
 project:
   path: .
   include: []
@@ -34,6 +36,8 @@ ignore:
 
 ## 2. Supported Top-Level Keys
 
+- `version`
+- `preset`
 - `project`
 - `packs`
 - `rules`
@@ -103,6 +107,8 @@ The legacy `ForbiddenImportRule` rule-config shape remains accepted as a compati
 ## 6. Example
 
 ```yaml
+version: 1
+preset: feature-modules
 project:
   path: .
   include: []

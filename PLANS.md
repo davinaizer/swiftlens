@@ -2,18 +2,18 @@
 
 ## Current Objective
 
-Phase 3A closed; Phase 4 authorized within the governed phase contract.
+Phase 4 closed; Phase 5A authorized within the governed phase contract.
 
 ## Current Phase
 
-- Current Authorized Phase: Phase 4 - Syntax-First Governance Rules.
+- Current Authorized Phase: Phase 5A - Preset Registry Foundation.
 - Current Implementation Status: Authorized / Not Started.
 - The active phase is the one defined in [docs/SwiftLens-project-action-plan.md](docs/SwiftLens-project-action-plan.md).
 - If the phase is undefined or disputed, resolve the docs first.
 
 ## Active Work
 
-1. Consolidate release version management around `Sources/SwiftLens/Version.generated.swift` and the shared shell helper so release/install scripts do not duplicate parsing logic.
+1. Implement the deterministic built-in preset registry, preset expansion layer, and preset config validation for Phase 5A.
 
 ## Completed Work
 

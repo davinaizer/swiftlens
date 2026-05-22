@@ -1,0 +1,6 @@
+version: 1
+preset: feature-modules
+project:
+  path: .
+  include: []
+  exclude: []

@@ -2,6 +2,7 @@ import Foundation
 
 struct ConfigLoaderParser {
     let registry: RuleRegistry
+    let presetRegistry: PresetRegistry
     let decoder = ConfigValueDecoder()
 
     func buildConfig(from root: YAMLValue, configURL: URL) throws -> SwiftLensConfig {
@@ -10,41 +11,41 @@ struct ConfigLoaderParser {
         }
 
         try validateTopLevelKeys(topLevel.keys)
-
-        guard let projectValue = topLevel["project"] else {
-            throw SwiftLensError.configuration("Missing required `project` section.")
-        }
-
-        let project = try parseProject(projectValue)
-        guard let rulesValue = topLevel["rules"] else {
-            throw SwiftLensError.configuration("Missing required `rules` section.")
-        }
-
+        try parseVersion(topLevel["version"])
+        let presetID = try parsePreset(topLevel["preset"])
+        let project = try resolveProjectConfiguration(topLevel["project"], presetID: presetID)
+        let rulesValue = try resolveRulesValue(topLevel["rules"], presetID: presetID)
+        let presetExpansion = try presetExpansion(for: presetID)
         let packs = try parsePacks(topLevel["packs"])
         let legacyRuleState = try parseRules(rulesValue)
         let architectureRuleConfig = try parseArchitecture(topLevel["architecture"])
         let ignore = try parseIgnore(topLevel["ignore"])
 
-        var rules = legacyRuleState.ruleConfigurations
+        var rules = presetExpansion?.rules ?? [:]
         if let architectureRuleConfig {
             let canonicalRuleID = ForbiddenImportRule.descriptor.id
-            if let existing = rules[canonicalRuleID] {
-                rules[canonicalRuleID] = RuleConfiguration(
-                    enabled: existing.enabled,
-                    severity: existing.severity,
-                    config: existing.config.merging(architectureRuleConfig) { _, new in new }
-                )
-            } else {
-                rules[canonicalRuleID] = RuleConfiguration(
+            let baseRuleConfiguration = rules[canonicalRuleID]
+            rules[canonicalRuleID] = mergeRuleConfiguration(
+                base: baseRuleConfiguration,
+                override: RuleConfiguration(
                     enabled: nil,
                     severity: nil,
                     config: architectureRuleConfig
                 )
-            }
+            )
         }
 
-        let ruleOrder = legacyRuleState.ruleOrder
+        for (ruleID, ruleConfiguration) in legacyRuleState.ruleConfigurations {
+            rules[ruleID] = mergeRuleConfiguration(
+                base: rules[ruleID],
+                override: ruleConfiguration
+            )
+        }
+
+        let ruleOrder = rulesValue == nil ? (presetExpansion?.ruleOrder ?? legacyRuleState.ruleOrder)
+            : legacyRuleState.ruleOrder
         return SwiftLensConfig(
+            presetID: presetID,
             project: project,
             packs: packs,
             rules: rules,
@@ -54,8 +55,87 @@ struct ConfigLoaderParser {
     }
 
     private func validateTopLevelKeys(_ keys: Dictionary<String, YAMLValue>.Keys) throws {
-        let allowedTopLevelKeys: Set<String> = ["project", "packs", "rules", "architecture", "ignore"]
+        let allowedTopLevelKeys: Set<String> = [
+            "version",
+            "preset",
+            "project",
+            "packs",
+            "rules",
+            "architecture",
+            "ignore"
+        ]
         try validateKeys(keys, allowed: allowedTopLevelKeys, subject: "top-level")
+    }
+
+    private func parseVersion(_ value: YAMLValue?) throws {
+        guard let value else {
+            return
+        }
+
+        guard let version = decoder.stringValue(value)?.trimmingCharacters(
+            in: CharacterSet.whitespacesAndNewlines
+        ), version == "1" else {
+            throw SwiftLensError.configuration(
+                "Unsupported config version `\(decoder.stringValue(value) ?? "unknown")`."
+            )
+        }
+    }
+
+    private func resolveProjectConfiguration(
+        _ value: YAMLValue?,
+        presetID: String?
+    ) throws -> ProjectConfiguration {
+        if let value {
+            return try parseProject(value)
+        }
+
+        if presetID != nil {
+            return ProjectConfiguration(path: ".", include: [], exclude: [])
+        }
+
+        throw SwiftLensError.configuration("Missing required `project` section.")
+    }
+
+    private func resolveRulesValue(_ value: YAMLValue?, presetID: String?) throws -> YAMLValue? {
+        if value != nil {
+            return value
+        }
+
+        if presetID == nil {
+            throw SwiftLensError.configuration("Missing required `rules` section.")
+        }
+
+        return nil
+    }
+
+    private func parsePreset(_ value: YAMLValue?) throws -> String? {
+        guard let value else {
+            return nil
+        }
+
+        guard let presetID = decoder.stringValue(value)?.trimmingCharacters(
+            in: CharacterSet.whitespacesAndNewlines
+        ), !presetID.isEmpty else {
+            throw SwiftLensError.configuration("`preset` must be a string.")
+        }
+
+        guard presetRegistry.descriptor(for: presetID) != nil else {
+            throw SwiftLensError.configuration("Unknown preset `\(presetID)`.")
+        }
+
+        return presetID
+    }
+
+    private func presetExpansion(for presetID: String?) throws -> PresetExpansion? {
+        guard let presetID else {
+            return nil
+        }
+
+        guard let expansion = presetRegistry.expansion(for: presetID) else {
+            throw SwiftLensError.configuration("Unknown preset `\(presetID)`.")
+        }
+
+        return expansion
     }
 
     private func parseProject(_ value: YAMLValue) throws -> ProjectConfiguration {

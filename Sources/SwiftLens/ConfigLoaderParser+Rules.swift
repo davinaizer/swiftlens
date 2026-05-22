@@ -275,6 +275,17 @@ extension ConfigLoaderParser {
     func canonicalRuleID(for ruleID: String) -> String? {
         registry.canonicalRuleID(for: ruleID)
     }
+
+    func mergeRuleConfiguration(
+        base: RuleConfiguration?,
+        override: RuleConfiguration
+    ) -> RuleConfiguration {
+        RuleConfiguration(
+            enabled: override.enabled ?? base?.enabled,
+            severity: override.severity ?? base?.severity,
+            config: base?.config.merging(override.config) { _, new in new } ?? override.config
+        )
+    }
 }
 
 struct ForbiddenImportScope {

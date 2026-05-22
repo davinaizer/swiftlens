@@ -1,0 +1,7 @@
+version: 2
+project:
+  path: .
+  include: []
+  exclude: []
+rules:
+  - architecture.forbidden-import

@@ -3,10 +3,16 @@ import Foundation
 struct ConfigLoader {
     private let fileManager: FileManager
     private let registry: RuleRegistry
+    private let presetRegistry: PresetRegistry
 
-    init(fileManager: FileManager = .default, registry: RuleRegistry = .default) {
+    init(
+        fileManager: FileManager = .default,
+        registry: RuleRegistry = .default,
+        presetRegistry: PresetRegistry = .default
+    ) {
         self.fileManager = fileManager
         self.registry = registry
+        self.presetRegistry = presetRegistry
     }
 
     func load(configPath: String?, projectPathOverride: String?) throws -> LoadedConfiguration {
@@ -19,7 +25,7 @@ struct ConfigLoader {
         }
 
         let root = try YAMLParser().parse(contents)
-        let config = try ConfigLoaderParser(registry: registry)
+        let config = try ConfigLoaderParser(registry: registry, presetRegistry: presetRegistry)
             .buildConfig(from: root, configURL: configURL)
         let projectRootURL = try resolveProjectRoot(
             config.project.path, configURL: configURL, override: projectPathOverride)
