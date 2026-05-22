@@ -40,7 +40,8 @@ struct SwiftSyntaxParserService {
         }
 
         let trimmed = importDecl.trimmedDescription
-        let cleaned = trimmed
+        let cleaned =
+            trimmed
             .replacingOccurrences(of: "@_exported ", with: "")
             .replacingOccurrences(of: "import ", with: "")
         return cleaned.trimmingCharacters(in: .whitespacesAndNewlines)

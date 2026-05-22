@@ -14,10 +14,11 @@ struct ScanEngine {
     }
 
     func scan(options: ScanOptions) throws -> ScanReport {
-        let loadedConfiguration = try ConfigLoader(fileManager: fileManager, registry: registry).load(
-            configPath: options.configPath,
-            projectPathOverride: options.path
-        )
+        let loadedConfiguration = try ConfigLoader(fileManager: fileManager, registry: registry)
+            .load(
+                configPath: options.configPath,
+                projectPathOverride: options.path
+            )
 
         let files = try discoverSwiftFiles(
             root: loadedConfiguration.projectRootURL,
@@ -27,7 +28,8 @@ struct ScanEngine {
 
         let parser = SwiftSyntaxParserService()
         let parsedFiles = try files.map { try parser.parseFile(at: $0) }
-        let violations = RuleEngine(registry: registry).evaluate(config: loadedConfiguration.config, files: parsedFiles)
+        let violations = RuleEngine(registry: registry).evaluate(
+            config: loadedConfiguration.config, files: parsedFiles)
         let summary = ScanSummary(filesScanned: parsedFiles.count, violations: violations.count)
 
         return ScanReport(
@@ -39,10 +41,12 @@ struct ScanEngine {
     }
 
     func validateConfig(options: ValidationOptions) throws {
-        try ConfigLoader(fileManager: fileManager, registry: registry).validate(configPath: options.configPath)
+        try ConfigLoader(fileManager: fileManager, registry: registry).validate(
+            configPath: options.configPath)
     }
 
-    private func discoverSwiftFiles(root: URL, include: [String], exclude: [String]) throws -> [URL] {
+    private func discoverSwiftFiles(root: URL, include: [String], exclude: [String]) throws -> [URL]
+    {
         guard fileManager.fileExists(atPath: root.path) else {
             throw SwiftLensError.configuration("Project path not found at \(root.path).")
         }
@@ -67,7 +71,9 @@ struct ScanEngine {
             }
 
             let relativePath = relativePathString(for: url, root: root)
-            if !include.isEmpty, !include.contains(where: { matchesScope(relativePath, pattern: $0) }) {
+            if !include.isEmpty,
+                !include.contains(where: { matchesScope(relativePath, pattern: $0) })
+            {
                 continue
             }
             if exclude.contains(where: { matchesScope(relativePath, pattern: $0) }) {
@@ -96,7 +102,8 @@ struct ScanEngine {
     }
 
     private func matchesScope(_ relativePath: String, pattern: String) -> Bool {
-        let normalized = pattern.trimmingCharacters(in: .whitespacesAndNewlines).trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        let normalized = pattern.trimmingCharacters(in: .whitespacesAndNewlines).trimmingCharacters(
+            in: CharacterSet(charactersIn: "/"))
         guard !normalized.isEmpty else {
             return false
         }

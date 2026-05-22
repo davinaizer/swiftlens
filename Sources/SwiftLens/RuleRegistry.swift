@@ -74,18 +74,23 @@ struct RuleEngine {
                 continue
             }
 
-            let context = RuleEvaluationContext(descriptor: descriptor, settings: settings, files: files)
+            let context = RuleEvaluationContext(
+                descriptor: descriptor, settings: settings, files: files)
             violations.append(contentsOf: descriptor.evaluate(context))
         }
 
         return violations
     }
 
-    private func resolveSettings(for descriptor: RuleDescriptor, config: SwiftLensConfig) -> ResolvedRuleSettings {
+    private func resolveSettings(for descriptor: RuleDescriptor, config: SwiftLensConfig)
+        -> ResolvedRuleSettings
+    {
         let pack = config.packs[descriptor.pack]
         let rule = config.rules[descriptor.id]
-        let enabled = (pack?.enabled == false) ? false : (rule?.enabled ?? descriptor.defaultEnabled)
-        let severity = rule?.severity ?? pack?.severityOverrides[descriptor.id] ?? descriptor.defaultSeverity
+        let enabled =
+            (pack?.enabled == false) ? false : (rule?.enabled ?? descriptor.defaultEnabled)
+        let severity =
+            rule?.severity ?? pack?.severityOverrides[descriptor.id] ?? descriptor.defaultSeverity
         let configValues = descriptor.defaultConfig.merging(rule?.config ?? [:]) { _, new in new }
 
         return ResolvedRuleSettings(

@@ -29,7 +29,8 @@ struct ForbiddenImportRule {
                         file: file.url.path,
                         range: imported.range,
                         reason: "Forbidden import `\(imported.module)` found.",
-                        fixPattern: "Remove the forbidden import or move the code into an allowed module."
+                        fixPattern:
+                            "Remove the forbidden import or move the code into an allowed module."
                     )
                 }
             }

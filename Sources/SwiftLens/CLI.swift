@@ -1,14 +1,17 @@
 import Foundation
 
 enum SwiftLensCLI {
-    static func execute(arguments: [String], fileManager: FileManager = .default) -> CLIExecutionResult {
+    static func execute(arguments: [String], fileManager: FileManager = .default)
+        -> CLIExecutionResult
+    {
         do {
             let command = try parse(arguments: arguments)
             switch command {
             case .help:
                 return CLIExecutionResult(exitCode: 0, stdout: helpText(), stderr: "")
             case .version:
-                return CLIExecutionResult(exitCode: 0, stdout: "SwiftLens \(SwiftLensVersion.current)\n", stderr: "")
+                return CLIExecutionResult(
+                    exitCode: 0, stdout: "SwiftLens \(SwiftLensVersion.current)\n", stderr: "")
             case .validateConfig(let options):
                 try ScanEngine(fileManager: fileManager).validateConfig(options: options)
                 return CLIExecutionResult(exitCode: 0, stdout: "Configuration valid.\n", stderr: "")
@@ -19,9 +22,12 @@ enum SwiftLensCLI {
                 return CLIExecutionResult(exitCode: exitCode, stdout: stdout, stderr: "")
             }
         } catch let error as SwiftLensError {
-            return CLIExecutionResult(exitCode: error.exitCode, stdout: "", stderr: error.message + "\n")
+            return CLIExecutionResult(
+                exitCode: error.exitCode, stdout: "", stderr: error.message + "\n")
         } catch {
-            return CLIExecutionResult(exitCode: 3, stdout: "", stderr: "Internal failure: \(error.localizedDescription)\n")
+            return CLIExecutionResult(
+                exitCode: 3, stdout: "", stderr: "Internal failure: \(error.localizedDescription)\n"
+            )
         }
     }
 
@@ -141,7 +147,7 @@ enum SwiftLensCLI {
           --path PATH
           --verbose
         """
-        + "\n"
+            + "\n"
     }
 }
 
