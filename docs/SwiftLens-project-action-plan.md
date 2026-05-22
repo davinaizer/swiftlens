@@ -549,6 +549,68 @@ Provide deterministic, read-only explainability commands for preset discovery an
 - no hidden state
 - no speculative abstraction layer
 
+## Phase 5G - Baseline / Regression Workflow
+
+### Objective
+
+Provide deterministic baseline creation and regression-only scan filtering so existing repositories can adopt SwiftLens incrementally without waiving the rule model.
+
+### Allowed Capabilities
+
+- `swiftlens baseline create`
+- `swiftlens scan --baseline <path>`
+- local JSON baseline serialization
+- deterministic violation fingerprinting
+- regression-only filtering after rule evaluation
+- fixture-backed baseline tests
+
+### Forbidden Capabilities
+
+- semantic analysis
+- graph systems
+- plugin/runtime systems
+- remote registries
+- architecture inference
+- interactive TUI flows
+- suppression comments
+- inline ignores
+- baseline editing UI
+
+### Required Deliverables
+
+- baseline creation command
+- deterministic baseline file format
+- baseline load and validation path
+- regression filtering stage in scan
+- fixture-backed tests for baseline creation, reuse, invalid files, and ordering
+- documentation updates for onboarding, schema, validation, and phase status
+
+### Exit Criteria
+
+- baseline creation is byte-stable for identical violations
+- scan with a baseline reports only new violations
+- invalid baselines fail with exit code `2`
+- stale baseline entries are ignored silently for MVP
+- documentation reflects incremental adoption and regression-only enforcement
+
+### Explicit Non-Goals
+
+- semantic analysis
+- dependency graphs
+- plugin/runtime systems
+- remote registries
+- architecture auto-detection
+- interactive TUI flows
+- suppression comments
+- inline ignores
+
+### Architectural Constraints
+
+- deterministic output only
+- local-only file I/O
+- no hidden state
+- no speculative abstraction layer
+
 ## Phase 6 - Documentation Hardening
 
 ### Objective

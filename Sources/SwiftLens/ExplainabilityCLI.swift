@@ -159,6 +159,7 @@ enum CLICommand {
     case version
     case validateConfig(ValidationOptions)
     case scan(ScanOptions)
+    case baseline(BaselineCLICommand)
     case initCommand(InitOptions)
     case preset(PresetCLICommand)
     case rule(RuleCLICommand)

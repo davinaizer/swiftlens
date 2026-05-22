@@ -47,6 +47,13 @@ Init UX is deterministic too:
 - `swiftlens init` rejects existing `.swiftlens.yml` files with exit code `2` unless `--force` is set
 - init output is written locally with stable ordering and no hidden state
 
+Baseline UX is deterministic too:
+
+- `swiftlens baseline create` writes a local JSON baseline file with stable ordering
+- `swiftlens scan --baseline <path>` loads the baseline explicitly from the given path
+- invalid baseline files return exit code `2`
+- baseline filtering suppresses exact fingerprint matches only
+
 ## 2. Precedence
 
 1. Preset defaults define the baseline when `preset` is set.
@@ -72,6 +79,7 @@ Init UX is deterministic too:
 - `rules.<rule>.config` must be a mapping when provided
 - `rules.<rule>.severity` must be one of `advisory`, `warning`, or `error`
 - empty `packs.<pack>.severityOverrides` must use block form, not inline `{}` syntax
+- baseline files must decode as version `1` JSON with the documented baseline shape
 
 ## 4. Exit Codes
 

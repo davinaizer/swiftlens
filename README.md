@@ -101,6 +101,18 @@ swiftlens scan Sources --format json
 ```
 
 ```bash
+swiftlens baseline create
+```
+
+```bash
+swiftlens scan . --baseline .swiftlens/baseline.json
+```
+
+```bash
+swiftlens scan . --format json --baseline .swiftlens/baseline.json
+```
+
+```bash
 swiftlens validate-config
 ```
 
@@ -111,6 +123,7 @@ Supported commands:
 ```text
 swiftlens
 swiftlens scan
+swiftlens baseline create
 swiftlens validate-config
 swiftlens init
 swiftlens preset list
@@ -125,6 +138,7 @@ Supported flags:
 ```text
 --config
 --format
+--baseline
 --path
 --verbose
 ```
@@ -141,6 +155,31 @@ Supported flags:
 | Exit code `1`       | rule violations                            |
 | Exit code `2`       | config or usage error                      |
 | Exit code `3`       | internal failure                           |
+
+## Incremental Adoption
+
+SwiftLens baselines support gradual rollout in existing repositories without changing the rule model.
+
+Workflow:
+
+1. Capture the current violation set as a local baseline.
+2. Keep the baseline under version control or in the repo workspace.
+3. Run scans against the baseline to report only regressions.
+4. Fix new violations without being blocked by legacy debt.
+
+Example:
+
+```bash
+swiftlens baseline create
+swiftlens scan . --baseline .swiftlens/baseline.json
+```
+
+Baseline behavior is deterministic and local-only:
+
+- baseline files are created from the current scan result
+- scan filtering suppresses only exact fingerprint matches
+- stale baseline entries are ignored for MVP
+- baseline filtering does not waive rules or alter rule semantics
 
 ## What SwiftLens Detects
 

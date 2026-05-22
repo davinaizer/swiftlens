@@ -50,6 +50,7 @@ struct ScanOptions: Equatable, Sendable {
     var format: String = "json"
     var path: String?
     var verbose: Bool = false
+    var baselinePath: String?
 }
 
 struct ValidationOptions: Equatable, Sendable {

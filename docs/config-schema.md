@@ -132,3 +132,37 @@ ignore:
   paths:
     - DerivedData/
 ```
+
+## 7. Baseline File Format
+
+`swiftlens baseline create` writes a local JSON baseline file that is separate from `.swiftlens.yml`.
+
+Default output:
+
+- `.swiftlens/baseline.json`
+
+Optional output path:
+
+- `--output <path>`
+
+Baseline files are deterministic and contain only regression-filter data:
+
+```json
+{
+  "version": 1,
+  "violations": [
+    {
+      "fingerprint": "…",
+      "rule": "architecture.forbidden-import",
+      "file": "Sources/Feature/Auth.swift",
+      "reason": "Forbidden import `UIKit` found in `Domain`."
+    }
+  ]
+}
+```
+
+Baseline files are not config files:
+
+- they are local JSON artifacts
+- they are loaded explicitly with `swiftlens scan --baseline <path>`
+- they do not participate in `.swiftlens.yml` schema validation

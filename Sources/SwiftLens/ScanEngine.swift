@@ -29,8 +29,19 @@ struct ScanEngine {
 
         let parser = SwiftSyntaxParserService()
         let parsedFiles = try files.map { try parser.parseFile(at: $0.url, relativePath: $0.relativePath) }
-        let violations = RuleEngine(registry: registry).evaluate(
+        let evaluatedViolations = RuleEngine(registry: registry).evaluate(
             config: loadedConfiguration.config, files: parsedFiles)
+        let violations: [Violation]
+        if let baselinePath = options.baselinePath {
+            let baseline = try BaselineStore(fileManager: fileManager).load(from: baselinePath)
+            violations = BaselineStore(fileManager: fileManager).filter(
+                evaluatedViolations,
+                using: baseline,
+                projectRootPath: loadedConfiguration.projectRootURL.path
+            )
+        } else {
+            violations = evaluatedViolations
+        }
         let summary = ScanSummary(filesScanned: parsedFiles.count, violations: violations.count)
 
         return ScanReport(

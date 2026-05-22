@@ -2,18 +2,18 @@
 
 ## Current Objective
 
-Phase 4 closed; Phase 5F authorized within the governed phase contract.
+Phase 4 closed; Phase 5G authorized within the governed phase contract.
 
 ## Current Phase
 
-- Current Authorized Phase: Phase 5F - Explainability UX.
+- Current Authorized Phase: Phase 5G - Baseline / Regression Workflow.
 - Current Implementation Status: Authorized / In Progress.
 - The active phase is the one defined in [docs/SwiftLens-project-action-plan.md](docs/SwiftLens-project-action-plan.md).
 - If the phase is undefined or disputed, resolve the docs first.
 
 ## Active Work
 
-1. Implement deterministic explainability commands for preset and rule discovery, explanation, and auditability.
+1. Implement deterministic baseline creation and regression-only scan filtering for incremental adoption.
 
 ## Completed Work
 
