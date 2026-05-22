@@ -40,12 +40,46 @@ swiftlens scan Sources --format json
 
 ## Installation
 
-### Swift Package Manager
+### Release installer
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/davinaizer/swiftlens/develop/scripts/install.sh | sh
+```
+
+If you install to `$HOME/.local/bin`, add that directory to your `PATH`.
+
+### Swift Package Manager fallback
 
 ```bash
 git clone https://github.com/davinaizer/swiftlens.git
 cd swiftlens
 swift build -c release
+```
+
+## Release Packaging
+
+Prerequisites:
+
+- Swift toolchain
+- `tar`
+- authenticated `gh` (`gh auth login`)
+
+Build the release archives locally:
+
+```bash
+./scripts/package-release.sh
+```
+
+Upload them to a GitHub release:
+
+```bash
+./scripts/upload-release.sh v0.1.0
+```
+
+Preview the upload flow without mutating GitHub:
+
+```bash
+./scripts/upload-release.sh v0.1.0 --dry-run
 ```
 
 ## Quick Start
