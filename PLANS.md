@@ -15,6 +15,10 @@ Phase 3A closed; Phase 4 authorized within the governed phase contract.
 
 1. Consolidate release version management around `Sources/SwiftLens/Version.generated.swift` and the shared shell helper so release/install scripts do not duplicate parsing logic.
 
+## Completed Work
+
+1. Refactor `AGENTS.md` into a compact bootstrap index that prioritizes `README.md`, `docs/README.md`, `docs/governance/README.md`, and `PLANS.md`, while leaving deeper specs behind the docs indexes.
+
 ## Rejection Rules
 
 Reject any proposed implementation or doc change unless it is:

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This directory is the entrypoint for the canonical SwiftLens documentation pack.
+Use this index after `AGENTS.md`. It is the canonical navigation surface for the repository docs.
 
 ## Read On Demand
 
@@ -18,4 +18,4 @@ This directory is the entrypoint for the canonical SwiftLens documentation pack.
 
 ## Rule
 
-Read the specific document for the decision you need. Do not expand `AGENTS.md` into a substitute for the repository docs.
+Open only the document that answers the decision you need. Do not expand `AGENTS.md` into a substitute for the repository docs.

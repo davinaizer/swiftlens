@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This directory is the authoritative governance entrypoint for SwiftLens. Use the file that matches the decision you need to make.
+Use this index after `AGENTS.md` or `docs/README.md` when the question is governance. Open the file that matches the decision you need to make.
 
 ## Read On Demand
 
@@ -15,4 +15,4 @@ This directory is the authoritative governance entrypoint for SwiftLens. Use the
 
 ## Rule
 
-If a governance decision is not in the file you are reading, do not infer it from `AGENTS.md` or task chatter. Resolve it in the authoritative doc first.
+If a governance decision is not in the file you are reading, do not infer it from `AGENTS.md`, task chatter, or adjacent docs. Resolve it in the authoritative doc first.
