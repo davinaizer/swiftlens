@@ -16,38 +16,33 @@ struct PresetRegistry: Sendable {
     static let `default` = PresetRegistry(descriptors: [
         PresetDescriptor(
             id: "app-layers",
-            expansion: PresetExpansion(
-                rules: [
-                    ForbiddenImportRule.descriptor.id: PresetRegistry.forbiddenImportRuleConfiguration(
-                        from: "App/",
-                        imports: ["UIKit"]
-                    )
-                ],
-                ruleOrder: [ForbiddenImportRule.descriptor.id]
+            expansion: PresetRegistry.presetExpansion(
+                forbiddenImports: [
+                    ("Domain", ["SwiftUI", "UIKit", "AppKit"]),
+                    ("UI", ["Data"])
+                ]
             )
         ),
         PresetDescriptor(
             id: "feature-modules",
-            expansion: PresetExpansion(
-                rules: [
-                    ForbiddenImportRule.descriptor.id: PresetRegistry.forbiddenImportRuleConfiguration(
-                        from: "Features/",
-                        imports: ["UIKit"]
-                    )
-                ],
-                ruleOrder: [ForbiddenImportRule.descriptor.id]
+            expansion: PresetRegistry.presetExpansion(
+                forbiddenImports: [
+                    ("Core", ["Features"]),
+                    ("Features", ["Features"]),
+                    ("Shared", ["Features"])
+                ]
             )
         ),
         PresetDescriptor(
             id: "tca-features",
-            expansion: PresetExpansion(
-                rules: [
-                    ForbiddenImportRule.descriptor.id: PresetRegistry.forbiddenImportRuleConfiguration(
-                        from: "Features/",
-                        imports: ["UIKit"]
-                    )
-                ],
-                ruleOrder: [ForbiddenImportRule.descriptor.id]
+            expansion: PresetRegistry.presetExpansion(
+                forbiddenImports: [
+                    ("Dependencies", ["Features"]),
+                    ("Dependencies", ["SwiftUI", "UIKit", "AppKit"]),
+                    ("Features", ["Features"]),
+                    ("Features", ["SwiftUI", "UIKit", "AppKit"]),
+                    ("Shared", ["Features"])
+                ]
             )
         )
     ])
@@ -64,20 +59,34 @@ struct PresetRegistry: Sendable {
         descriptors.map(\.id)
     }
 
+    private static func presetExpansion(
+        forbiddenImports: [(from: String, imports: [String])]
+    ) -> PresetExpansion {
+        PresetExpansion(
+            rules: [
+                ForbiddenImportRule.descriptor.id: forbiddenImportRuleConfiguration(
+                    forbiddenImports: forbiddenImports
+                )
+            ],
+            ruleOrder: [ForbiddenImportRule.descriptor.id]
+        )
+    }
+
     private static func forbiddenImportRuleConfiguration(
-        from: String,
-        imports: [String]
+        forbiddenImports: [(from: String, imports: [String])]
     ) -> RuleConfiguration {
         RuleConfiguration(
             enabled: true,
             severity: nil,
             config: [
-                "forbiddenImports": .array([
-                    .mapping([
-                        "from": .string(from),
-                        "imports": .array(imports.map(YAMLValue.string))
-                    ])
-                ])
+                "forbiddenImports": .array(
+                    forbiddenImports.map { scope in
+                        .mapping([
+                        "from": .string(normalizeRelativePath(scope.from)),
+                        "imports": .array(scope.imports.map(YAMLValue.string))
+                        ])
+                    }
+                )
             ]
         )
     }

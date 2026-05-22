@@ -7,6 +7,6 @@ project:
 architecture:
   forbiddenImports:
     -
-      from: Feature/
+      from: Features/
       imports:
         - Foundation

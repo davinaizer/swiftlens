@@ -148,12 +148,12 @@ struct SwiftLensPhase5ATests {
 
     @Test("JSON output remains deterministic across repeated runs")
     func jsonOutputRemainsDeterministicAcrossRepeatedRuns() throws {
-        let fixture = fixtureURL("PresetFeatureModules")
+        let fixture = fixtureURL("PresetFeatureModulesScanned")
         let first = phase5ARunCLI([
             "swiftlens",
             "scan",
             "--config",
-            configURL("PresetFeatureModules").path,
+            configURL("PresetFeatureModulesScanned").path,
             "--format",
             "json"
         ], fileManager: Phase5AFixedCurrentDirectoryFileManager(currentDirectoryPath: fixture.path))
@@ -161,7 +161,7 @@ struct SwiftLensPhase5ATests {
             "swiftlens",
             "scan",
             "--config",
-            configURL("PresetFeatureModules").path,
+            configURL("PresetFeatureModulesScanned").path,
             "--format",
             "json"
         ], fileManager: Phase5AFixedCurrentDirectoryFileManager(currentDirectoryPath: fixture.path))

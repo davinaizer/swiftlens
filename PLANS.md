@@ -2,18 +2,18 @@
 
 ## Current Objective
 
-Phase 4 closed; Phase 5A authorized within the governed phase contract.
+Phase 4 closed; Phase 5B authorized within the governed phase contract.
 
 ## Current Phase
 
-- Current Authorized Phase: Phase 5A - Preset Registry Foundation.
-- Current Implementation Status: Authorized / Not Started.
+- Current Authorized Phase: Phase 5B - MVP Preset Definitions.
+- Current Implementation Status: Authorized / In Progress.
 - The active phase is the one defined in [docs/SwiftLens-project-action-plan.md](docs/SwiftLens-project-action-plan.md).
 - If the phase is undefined or disputed, resolve the docs first.
 
 ## Active Work
 
-1. Implement the deterministic built-in preset registry, preset expansion layer, and preset config validation for Phase 5A.
+1. Implement the deterministic MVP preset definitions for `app-layers`, `feature-modules`, and `tca-features`.
 
 ## Completed Work
 

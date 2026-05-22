@@ -18,7 +18,9 @@ struct ForbiddenImportRule {
             for file in context.files {
                 for scope in forbiddenImports where pathMatchesPrefixBoundary(file.relativePath, prefix: scope.from) {
                     let scopeLabel = scope.from.isEmpty ? "<root>" : scope.from
-                    for imported in file.imports where scope.imports.contains(imported.module) {
+                    for imported in file.imports where scope.imports.contains(where: {
+                        importMatchesScope(imported.module, scope: $0)
+                    }) {
                         violations.append(
                             Violation(
                                 rule: context.descriptor.id,
@@ -78,6 +80,13 @@ struct ForbiddenImportRule {
         }
 
         return scopes
+    }
+
+    private static func importMatchesScope(_ module: String, scope: String) -> Bool {
+        pathMatchesPrefixBoundary(
+            module.replacingOccurrences(of: ".", with: "/"),
+            prefix: scope
+        )
     }
 }
 
