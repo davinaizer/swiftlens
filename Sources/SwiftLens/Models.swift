@@ -56,6 +56,12 @@ struct ValidationOptions: Equatable, Sendable {
     var configPath: String?
 }
 
+struct InitOptions: Equatable, Sendable {
+    var presetID: String?
+    var force: Bool = false
+    var showHelp: Bool = false
+}
+
 struct ProjectConfiguration: Equatable, Sendable {
     let path: String
     let include: [String]

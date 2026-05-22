@@ -429,6 +429,67 @@ Stabilize machine output, CI gating, and regression coverage without changing th
 - formatting must remain deterministic
 - reporter code must stay simple enough to audit
 
+## Phase 5E - Init UX
+
+### Objective
+
+Provide a deterministic `swiftlens init` flow that writes a minimal local `.swiftlens.yml` from the built-in preset registry.
+
+### Allowed Capabilities
+
+- `swiftlens init`
+- `swiftlens init --preset <name>`
+- deterministic config generation
+- overwrite protection with explicit `--force`
+- preset validation through the built-in registry
+- fixture-backed init tests
+
+### Forbidden Capabilities
+
+- interactive prompts
+- TUI flows
+- architecture auto-detection
+- rule packs
+- baseline workflows
+- boundary inspection
+- semantic analysis
+- graph systems
+- remote registries
+- plugins
+
+### Required Deliverables
+
+- init command routing
+- preset selection support
+- deterministic `.swiftlens.yml` generation
+- overwrite failure with exit code `2`
+- unknown preset failure with exit code `2`
+- init help output
+- tests for default, explicit preset, overwrite, and scan/validate round-trips
+
+### Exit Criteria
+
+- `swiftlens init` writes the same bytes in clean directories
+- `swiftlens init --preset feature-modules` writes the requested preset
+- existing configs are protected unless `--force` is used
+- generated configs validate and scan successfully
+
+### Explicit Non-Goals
+
+- interactive wizard flows
+- semantic analysis
+- graph infrastructure
+- plugin/runtime systems
+- remote preset fetching
+- architecture inference
+
+### Architectural Constraints
+
+- deterministic output only
+- local-only file I/O
+- no hidden state
+- no speculative abstraction layer
+
 ## Phase 6 - Documentation Hardening
 
 ### Objective

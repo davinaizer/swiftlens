@@ -35,6 +35,12 @@ Preset resolution is deterministic:
 - preset defaults are expanded before explicit project config is applied
 - explicit project config overrides preset defaults
 
+Init UX is deterministic too:
+
+- `swiftlens init` validates `--preset` against the built-in preset registry before writing
+- `swiftlens init` rejects existing `.swiftlens.yml` files with exit code `2` unless `--force` is set
+- init output is written locally with stable ordering and no hidden state
+
 ## 2. Precedence
 
 1. Preset defaults define the baseline when `preset` is set.

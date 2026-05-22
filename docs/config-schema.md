@@ -13,26 +13,23 @@ Use this document to answer:
 
 For validation behavior, exit codes, and precedence rules, see [config-validation.md](config-validation.md).
 
-## 1. Minimum Shape
+## 1. Init-Generated Minimum Shape
+
+`swiftlens init` writes the minimal preset-backed config shape:
 
 ```yaml
 version: 1
-preset: feature-modules
-project:
-  path: .
-  include: []
-  exclude: []
-rules:
-  - architecture.forbidden-import
-architecture:
-  forbiddenImports:
-    -
-      from: Features/
-      imports:
-        - UIKit
+preset: app-layers
 ignore:
-  paths: []
+  paths:
+    - .build/
+    - .swiftpm/
+    - DerivedData/
 ```
+
+When `preset` is present, `project` and `rules` may be omitted because preset defaults are expanded locally before validation.
+
+Explicit configs without `preset` still use the fuller schema documented below.
 
 ## 2. Supported Top-Level Keys
 

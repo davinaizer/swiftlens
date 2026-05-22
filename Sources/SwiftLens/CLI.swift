@@ -19,6 +19,15 @@ enum SwiftLensCLI {
                 let stdout = try JSONReporter().render(report)
                 let exitCode: Int32 = report.summary.violations > 0 ? 1 : 0
                 return CLIExecutionResult(exitCode: exitCode, stdout: stdout, stderr: "")
+            case .initCommand(let options):
+                if options.showHelp {
+                    return CLIExecutionResult(exitCode: 0, stdout: initHelpText(), stderr: "")
+                }
+
+                let output = try ConfigInitializer(fileManager: fileManager).initialize(
+                    options: options
+                )
+                return CLIExecutionResult(exitCode: 0, stdout: output, stderr: "")
             }
         } catch let error as SwiftLensError {
             return CLIExecutionResult(
@@ -47,6 +56,8 @@ enum SwiftLensCLI {
             return .validateConfig(ValidationOptions(configPath: try parseConfigPath(flags)))
         case "scan":
             return .scan(try parseScanOptions(flags))
+        case "init":
+            return .initCommand(try parseInitOptions(flags))
         default:
             throw SwiftLensError.usage("Unknown command `\(commandName)`.")
         }
@@ -100,6 +111,31 @@ enum SwiftLensCLI {
 
         if options.format != "json" {
             throw SwiftLensError.usage("Only `--format json` is supported in Phase 1.")
+        }
+
+        return options
+    }
+
+    private static func parseInitOptions(_ arguments: [String]) throws -> InitOptions {
+        var options = InitOptions()
+        var presetSpecified = false
+        var iterator = arguments.makeIterator()
+        while let argument = iterator.next() {
+            switch argument {
+            case "--help", "-h":
+                options.showHelp = true
+            case "--preset":
+                try consumeUniqueValue(
+                    for: "--preset",
+                    into: &options.presetID,
+                    seen: &presetSpecified,
+                    iterator: &iterator
+                )
+            case "--force":
+                options.force = true
+            default:
+                throw SwiftLensError.usage("Unknown flag `\(argument)`.")
+            }
         }
 
         return options
@@ -161,6 +197,7 @@ enum SwiftLensCLI {
         Commands:
           swiftlens scan [PATH] [--config PATH] [--format json] [--path PATH] [--verbose]
           swiftlens validate-config [--config PATH]
+          swiftlens init [--preset NAME] [--force]
           swiftlens version
           swiftlens help
 
@@ -169,6 +206,24 @@ enum SwiftLensCLI {
           --format json
           --path PATH
           --verbose
+
+        Init flags:
+          --preset NAME
+          --force
+        """
+            + "\n"
+    }
+
+    private static func initHelpText() -> String {
+        """
+        SwiftLens \(SwiftLensVersion.current)
+
+        Usage:
+          swiftlens init [--preset NAME] [--force]
+
+        Flags:
+          --preset NAME
+          --force
         """
             + "\n"
     }
@@ -179,6 +234,7 @@ private enum CLICommand {
     case version
     case validateConfig(ValidationOptions)
     case scan(ScanOptions)
+    case initCommand(InitOptions)
 }
 
 @main

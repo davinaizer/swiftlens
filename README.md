@@ -77,11 +77,19 @@ swift build -c release
 ## Quick Start
 
 ```bash
+brew install swiftlens
+```
+
+```bash
 swiftlens
 ```
 
 ```bash
-swiftlens scan
+swiftlens init
+```
+
+```bash
+swiftlens scan .
 ```
 
 ```bash
@@ -100,6 +108,7 @@ Supported commands:
 swiftlens
 swiftlens scan
 swiftlens validate-config
+swiftlens init
 swiftlens version
 swiftlens help
 ```
