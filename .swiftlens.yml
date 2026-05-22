@@ -1,18 +1,21 @@
-project:
-  path: .
-  include: []
-  exclude:
-    - .build/**
-    - .swiftlens-bin/**
-    - dist/**
-    - DerivedData/**
-packs:
-  architecture:
-    enabled: true
-    severityOverrides:
+version: 1
+
+preset: app-layers
+
+ignore:
+  paths:
+    - .build/
+    - .swiftlens-bin/
+    - dist/
+    - DerivedData/
+    - Tests/SwiftLensTests/Fixtures/
+
 rules:
-  ForbiddenImportRule:
-    enabled: true
-    config:
-      forbiddenImports:
+  - architecture.forbidden-import
+
+architecture:
+  forbiddenImports:
+    -
+      from: Sources/
+      imports:
         - UIKit
