@@ -176,74 +176,13 @@ An explicit `--config` path always overrides local lookup.
 
 Missing config returns exit code `2`.
 
-## 9. Config Model
+## 9. Config Contracts
 
-`.swiftlens.yml` is the policy contract.
+The full `.swiftlens.yml` schema is documented in [config-schema.md](config-schema.md).
 
-### 9.1 Minimum Shape
+Validation rules, precedence, and exit-code behavior are documented in [config-validation.md](config-validation.md).
 
-```yaml
-project:
-  path: .
-  include: []
-  exclude: []
-packs:
-  swiftui-core:
-    enabled: true
-    severityOverrides: {}
-rules:
-  MassiveSwiftUIView:
-    enabled: true
-    severity: warning
-    config: {}
-```
-
-### 9.2 Project Fields
-
-| Field | Type | Required | Notes |
-| --- | --- | --- | --- |
-| `project.path` | string | yes | Repo root or scan root |
-| `project.include` | string array | no | Glob patterns included in scope |
-| `project.exclude` | string array | no | Glob patterns excluded from scope |
-| `project.name` | string | no | Human-readable project name |
-| `project.sourceRoots` | string array | no | Explicit source roots for discovery |
-| `project.featureRoots` | string array | no | Ownership and boundary roots |
-| `project.navigationOwner` | string | no | Expected router owner |
-| `project.localizationFiles` | string array | no | Localization resources for string rules |
-| `project.debugPreviewPaths` | string array | no | Debug-only preview locations |
-
-### 9.3 Pack and Rule Fields
-
-| Field | Type | Required | Notes |
-| --- | --- | --- | --- |
-| `packs.<pack>.enabled` | boolean | yes | Enables or disables the pack |
-| `packs.<pack>.severityOverrides` | map | no | Per-rule severity overrides |
-| `rules.<rule>.enabled` | boolean | yes | Enables or disables a rule |
-| `rules.<rule>.severity` | enum | no | Rule severity override |
-| `rules.<rule>.config` | map | no | Rule-specific parameters |
-
-### 9.4 Validation Rules
-
-Validation must reject:
-
-- missing required fields
-- invalid severity values
-- invalid paths
-- invalid pack names
-- invalid rule IDs
-- unknown keys at any level
-- unknown rule config keys
-- malformed glob patterns if the implementation can detect them
-
-Config failures return exit code `2`.
-
-### 9.5 Precedence
-
-1. Built-in rule defaults define the baseline.
-2. Pack-level severity overrides apply next.
-3. Rule-level severity overrides win over pack-level and built-in values.
-4. Rule-level config merges over built-in config.
-5. CLI flags never mutate rule semantics.
+The TAD intentionally stays focused on architecture and leaves the schema contract to the dedicated config docs.
 
 ## 10. Project Discovery
 

@@ -186,6 +186,11 @@ rules:
         - UIKit
 ```
 
+For the full schema and validation contract, see:
+
+- [`docs/config-schema.md`](docs/config-schema.md)
+- [`docs/config-validation.md`](docs/config-validation.md)
+
 ## Architecture Principles
 
 SwiftLens is intentionally:

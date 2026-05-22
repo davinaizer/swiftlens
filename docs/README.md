@@ -8,6 +8,8 @@ This directory is the entrypoint for the canonical SwiftLens documentation pack.
 
 - [Project Requirements Document](prd.md)
 - [Technical Architecture Document](tad.md)
+- [Config Schema](config-schema.md)
+- [Config Validation](config-validation.md)
 - [Project Definition Pack](SwiftLens-project-definition-pack.md)
 - [Project Action Plan](SwiftLens-project-action-plan.md)
 - [Project Bootstrap Guide](project_bootstrap_guide.md)
