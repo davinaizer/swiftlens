@@ -47,35 +47,55 @@ enum SwiftLensCLI {
         }
     }
 
-    private static func parseScanOptions(_ flags: [String]) throws -> ScanOptions {
-        var options = ScanOptions(path: ".")
-        var iterator = flags.makeIterator()
-        while let flag = iterator.next() {
-            switch flag {
+    private static func parseScanOptions(_ arguments: [String]) throws -> ScanOptions {
+        var options = ScanOptions(path: nil)
+        var positionalPath: String?
+        var formatSpecified = false
+        var pathSpecified = false
+        var iterator = arguments.makeIterator()
+        while let argument = iterator.next() {
+            switch argument {
             case "--config":
                 guard let value = iterator.next() else {
                     throw SwiftLensError.usage("Missing value for `--config`.")
+                }
+                if options.configPath != nil {
+                    throw SwiftLensError.usage("Duplicate flag `--config`.")
                 }
                 options.configPath = value
             case "--format":
                 guard let value = iterator.next() else {
                     throw SwiftLensError.usage("Missing value for `--format`.")
                 }
+                if formatSpecified {
+                    throw SwiftLensError.usage("Duplicate flag `--format`.")
+                }
+                formatSpecified = true
                 options.format = value
             case "--path":
                 guard let value = iterator.next() else {
                     throw SwiftLensError.usage("Missing value for `--path`.")
                 }
+                if pathSpecified {
+                    throw SwiftLensError.usage("Duplicate flag `--path`.")
+                }
+                pathSpecified = true
                 options.path = value
             case "--verbose":
                 options.verbose = true
             default:
-                throw SwiftLensError.usage("Unknown flag `\(flag)`.")
+                if argument.hasPrefix("-") {
+                    throw SwiftLensError.usage("Unknown flag `\(argument)`.")
+                }
+                if positionalPath != nil {
+                    throw SwiftLensError.usage("Unexpected argument `\(argument)`.")
+                }
+                positionalPath = argument
             }
         }
 
-        if options.configPath != nil, options.path == "." {
-            options.path = nil
+        if !pathSpecified {
+            options.path = positionalPath ?? (options.configPath == nil ? "." : nil)
         }
 
         if options.format != "json" {
@@ -110,7 +130,7 @@ enum SwiftLensCLI {
         SwiftLens \(SwiftLensVersion.current)
 
         Commands:
-          swiftlens scan [--config PATH] [--format json] [--path PATH] [--verbose]
+          swiftlens scan [PATH] [--config PATH] [--format json] [--path PATH] [--verbose]
           swiftlens validate-config [--config PATH]
           swiftlens version
           swiftlens help

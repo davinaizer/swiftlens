@@ -13,7 +13,7 @@ Phase 3A closed; Phase 4 authorized within the governed phase contract.
 
 ## Active Work
 
-1. Stabilize the macOS release installer so it resolves the published release from the generated version source and fails with a useful message when no GitHub release asset is available.
+1. Consolidate release version management around `Sources/SwiftLens/Version.generated.swift` and the shared shell helper so release/install scripts do not duplicate parsing logic.
 
 ## Rejection Rules
 

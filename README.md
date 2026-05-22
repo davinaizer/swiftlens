@@ -136,14 +136,54 @@ SwiftLens focuses on deterministic governance signals:
 - lightweight architectural heuristics
 - configurable governance rule packs
 
-## Example Configuration
+## Configuration
+
+SwiftLens reads `.swiftlens.yml` from the current working directory unless you pass `--config`.
+
+Supported top-level keys:
+
+- `project`
+- `packs`
+- `rules`
+
+Supported `project` fields:
+
+- `path`
+- `include`
+- `exclude`
+
+Supported `packs.architecture` fields:
+
+- `enabled`
+- `severityOverrides`
+
+Supported `rules.ForbiddenImportRule` fields:
+
+- `enabled`
+- `config.forbiddenImports`
+
+Example configuration:
 
 ```yaml
 project:
-  name: Alfred
-
+  path: .
+  include: []
+  exclude:
+    - .build/**
+    - .swiftlens-bin/**
+    - dist/**
+    - DerivedData/**
+packs:
+  architecture:
+    enabled: true
+    severityOverrides:
+      # leave empty unless overriding rule severities
 rules:
-  - architecture.forbidden-import
+  ForbiddenImportRule:
+    enabled: true
+    config:
+      forbiddenImports:
+        - UIKit
 ```
 
 ## Architecture Principles
@@ -198,6 +238,20 @@ Run SwiftLint:
 swiftlint lint
 ```
 
+Link a local build into a repo-local shim directory so it wins on `PATH`:
+
+```bash
+./scripts/dev-link.sh link
+export PATH="$PWD/.swiftlens-bin:$PATH"
+swiftlens --version
+```
+
+Remove the local shim:
+
+```bash
+./scripts/dev-link.sh unlink
+```
+
 SwiftLens development is:
 
 - governance-driven
@@ -215,10 +269,10 @@ Prerequisites:
 - `tar`
 - authenticated `gh` (`gh auth login`)
 
-1. Pick the release version, generate the version file, and tag it:
+1. Pick the release version, write the release version source, and tag it:
 
 ```bash
-./scripts/generate-version-file.sh vX.Y.Z
+./scripts/write-release-version-source.sh vX.Y.Z
 git add Sources/SwiftLens/Version.generated.swift
 git commit -m "chore: prepare vX.Y.Z"
 git tag vX.Y.Z

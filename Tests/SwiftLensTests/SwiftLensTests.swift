@@ -100,7 +100,7 @@ struct SwiftLensPhase1Tests {
 
         #expect(result.exitCode == 0)
         #expect(result.stderr.isEmpty)
-        #expect(result.stdout == "SwiftLens v0.1.0\n")
+        #expect(result.stdout == "SwiftLens \(SwiftLensVersion.current)\n")
     }
 }
 
@@ -130,6 +130,66 @@ struct SwiftLensPhase3ATests {
         #expect(result.exitCode == 0)
         #expect(result.stderr.isEmpty)
         #expect(result.stdout.contains("\"command\":\"scan\""))
+        #expect(result.stdout.contains("\"projectPath\":\"\(escapedProjectPath)\""))
+    }
+
+    @Test("swiftlens scan accepts a positional dot path")
+    func scanAcceptsPositionalDotPath() throws {
+        let fixture = fixtureURL("ScanSuccess")
+        let escapedProjectPath = jsonEscapedPath(fixture.path)
+
+        let result = scanResult(["swiftlens", "scan", "."], in: fixture)
+
+        #expect(result.exitCode == 0)
+        #expect(result.stderr.isEmpty)
+        #expect(result.stdout.contains("\"projectPath\":\"\(escapedProjectPath)\""))
+    }
+
+    @Test("swiftlens scan accepts a positional Sources path")
+    func scanAcceptsPositionalSourcesPath() throws {
+        let fixture = fixtureURL("ScanSuccess")
+        let escapedProjectPath = jsonEscapedPath(fixture.path + "/Sources")
+
+        let result = scanResult(["swiftlens", "scan", "Sources"], in: fixture)
+
+        #expect(result.exitCode == 0)
+        #expect(result.stderr.isEmpty)
+        #expect(result.stdout.contains("\"projectPath\":\"\(escapedProjectPath)\""))
+    }
+
+    @Test("swiftlens scan accepts a nested positional path")
+    func scanAcceptsNestedPositionalPath() throws {
+        let fixture = fixtureURL("ScanSuccess")
+        let escapedProjectPath = jsonEscapedPath(fixture.path + "/Sources/Features")
+
+        let result = scanResult(["swiftlens", "scan", "Sources/Features"], in: fixture)
+
+        #expect(result.exitCode == 0)
+        #expect(result.stderr.isEmpty)
+        #expect(result.stdout.contains("\"projectPath\":\"\(escapedProjectPath)\""))
+    }
+
+    @Test("swiftlens scan accepts --path")
+    func scanAcceptsPathFlag() throws {
+        let fixture = fixtureURL("ScanSuccess")
+        let escapedProjectPath = jsonEscapedPath(fixture.path + "/Sources")
+
+        let result = scanResult(["swiftlens", "scan", "--path", "Sources"], in: fixture)
+
+        #expect(result.exitCode == 0)
+        #expect(result.stderr.isEmpty)
+        #expect(result.stdout.contains("\"projectPath\":\"\(escapedProjectPath)\""))
+    }
+
+    @Test("swiftlens scan prefers --path over a positional path")
+    func scanPrefersPathFlagOverPositionalPath() throws {
+        let fixture = fixtureURL("ScanSuccess")
+        let escapedProjectPath = jsonEscapedPath(fixture.path + "/Sources")
+
+        let result = scanResult(["swiftlens", "scan", ".", "--path", "Sources"], in: fixture)
+
+        #expect(result.exitCode == 0)
+        #expect(result.stderr.isEmpty)
         #expect(result.stdout.contains("\"projectPath\":\"\(escapedProjectPath)\""))
     }
 
@@ -172,6 +232,51 @@ struct SwiftLensPhase3ATests {
         #expect(scanResult.exitCode == 1)
         #expect(bareResult.stdout.contains("ForbiddenImportRule"))
         #expect(scanResult.stdout.contains("ForbiddenImportRule"))
+    }
+
+    @Test("swiftlens scan rejects trailing positional arguments")
+    func scanRejectsTrailingPositionalArguments() throws {
+        let fixture = fixtureURL("ScanSuccess")
+
+        let result = scanResult(["swiftlens", "scan", "Sources", "extra"], in: fixture)
+
+        #expect(result.exitCode == 2)
+        #expect(result.stdout.isEmpty)
+        #expect(result.stderr.contains("Unexpected argument `extra`"))
+    }
+
+    @Test("swiftlens scan rejects duplicate path flags")
+    func scanRejectsDuplicatePathFlags() throws {
+        let fixture = fixtureURL("ScanSuccess")
+
+        let result = scanResult([
+            "swiftlens",
+            "scan",
+            "--path",
+            "Sources",
+            "--path",
+            "Sources/Features"
+        ], in: fixture)
+
+        #expect(result.exitCode == 2)
+        #expect(result.stdout.isEmpty)
+        #expect(result.stderr.contains("Duplicate flag `--path`"))
+    }
+
+    @Test("swiftlens scan rejects unsupported format values")
+    func scanRejectsUnsupportedFormatValues() throws {
+        let fixture = fixtureURL("ScanSuccess")
+
+        let result = scanResult([
+            "swiftlens",
+            "scan",
+            "--format",
+            "yaml"
+        ], in: fixture)
+
+        #expect(result.exitCode == 2)
+        #expect(result.stdout.isEmpty)
+        #expect(result.stderr.contains("Only `--format json` is supported"))
     }
 }
 
