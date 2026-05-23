@@ -1,5 +1,6 @@
 import CryptoKit
 import Foundation
+import SwiftUI
 
 struct BaselineFile: Codable, Equatable, Sendable {
     let version: Int
@@ -84,7 +85,8 @@ struct BaselineStore {
         }
 
         guard baseline.version == 1 else {
-            throw SwiftLensError.configuration("Unsupported baseline version `\(baseline.version)`.")
+            throw SwiftLensError.configuration(
+                "Unsupported baseline version `\(baseline.version)`.")
         }
 
         return baseline
@@ -169,7 +171,9 @@ struct BaselineStore {
         return url
     }
 
-    private static func compareViolations(_ lhs: BaselineViolation, _ rhs: BaselineViolation) -> Bool {
+    private static func compareViolations(_ lhs: BaselineViolation, _ rhs: BaselineViolation)
+        -> Bool
+    {
         if lhs.fingerprint != rhs.fingerprint {
             return lhs.fingerprint < rhs.fingerprint
         }

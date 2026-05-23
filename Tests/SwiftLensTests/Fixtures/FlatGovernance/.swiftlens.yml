@@ -10,9 +10,6 @@ architecture:
       from: Features/
       imports:
         - UIKit
-    -
-      from: Features/
-      imports:
         - Foundation
 ignore:
   paths:

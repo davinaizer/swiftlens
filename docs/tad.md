@@ -126,6 +126,7 @@ CLI scope:
 - omitted `--format` defaults to `json`
 - flags influence execution scope and reporter selection
 - flags do not override rule severity or rule config
+- config normalization canonicalizes rule IDs, scope identities, and ignore paths before evaluation
 - CLI execution remains single-process and deterministic
 
 ## 7. Forbidden Technical Directions
@@ -347,7 +348,7 @@ Every violation must include:
 3. Parse files into syntax and structure records.
 4. Build declaration and reference metadata only when the current phase requires it.
 5. Execute enabled rules in a deterministic order.
-6. Merge built-in defaults with pack and rule overrides.
+6. Merge built-in defaults with pack and explicit overrides through the deterministic normalization pipeline.
 7. Collect violations.
 8. Report findings.
 9. Map final severity state to exit code.

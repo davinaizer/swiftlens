@@ -89,44 +89,12 @@ struct ForbiddenImportRule {
         }
     )
 
-    private struct ForbiddenImportScope {
-        let from: String
-        let imports: [String]
-    }
-
     private static func forbiddenImports(from config: [String: YAMLValue]) -> [ForbiddenImportScope] {
-        guard let value = config["forbiddenImports"] else {
+        do {
+            return try ForbiddenImportSupport.scopes(from: config)
+        } catch {
             return []
         }
-
-        guard case .array(let items) = value else {
-            return []
-        }
-
-        var scopes: [ForbiddenImportScope] = []
-        for item in items {
-            guard case .mapping(let mapping) = item else {
-                return []
-            }
-
-            guard let from = mapping["from"]?.stringValue else {
-                return []
-            }
-
-            let scope = normalizeRelativePath(from)
-            let imports: [String]
-            do {
-                imports = try ConfigValueDecoder().stringArrayValue(
-                    mapping["imports"],
-                    field: "architecture.forbiddenImports.imports"
-                )
-            } catch {
-                return []
-            }
-            scopes.append(ForbiddenImportScope(from: scope, imports: imports))
-        }
-
-        return scopes
     }
 
     private static func importMatchesScope(_ module: String, scope: String) -> Bool {
@@ -134,14 +102,5 @@ struct ForbiddenImportRule {
             module.replacingOccurrences(of: ".", with: "/"),
             prefix: scope
         )
-    }
-}
-
-private extension YAMLValue {
-    var stringValue: String? {
-        guard case .string(let string) = self else {
-            return nil
-        }
-        return string
     }
 }

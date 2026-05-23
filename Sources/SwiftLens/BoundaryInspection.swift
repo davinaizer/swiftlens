@@ -8,7 +8,7 @@ struct BoundaryInspectionReport: Equatable, Sendable {
 
 struct BoundaryInspectionEntry: Equatable, Sendable {
     let path: String
-    let sources: [BoundarySource]
+    let sources: [GovernanceSource]
     let allows: [String]
     let restrictedImports: [String]
     let notes: [String]
@@ -28,14 +28,13 @@ struct BoundaryInspector {
 
     func inspect(_ loadedConfiguration: LoadedConfiguration) throws -> BoundaryInspectionReport {
         let presetID = loadedConfiguration.config.presetID
-        let parser = ConfigLoaderParser(registry: registry, presetRegistry: presetRegistry)
         let ruleEngine = RuleEngine(registry: registry)
         let canonicalRuleID = ForbiddenImportRule.descriptor.id
 
         guard let descriptor = registry.descriptor(for: canonicalRuleID) else {
             return BoundaryInspectionReport(
                 presetID: presetID,
-                ignoredPaths: loadedConfiguration.config.ignore.paths,
+                ignoredPaths: loadedConfiguration.governance.ignorePaths,
                 boundaries: []
             )
         }
@@ -44,7 +43,7 @@ struct BoundaryInspector {
         guard settings.enabled else {
             return BoundaryInspectionReport(
                 presetID: presetID,
-                ignoredPaths: loadedConfiguration.config.ignore.paths,
+                ignoredPaths: loadedConfiguration.governance.ignorePaths,
                 boundaries: []
             )
         }
@@ -65,58 +64,38 @@ struct BoundaryInspector {
 
         let ruleBoundaries = try resolveRuleBoundaries(
             loadedConfiguration: loadedConfiguration,
-            parser: parser
+            canonicalRuleID: canonicalRuleID
         )
         boundaries.append(contentsOf: ruleBoundaries)
 
         return BoundaryInspectionReport(
             presetID: presetID,
-            ignoredPaths: loadedConfiguration.config.ignore.paths,
+            ignoredPaths: loadedConfiguration.governance.ignorePaths,
             boundaries: boundaries
         )
     }
 
     private func resolveRuleBoundaries(
         loadedConfiguration: LoadedConfiguration,
-        parser: ConfigLoaderParser
+        canonicalRuleID: String
     ) throws -> [BoundaryInspectionEntry] {
-        if loadedConfiguration.boundaryInspection.hasExplicitForbiddenImports {
-            guard let ruleConfig = loadedConfiguration.config.rules[ForbiddenImportRule.descriptor.id] else {
-                return []
-            }
-
-            return try boundaryEntries(
-                scopes: try parser.parseForbiddenImportScopes(
-                    from: ruleConfig.config["forbiddenImports"] ?? .array([])
-                ),
-                source: .explicitConfig
-            )
-        }
-
-        guard let presetID = loadedConfiguration.config.presetID,
-            let expansion = presetRegistry.expansion(for: presetID),
-            let ruleConfig = expansion.rules[ForbiddenImportRule.descriptor.id] else {
+        guard let ruleResolution = loadedConfiguration.governance.ruleConfigurations[canonicalRuleID] else {
             return []
         }
 
-        let scopes = try parser.parseForbiddenImportScopes(
-            from: ruleConfig.config["forbiddenImports"] ?? .array([])
-        )
-        let orderedScopes = orderedPresetScopes(scopes, presetID: presetID)
-        return try boundaryEntries(scopes: orderedScopes, source: .preset)
+        return try boundaryEntries(scopes: ruleResolution.forbiddenImportScopes)
     }
 
     private func boundaryEntries(
-        scopes: [ForbiddenImportScope],
-        source: BoundarySource
+        scopes: [ResolvedForbiddenImportScope]
     ) throws -> [BoundaryInspectionEntry] {
         scopes.map { scope in
             BoundaryInspectionEntry(
-                path: displayPath(scope.from),
-                sources: [source],
+                path: displayPath(scope.scope.from),
+                sources: [scope.source],
                 allows: [],
-                restrictedImports: scope.imports.map(displayImportPattern),
-                notes: source == .preset ? presetNotes(for: scope) : []
+                restrictedImports: scope.scope.imports.map(displayImportPattern),
+                notes: scope.source == .preset ? presetNotes(for: scope.scope) : []
             )
         }
     }
@@ -128,32 +107,6 @@ struct BoundaryInspector {
             return ["sibling feature imports are restricted"]
         }
         return []
-    }
-
-    private func orderedPresetScopes(
-        _ scopes: [ForbiddenImportScope],
-        presetID: String
-    ) -> [ForbiddenImportScope] {
-        guard let descriptor = presetRegistry.descriptor(for: presetID) else {
-            return scopes
-        }
-
-        let order = descriptor.boundaryScopeOrder
-        let orderIndex: [String: Int] = Dictionary(
-            uniqueKeysWithValues: order.enumerated().map { (normalizeRelativePath($0.element), $0.offset) }
-        )
-
-        return scopes.sorted { left, right in
-            let leftIndex = orderIndex[normalizeRelativePath(left.from)] ?? Int.max
-            let rightIndex = orderIndex[normalizeRelativePath(right.from)] ?? Int.max
-            if leftIndex != rightIndex {
-                return leftIndex < rightIndex
-            }
-            if normalizeRelativePath(left.from) != normalizeRelativePath(right.from) {
-                return normalizeRelativePath(left.from) < normalizeRelativePath(right.from)
-            }
-            return left.imports.joined(separator: ",") < right.imports.joined(separator: ",")
-        }
     }
 
     private func displayPath(_ path: String) -> String {

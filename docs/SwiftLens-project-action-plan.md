@@ -351,7 +351,7 @@ Introduce a deterministic built-in preset registry and preset expansion layer wi
 - known presets resolve deterministically
 - unknown presets fail deterministically
 - preset expansion order is stable
-- explicit config remains authoritative over preset defaults
+- explicit config remains authoritative over preset and pack defaults
 - JSON output determinism remains intact
 
 ### Explicit Non-Goals
@@ -449,7 +449,7 @@ Provide a deterministic `swiftlens init` flow that writes a minimal local `.swif
 - interactive prompts
 - TUI flows
 - architecture auto-detection
-- rule packs
+- user-authored rule packs
 - baseline workflows
 - boundary inspection
 - semantic analysis
@@ -500,6 +500,8 @@ Provide deterministic, read-only explainability commands for preset discovery an
 
 - `swiftlens preset list`
 - `swiftlens preset explain <preset>`
+- `swiftlens pack list`
+- `swiftlens pack explain <pack>`
 - `swiftlens rule explain <rule-id>`
 - static explainability metadata for built-in presets and rules
 - deterministic terminal formatting
@@ -520,6 +522,8 @@ Provide deterministic, read-only explainability commands for preset discovery an
 
 - preset listing command
 - preset explanation command
+- pack listing command
+- pack explanation command
 - rule explanation command
 - deterministic formatting helper
 - help output updates
@@ -529,7 +533,7 @@ Provide deterministic, read-only explainability commands for preset discovery an
 ### Exit Criteria
 
 - preset and rule explanations render identically across repeated runs
-- unknown preset and rule lookups fail with exit code `2`
+- unknown preset, pack, and rule lookups fail with exit code `2`
 - help output exposes the new explainability commands
 - documentation reflects the new discovery workflow
 
@@ -615,7 +619,7 @@ Provide deterministic baseline creation and regression-only scan filtering so ex
 
 ### Objective
 
-Provide deterministic boundary visibility so users can inspect the effective architectural boundary model without scanning source files or inferring topology.
+Provide deterministic boundary visibility so users can inspect the effective architectural boundary model, including normalized provenance, without scanning source files or inferring topology.
 
 ### Allowed Capabilities
 
@@ -651,6 +655,7 @@ Provide deterministic boundary visibility so users can inspect the effective arc
 
 - boundary output is byte-stable for identical configs
 - preset defaults and explicit config overrides are rendered deterministically
+- provenance labels remain stable across repeated normalization
 - invalid configs fail with exit code `2`
 - help output exposes the boundary command
 - the boundary view remains local-only and governance-focused

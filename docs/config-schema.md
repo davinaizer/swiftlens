@@ -28,6 +28,7 @@ ignore:
 ```
 
 When `preset` is present, `project` and `rules` may be omitted because preset defaults are expanded locally before validation.
+Preset defaults are composed from built-in rule packs internally before rule evaluation.
 
 Explicit configs without `preset` still use the fuller schema documented below.
 
@@ -35,6 +36,8 @@ The built-in preset registry and canonical rule registry are discoverable throug
 
 - `swiftlens preset list`
 - `swiftlens preset explain <preset>`
+- `swiftlens pack list`
+- `swiftlens pack explain <pack>`
 - `swiftlens rule explain <rule-id>`
 
 Boundary inspection uses the same local config model and renders the effective state of:
@@ -43,15 +46,16 @@ Boundary inspection uses the same local config model and renders the effective s
 - `architecture.forbiddenImports`
 - `ignore.paths`
 - explicit `from:` scopes in configured boundary rules
+The rendered boundaries also surface deterministic source provenance such as `preset`, `pack: <id>`, and `explicit-config`.
 
 It does not infer or reconstruct architecture beyond the declared config.
+The rendered state is normalized deterministically, with canonical rule IDs, stable ordering, and deduplicated ignore paths.
 
 ## 2. Supported Top-Level Keys
 
 - `version`
 - `preset`
 - `project`
-- `packs`
 - `rules`
 - `architecture`
 - `ignore`
@@ -80,28 +84,17 @@ The current parser supports:
 
 ## 4. Pack Fields
 
-| Field | Type | Required | Notes |
-| --- | --- | --- | --- |
-| `packs.<pack>.enabled` | boolean | yes | Enables or disables the pack |
-| `packs.<pack>.severityOverrides` | map | no | Per-rule severity overrides |
+Rule packs are built into the binary and are not user-configurable in `.swiftlens.yml` in this phase.
 
-The current built-in pack is:
-
-- `architecture`
-
-For an empty `severityOverrides` mapping, use block form:
-
-```yaml
-severityOverrides:
-```
-
-The current parser does not accept inline `{}` for this field.
+- `swiftlens pack list` and `swiftlens pack explain <pack>` inspect the registry only
+- user-authored `packs:` sections are rejected
+- presets compose packs internally and expand them before validation
 
 ## 5. Rule Fields
 
 | Field | Type | Required | Notes |
 | --- | --- | --- | --- |
-| `rules` | string array | no | Ordered enablement list for canonical rule IDs |
+| `rules` | string array | no | Ordered enablement list for canonical rule IDs; duplicate entries collapse deterministically after normalization |
 | `rules.<rule>.enabled` | boolean | yes | Legacy alias path for compatibility |
 | `rules.<rule>.severity` | enum | no | Legacy alias path for compatibility |
 | `rules.<rule>.config` | map | no | Legacy alias path for compatibility |
@@ -115,6 +108,7 @@ The current canonical rule-family config lives under:
 - `architecture.forbiddenImports`
 
 The legacy `ForbiddenImportRule` rule-config shape remains accepted as a compatibility alias.
+When normalized, `architecture.forbiddenImports` is merged deterministically with later explicit overrides replacing earlier same-scope definitions and duplicate same-layer scope identities rejected with exit code `2`.
 
 ## 6. Example
 

@@ -26,7 +26,7 @@ enum BoundaryRenderer {
             for (index, boundary) in report.boundaries.enumerated() {
                 lines.append("- \(boundary.path)")
                 lines.append("  Source:")
-                lines.append(contentsOf: boundary.sources.map { "    - \($0.rawValue)" })
+                lines.append(contentsOf: boundary.sources.map { "    - \($0.displayName)" })
 
                 if !boundary.allows.isEmpty {
                     lines.append("  Allows:")

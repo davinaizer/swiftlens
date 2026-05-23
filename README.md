@@ -93,6 +93,14 @@ swiftlens preset explain feature-modules
 ```
 
 ```bash
+swiftlens pack list
+```
+
+```bash
+swiftlens pack explain feature-isolation
+```
+
+```bash
 swiftlens boundary list
 ```
 
@@ -133,6 +141,8 @@ swiftlens init
 swiftlens boundary list
 swiftlens preset list
 swiftlens preset explain <PRESET>
+swiftlens pack list
+swiftlens pack explain <PACK>
 swiftlens rule explain <RULE-ID>
 swiftlens version
 swiftlens help
@@ -151,6 +161,7 @@ Supported flags:
 ## Boundary Inspection
 
 SwiftLens can now inspect the effective boundary model without scanning source files.
+The rendered sources are deterministic and use provenance labels such as `preset`, `pack: <id>`, and `explicit-config`.
 
 Workflow:
 
@@ -191,21 +202,19 @@ Boundaries:
 
 - Features/
   Source:
-    - preset
+    - pack: feature-isolation
   Restricted Imports:
     - Features/*
-  Notes:
-    - sibling feature imports are restricted
 
 - Shared/
   Source:
-    - preset
+    - pack: shared-boundaries
   Restricted Imports:
     - Features/*
 
 - Core/
   Source:
-    - preset
+    - pack: shared-boundaries
   Restricted Imports:
     - Features/*
 ```
@@ -216,6 +225,24 @@ This view is intentionally lightweight:
 - it is deterministic
 - it does not infer ownership or dependency graphs
 - it reflects preset defaults plus explicit config only
+- preset defaults are composed from built-in rule packs internally
+
+## Rule Packs
+
+SwiftLens ships built-in rule packs as deterministic composition units.
+
+- packs are local-only and static
+- packs are not user-defined in `.swiftlens.yml`
+- presets compose packs internally and then expand to rules
+- `swiftlens pack list` and `swiftlens pack explain <PACK>` inspect the built-in pack registry
+
+Current built-in packs:
+
+- `feature-isolation`
+- `shared-boundaries`
+- `app-shell`
+- `domain-ui-separation`
+- `dependency-direction`
 
 ## Preset Debugging
 
@@ -226,10 +253,11 @@ Typical flow:
 ```bash
 swiftlens preset list
 swiftlens preset explain feature-modules
+swiftlens pack explain feature-isolation
 swiftlens boundary list --config .swiftlens.yml
 ```
 
-Use `swiftlens preset explain <PRESET>` to inspect the built-in preset intent, then use `swiftlens boundary list` to inspect the effective boundary state after local config overrides and ignore paths are applied.
+Use `swiftlens preset explain <PRESET>` to inspect the built-in preset intent, `swiftlens pack explain <PACK>` to inspect the underlying composition units, then use `swiftlens boundary list` to inspect the effective boundary state after local config overrides and ignore paths are applied.
 
 ## Behavior Guarantees
 
@@ -277,7 +305,7 @@ SwiftLens focuses on deterministic governance signals:
 - import/domain restrictions
 - SwiftUI naming and location drift
 - lightweight architectural heuristics
-- configurable governance rule packs
+- built-in governance rule packs
 
 ## Configuration
 
@@ -286,7 +314,6 @@ SwiftLens reads `.swiftlens.yml` from the current working directory unless you p
 Supported top-level keys:
 
 - `project`
-- `packs`
 - `rules`
 - `architecture`
 - `ignore`
@@ -297,10 +324,11 @@ Supported `project` fields:
 - `include`
 - `exclude`
 
-Supported `packs.architecture` fields:
+Built-in rule packs are not user-configurable in `.swiftlens.yml`.
+Inspect them with:
 
-- `enabled`
-- `severityOverrides`
+- `swiftlens pack list`
+- `swiftlens pack explain <PACK>`
 
 Supported `rules` forms:
 
@@ -330,8 +358,7 @@ rules:
   - architecture.forbidden-import
 architecture:
   forbiddenImports:
-    -
-      from: Features/
+    - from: Features/
       imports:
         - UIKit
 ignore:
@@ -364,23 +391,6 @@ SwiftLens is intentionally not:
 - an IDE automation tool
 - an architecture visualization system
 - an AI coding assistant
-
-## Current Status
-
-| Phase    | Status     |
-| -------- | ---------- |
-| Phase 1  | Complete   |
-| Phase 2  | Complete   |
-| Phase 3A | Complete   |
-| Phase 4  | Authorized |
-
-Current implementation includes:
-
-- deterministic rule registry
-- built-in governance rules
-- fixture-backed tests
-- local-first developer DX
-- machine-readable reporting
 
 ## Development
 

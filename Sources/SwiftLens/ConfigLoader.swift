@@ -4,15 +4,18 @@ struct ConfigLoader {
     private let fileManager: FileManager
     private let registry: RuleRegistry
     private let presetRegistry: PresetRegistry
+    private let rulePackRegistry: RulePackRegistry
 
     init(
         fileManager: FileManager = .default,
         registry: RuleRegistry = .default,
-        presetRegistry: PresetRegistry = .default
+        presetRegistry: PresetRegistry = .default,
+        rulePackRegistry: RulePackRegistry = .default
     ) {
         self.fileManager = fileManager
         self.registry = registry
         self.presetRegistry = presetRegistry
+        self.rulePackRegistry = rulePackRegistry
     }
 
     func load(
@@ -29,13 +32,17 @@ struct ConfigLoader {
         }
 
         let root = try YAMLParser().parse(contents)
-        let config = try ConfigLoaderParser(registry: registry, presetRegistry: presetRegistry)
+        let buildResult = try ConfigLoaderParser(
+            registry: registry,
+            presetRegistry: presetRegistry,
+            rulePackRegistry: rulePackRegistry
+        )
             .buildConfig(from: root, configURL: configURL)
         let boundaryInspection = BoundaryInspectionMetadata(
             hasExplicitForbiddenImports: hasExplicitForbiddenImports(in: root)
         )
         let projectRootURL = try resolveProjectRoot(
-            config.project.path,
+            buildResult.config.project.path,
             configURL: configURL,
             override: projectPathOverride,
             validateExists: validateProjectRoot
@@ -43,8 +50,9 @@ struct ConfigLoader {
         return LoadedConfiguration(
             configURL: configURL,
             projectRootURL: projectRootURL,
-            config: config,
-            boundaryInspection: boundaryInspection
+            config: buildResult.config,
+            boundaryInspection: boundaryInspection,
+            governance: buildResult.governance
         )
     }
 
@@ -109,7 +117,7 @@ struct ConfigLoader {
             return false
         }
 
-        for (ruleID, value) in rules {
+        for (ruleID, value) in rules.orderedEntries {
             guard let canonicalRuleID = registry.canonicalRuleID(for: ruleID),
                 canonicalRuleID == ForbiddenImportRule.descriptor.id,
                 case .mapping(let ruleMapping) = value,

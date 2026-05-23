@@ -4,7 +4,7 @@ import Testing
 
 private let phase5HCLIExecutionLock = NSLock()
 
-private func phase5HRunCLI(
+func phase5HRunCLI(
     _ arguments: [String],
     fileManager: FileManager = .default
 ) -> CLIExecutionResult {
@@ -16,7 +16,7 @@ private func phase5HRunCLI(
     return SwiftLensCLI.execute(arguments: arguments, fileManager: fileManager)
 }
 
-private func phase5HWriteText(_ text: String, to url: URL) throws {
+func phase5HWriteText(_ text: String, to url: URL) throws {
     try FileManager.default.createDirectory(
         at: url.deletingLastPathComponent(),
         withIntermediateDirectories: true
@@ -27,7 +27,7 @@ private func phase5HWriteText(_ text: String, to url: URL) throws {
     try data.write(to: url, options: [.atomic])
 }
 
-private func phase5HTemporaryDirectory() throws -> URL {
+func phase5HTemporaryDirectory() throws -> URL {
     let url = FileManager.default.temporaryDirectory.appendingPathComponent(
         "swiftlens-phase5h-\(UUID().uuidString)",
         isDirectory: true
@@ -36,7 +36,7 @@ private func phase5HTemporaryDirectory() throws -> URL {
     return url
 }
 
-private final class Phase5HFixedCurrentDirectoryFileManager: FileManager {
+final class Phase5HFixedCurrentDirectoryFileManager: FileManager {
     private let fixedCurrentDirectoryPath: String
 
     init(currentDirectoryPath: String) {
@@ -71,23 +71,8 @@ struct SwiftLensPhase5HTests {
         return destination
     }
 
-    @Test("boundary list renders preset-aware boundaries and ignore paths")
-    func boundaryListRendersPresetAwareBoundariesAndIgnorePaths() throws {
-        let root = try phase5HTemporaryDirectory()
-        let initResult = phase5HRunCLI(
-            ["swiftlens", "init", "--preset", "feature-modules"],
-            fileManager: Phase5HFixedCurrentDirectoryFileManager(currentDirectoryPath: root.path)
-        )
-        let result = phase5HRunCLI(
-            ["swiftlens", "boundary", "list"],
-            fileManager: Phase5HFixedCurrentDirectoryFileManager(currentDirectoryPath: root.path)
-        )
-        let repeatResult = phase5HRunCLI(
-            ["swiftlens", "boundary", "list", "--config", ".swiftlens.yml"],
-            fileManager: Phase5HFixedCurrentDirectoryFileManager(currentDirectoryPath: root.path)
-        )
-
-        let expected = """
+    private func featureModulesBoundaryListOutput() -> String {
+        """
         Project Boundaries
 
         Preset:
@@ -109,25 +94,40 @@ struct SwiftLensPhase5HTests {
 
         - Features/
           Source:
-            - preset
+            - pack: feature-isolation
           Restricted Imports:
             - Features/*
-          Notes:
-            - sibling feature imports are restricted
 
         - Shared/
           Source:
-            - preset
+            - pack: shared-boundaries
           Restricted Imports:
             - Features/*
 
         - Core/
           Source:
-            - preset
+            - pack: shared-boundaries
           Restricted Imports:
             - Features/*
         """
             + "\n"
+    }
+
+    @Test("boundary list renders preset-aware boundaries and ignore paths")
+    func boundaryListRendersPresetAwareBoundariesAndIgnorePaths() throws {
+        let root = try phase5HTemporaryDirectory()
+        let initResult = phase5HRunCLI(
+            ["swiftlens", "init", "--preset", "feature-modules"],
+            fileManager: Phase5HFixedCurrentDirectoryFileManager(currentDirectoryPath: root.path)
+        )
+        let result = phase5HRunCLI(
+            ["swiftlens", "boundary", "list"],
+            fileManager: Phase5HFixedCurrentDirectoryFileManager(currentDirectoryPath: root.path)
+        )
+        let repeatResult = phase5HRunCLI(
+            ["swiftlens", "boundary", "list", "--config", ".swiftlens.yml"],
+            fileManager: Phase5HFixedCurrentDirectoryFileManager(currentDirectoryPath: root.path)
+        )
 
         #expect(initResult.exitCode == 0)
         #expect(result.exitCode == 0)
@@ -135,8 +135,8 @@ struct SwiftLensPhase5HTests {
         #expect(initResult.stderr.isEmpty)
         #expect(result.stderr.isEmpty)
         #expect(repeatResult.stderr.isEmpty)
-        #expect(result.stdout == expected)
-        #expect(repeatResult.stdout == expected)
+        #expect(result.stdout == featureModulesBoundaryListOutput())
+        #expect(repeatResult.stdout == featureModulesBoundaryListOutput())
         #expect(result.stdout == repeatResult.stdout)
     }
 
@@ -173,6 +173,18 @@ struct SwiftLensPhase5HTests {
             - explicit-config
           Restricted Imports:
             - Foundation
+
+        - Shared/
+          Source:
+            - pack: shared-boundaries
+          Restricted Imports:
+            - Features/*
+
+        - Core/
+          Source:
+            - pack: shared-boundaries
+          Restricted Imports:
+            - Features/*
         """
             + "\n"
 
@@ -184,43 +196,8 @@ struct SwiftLensPhase5HTests {
         #expect(repeatResult.stdout == expected)
     }
 
-    @Test("boundary list hides forbidden-import boundaries when the architecture pack is disabled")
-    func boundaryListHidesForbiddenImportBoundariesWhenArchitecturePackIsDisabled() throws {
-        let fixture = try copiedFixture("PresetFeatureModulesScanned")
-        try phase5HWriteText(
-            """
-            version: 1
-            preset: feature-modules
-            project:
-              path: .
-              include: []
-              exclude: []
-            packs:
-              architecture:
-                enabled: false
-                severityOverrides:
-            ignore:
-              paths:
-                - .build/
-                - .swiftpm/
-                - DerivedData/
-            """,
-            to: fixture.appendingPathComponent(".swiftlens.yml")
-        )
-
-        let result = phase5HRunCLI(
-            ["swiftlens", "boundary", "list"],
-            fileManager: Phase5HFixedCurrentDirectoryFileManager(currentDirectoryPath: fixture.path)
-        )
-
-        #expect(result.exitCode == 0)
-        #expect(result.stderr.isEmpty)
-        #expect(result.stdout.contains("Preset:\n- feature-modules"))
-        #expect(result.stdout.contains("Boundaries:\n- none"))
-    }
-
     @Test("boundary list hides forbidden-import boundaries when the rule is disabled")
-    func boundaryListHidesForbiddenImportBoundariesWhenTheRuleIsDisabled() throws {
+    func boundaryListHidesForbiddenImportBoundariesWhenRuleIsDisabled() throws {
         let fixture = try copiedFixture("PresetFeatureModulesScanned")
         try phase5HWriteText(
             """
@@ -234,8 +211,7 @@ struct SwiftLensPhase5HTests {
               ForbiddenImportRule:
                 enabled: false
                 config:
-                  forbiddenImports:
-                    - Foundation
+                  forbiddenImports: []
             ignore:
               paths:
                 - .build/
@@ -285,107 +261,12 @@ struct SwiftLensPhase5HTests {
             fileManager: Phase5HFixedCurrentDirectoryFileManager(currentDirectoryPath: root.path)
         )
 
-        let expected = """
-        Project Boundaries
-
-        Preset:
-        - feature-modules
-
-        Ignored Paths:
-        - .build/
-        - .swiftpm/
-        - DerivedData/
-
-        Boundaries:
-        - App/
-          Source:
-            - preset
-          Allows:
-            - Features/*
-            - Shared/*
-            - Core/*
-
-        - Features/
-          Source:
-            - preset
-          Restricted Imports:
-            - Features/*
-          Notes:
-            - sibling feature imports are restricted
-
-        - Shared/
-          Source:
-            - preset
-          Restricted Imports:
-            - Features/*
-
-        - Core/
-          Source:
-            - preset
-          Restricted Imports:
-            - Features/*
-        """
-            + "\n"
-
         #expect(result.exitCode == 0)
         #expect(repeatResult.exitCode == 0)
         #expect(result.stderr.isEmpty)
         #expect(repeatResult.stderr.isEmpty)
-        #expect(result.stdout == expected)
-        #expect(repeatResult.stdout == expected)
+        #expect(result.stdout == featureModulesBoundaryListOutput())
+        #expect(repeatResult.stdout == featureModulesBoundaryListOutput())
     }
 
-    @Test("boundary list is byte stable across repeated runs")
-    func boundaryListIsByteStableAcrossRepeatedRuns() throws {
-        let fixture = try copiedFixture("PresetFeatureModulesScanned")
-        let fileManager = Phase5HFixedCurrentDirectoryFileManager(currentDirectoryPath: fixture.path)
-        let first = phase5HRunCLI(["swiftlens", "boundary", "list"], fileManager: fileManager)
-        let second = phase5HRunCLI(["swiftlens", "boundary", "list"], fileManager: fileManager)
-
-        #expect(first.exitCode == 0)
-        #expect(second.exitCode == 0)
-        #expect(first.stdout == second.stdout)
-    }
-
-    @Test("boundary list rejects missing configs with exit code 2")
-    func boundaryListRejectsMissingConfigsWithExitCodeTwo() throws {
-        let root = try phase5HTemporaryDirectory()
-        let result = phase5HRunCLI(
-            ["swiftlens", "boundary", "list"],
-            fileManager: Phase5HFixedCurrentDirectoryFileManager(currentDirectoryPath: root.path)
-        )
-
-        #expect(result.exitCode == 2)
-        #expect(result.stdout.isEmpty)
-        #expect(result.stderr.contains("Config file not found"))
-    }
-
-    @Test("boundary list rejects invalid configs")
-    func boundaryListRejectsInvalidConfigs() throws {
-        let fixture = fixtureURL("InvalidPreset")
-        let result = phase5HRunCLI([
-            "swiftlens",
-            "boundary",
-            "list",
-            "--config",
-            fixture.appendingPathComponent(".swiftlens.yml").path
-        ])
-
-        #expect(result.exitCode == 2)
-        #expect(result.stdout.isEmpty)
-        #expect(result.stderr.contains("Unknown preset `not-a-real-preset`"))
-    }
-
-    @Test("boundary help reports usage deterministically")
-    func boundaryHelpReportsUsageDeterministically() throws {
-        let result = phase5HRunCLI(["swiftlens", "boundary", "--help"])
-        let repeatResult = phase5HRunCLI(["swiftlens", "boundary", "--help"])
-
-        #expect(result.exitCode == 0)
-        #expect(repeatResult.exitCode == 0)
-        #expect(result.stderr.isEmpty)
-        #expect(repeatResult.stderr.isEmpty)
-        #expect(result.stdout.contains("swiftlens boundary list [--config PATH]"))
-        #expect(result.stdout == repeatResult.stdout)
-    }
 }

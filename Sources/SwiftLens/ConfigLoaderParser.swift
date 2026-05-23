@@ -3,9 +3,10 @@ import Foundation
 struct ConfigLoaderParser {
     let registry: RuleRegistry
     let presetRegistry: PresetRegistry
+    let rulePackRegistry: RulePackRegistry
     let decoder = ConfigValueDecoder()
 
-    func buildConfig(from root: YAMLValue, configURL: URL) throws -> SwiftLensConfig {
+    func buildConfig(from root: YAMLValue, configURL: URL) throws -> ConfigBuildResult {
         guard case .mapping(let topLevel) = root else {
             throw SwiftLensError.configuration("Config at \(configURL.path) must be a mapping.")
         }
@@ -16,50 +17,64 @@ struct ConfigLoaderParser {
         let project = try resolveProjectConfiguration(topLevel["project"], presetID: presetID)
         let rulesValue = try resolveRulesValue(topLevel["rules"], presetID: presetID)
         let presetExpansion = try presetExpansion(for: presetID)
-        let packs = try parsePacks(topLevel["packs"])
+        let presetRuleExpansion = try presetRuleExpansion(for: presetExpansion)
         let legacyRuleState = try parseRules(rulesValue)
         let architectureRuleConfig = try parseArchitecture(topLevel["architecture"])
         let ignore = try parseIgnore(topLevel["ignore"])
 
-        var rules = presetExpansion?.rules ?? [:]
+        var resolvedRules = presetRuleExpansion?.ruleConfigurations ?? [:]
         if let architectureRuleConfig {
             let canonicalRuleID = ForbiddenImportRule.descriptor.id
-            let baseRuleConfiguration = rules[canonicalRuleID]
-            rules[canonicalRuleID] = mergeRuleConfiguration(
+            let baseRuleConfiguration = resolvedRules[canonicalRuleID]
+            resolvedRules[canonicalRuleID] = try GovernanceNormalization.mergeRuleConfiguration(
                 base: baseRuleConfiguration,
                 override: RuleConfiguration(
                     enabled: nil,
                     severity: nil,
                     config: architectureRuleConfig
-                )
+                ),
+                ruleID: canonicalRuleID,
+                source: .explicitConfig
             )
         }
 
         for (ruleID, ruleConfiguration) in legacyRuleState.ruleConfigurations {
-            rules[ruleID] = mergeRuleConfiguration(
-                base: rules[ruleID],
-                override: ruleConfiguration
+            resolvedRules[ruleID] = try GovernanceNormalization.mergeRuleConfiguration(
+                base: resolvedRules[ruleID],
+                override: ruleConfiguration,
+                ruleID: ruleID,
+                source: .explicitConfig
             )
         }
 
-        let ruleOrder = rulesValue == nil ? (presetExpansion?.ruleOrder ?? legacyRuleState.ruleOrder)
-            : legacyRuleState.ruleOrder
-        return SwiftLensConfig(
+        let ruleOrder = mergedRuleOrder(
+            presetRuleOrder: presetRuleExpansion?.ruleOrder,
+            explicitRuleOrder: legacyRuleState.ruleOrder,
+            hasExplicitRules: rulesValue != nil
+        )
+
+        let config = SwiftLensConfig(
             presetID: presetID,
             project: project,
-            packs: packs,
-            rules: rules,
+            rules: resolvedRules.mapValues(\.configuration),
             ruleOrder: ruleOrder,
             ignore: ignore
         )
+
+        let governance = GovernanceResolution(
+            ruleConfigurations: resolvedRules,
+            ruleOrder: ruleOrder,
+            ignorePaths: ignore.paths
+        )
+
+        return ConfigBuildResult(config: config, governance: governance)
     }
 
-    private func validateTopLevelKeys(_ keys: Dictionary<String, YAMLValue>.Keys) throws {
+    private func validateTopLevelKeys(_ keys: [String]) throws {
         let allowedTopLevelKeys: Set<String> = [
             "version",
             "preset",
             "project",
-            "packs",
             "rules",
             "architecture",
             "ignore"
@@ -138,6 +153,36 @@ struct ConfigLoaderParser {
         return expansion
     }
 
+    private func presetRuleExpansion(for presetExpansion: PresetExpansion?) throws -> ResolvedRulePackExpansion? {
+        guard let presetExpansion else {
+            return nil
+        }
+
+        return try rulePackRegistry.resolvedExpansion(for: presetExpansion.packOrder)
+    }
+
+    func mergedRuleOrder(
+        presetRuleOrder: [String]?,
+        explicitRuleOrder: [String],
+        hasExplicitRules: Bool
+    ) -> [String] {
+        guard hasExplicitRules else {
+            return presetRuleOrder ?? explicitRuleOrder
+        }
+
+        var merged = presetRuleOrder ?? []
+        var seen = Set(merged)
+        for ruleID in explicitRuleOrder {
+            let canonicalRuleID = canonicalRuleID(for: ruleID) ?? ruleID
+            guard seen.insert(canonicalRuleID).inserted else {
+                continue
+            }
+            merged.append(canonicalRuleID)
+        }
+
+        return merged
+    }
+
     private func parseProject(_ value: YAMLValue) throws -> ProjectConfiguration {
         let mapping = try requireMapping(value, field: "`project`")
         try validateKeys(mapping.keys, allowed: ["path", "include", "exclude"], subject: "`project`")
@@ -155,67 +200,4 @@ struct ConfigLoaderParser {
         )
     }
 
-    private func parsePacks(_ value: YAMLValue?) throws -> [String: PackConfiguration] {
-        guard let value else {
-            return [:]
-        }
-
-        let mapping = try requireMapping(value, field: "`packs`")
-        let allowedPackNames = Set(registry.descriptors.map { $0.pack })
-        try validateKeys(mapping.keys, allowed: allowedPackNames, subject: "pack")
-
-        var packs: [String: PackConfiguration] = [:]
-        for (packName, packValue) in mapping {
-            packs[packName] = try parsePackConfiguration(packName: packName, value: packValue)
-        }
-
-        return packs
-    }
-
-    private func parsePackConfiguration(
-        packName: String,
-        value: YAMLValue
-    ) throws -> PackConfiguration {
-        let mapping = try requireMapping(value, field: "`packs.\(packName)`")
-        try validateKeys(
-            mapping.keys,
-            allowed: ["enabled", "severityOverrides"],
-            subject: "`packs.\(packName)`"
-        )
-
-        let enabled = decoder.boolValue(mapping["enabled"]) ?? true
-        return PackConfiguration(
-            enabled: enabled,
-            severityOverrides: try parseSeverityOverrides(
-                mapping["severityOverrides"],
-                packName: packName
-            )
-        )
-    }
-
-    private func parseSeverityOverrides(
-        _ value: YAMLValue?,
-        packName: String
-    ) throws -> [String: Severity] {
-        guard let value else {
-            return [:]
-        }
-
-        let mapping = try requireMapping(value, field: "`packs.\(packName).severityOverrides`")
-        var overrides: [String: Severity] = [:]
-
-        for (ruleID, ruleValue) in mapping {
-            guard let canonicalRuleID = canonicalRuleID(for: ruleID) else {
-                throw SwiftLensError.configuration("Unknown pack key `\(ruleID)`.")
-            }
-            guard let severity = try decoder.severityValue(ruleValue) else {
-                throw SwiftLensError.configuration(
-                    "`packs.\(packName).severityOverrides.\(ruleID)` must be `advisory`, `warning`, or `error`."
-                )
-            }
-            overrides[canonicalRuleID] = severity
-        }
-
-        return overrides
-    }
 }
