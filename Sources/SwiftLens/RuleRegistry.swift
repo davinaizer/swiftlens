@@ -107,7 +107,7 @@ struct RuleEngine {
                 continue
             }
 
-            let settings = resolveSettings(for: descriptor, config: config)
+            let settings = resolvedSettings(for: descriptor, config: config)
             guard settings.enabled else {
                 continue
             }
@@ -120,7 +120,7 @@ struct RuleEngine {
         return violations
     }
 
-    private func resolveSettings(for descriptor: RuleDescriptor, config: SwiftLensConfig)
+    func resolvedSettings(for descriptor: RuleDescriptor, config: SwiftLensConfig)
         -> ResolvedRuleSettings {
         let pack = config.packs[descriptor.pack]
         let rule = config.rules[descriptor.id]

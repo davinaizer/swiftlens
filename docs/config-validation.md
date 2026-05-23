@@ -47,6 +47,12 @@ Init UX is deterministic too:
 - `swiftlens init` rejects existing `.swiftlens.yml` files with exit code `2` unless `--force` is set
 - init output is written locally with stable ordering and no hidden state
 
+Boundary inspection is deterministic too:
+
+- `swiftlens boundary list` resolves the same local config model as scan and init
+- boundary rendering reflects the effective preset, ignore paths, and configured boundary scopes only
+- invalid configs return exit code `2` before any boundary output is rendered
+
 Baseline UX is deterministic too:
 
 - `swiftlens baseline create` writes a local JSON baseline file with stable ordering

@@ -57,6 +57,15 @@ struct ValidationOptions: Equatable, Sendable {
     var configPath: String?
 }
 
+struct BoundaryInspectionMetadata: Equatable, Sendable {
+    let hasExplicitForbiddenImports: Bool
+}
+
+enum BoundarySource: String, Codable, Equatable, Sendable {
+    case preset
+    case explicitConfig = "explicit-config"
+}
+
 struct InitOptions: Equatable, Sendable {
     var presetID: String?
     var force: Bool = false
@@ -113,6 +122,7 @@ struct LoadedConfiguration: Equatable, Sendable {
     let configURL: URL
     let projectRootURL: URL
     let config: SwiftLensConfig
+    let boundaryInspection: BoundaryInspectionMetadata
 }
 
 struct ParsedImport: Equatable, Sendable {

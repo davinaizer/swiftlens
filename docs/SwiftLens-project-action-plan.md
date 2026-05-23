@@ -611,6 +611,68 @@ Provide deterministic baseline creation and regression-only scan filtering so ex
 - no hidden state
 - no speculative abstraction layer
 
+## Phase 5H - Boundary Inspection UX
+
+### Objective
+
+Provide deterministic boundary visibility so users can inspect the effective architectural boundary model without scanning source files or inferring topology.
+
+### Allowed Capabilities
+
+- `swiftlens boundary list`
+- preset-aware boundary rendering
+- config-aware boundary rendering
+- ignore-path rendering
+- explicit `from:` scope rendering
+- fixture-backed inspection tests
+
+### Forbidden Capabilities
+
+- semantic analysis
+- dependency graphs
+- ownership systems
+- graph visualization
+- plugin/runtime systems
+- remote registries
+- architecture inference
+- IDE integrations
+- interactive TUI flows
+
+### Required Deliverables
+
+- boundary listing command
+- deterministic boundary resolution
+- preset-aware output rendering
+- config-aware output rendering
+- fixture-backed tests for presets, overrides, missing configs, invalid configs, help, and determinism
+- documentation updates for onboarding, schema, validation, and phase status
+
+### Exit Criteria
+
+- boundary output is byte-stable for identical configs
+- preset defaults and explicit config overrides are rendered deterministically
+- invalid configs fail with exit code `2`
+- help output exposes the boundary command
+- the boundary view remains local-only and governance-focused
+
+### Explicit Non-Goals
+
+- semantic reconstruction
+- dependency graph generation
+- ownership inference
+- auto-discovered architecture modeling
+- graph visualization
+- plugin surfaces
+- remote registries
+- interactive TUI
+
+### Architectural Constraints
+
+- preserve deterministic execution
+- preserve syntax-first analysis boundaries
+- keep boundary inspection local and non-recursive
+- do not introduce semantic, graph, or plugin infrastructure
+
 ## Phase 6 - Documentation Hardening
 
 ### Objective

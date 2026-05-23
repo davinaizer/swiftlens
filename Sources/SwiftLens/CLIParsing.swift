@@ -20,6 +20,7 @@ enum SwiftLensCLIParsing {
           swiftlens baseline create [--config PATH] [--output PATH] [--path PATH] [--verbose]
           swiftlens validate-config [--config PATH]
           swiftlens init [--preset NAME] [--force]
+          swiftlens boundary list [--config PATH]
           swiftlens preset list
           swiftlens preset explain <PRESET>
           swiftlens rule explain <RULE-ID>
@@ -71,6 +72,11 @@ enum SwiftLensCLIParsing {
             throw SwiftLensError.usage("Unknown command `\(commandName)`.")
         case "init":
             return .initCommand(try parseInitOptions(flags))
+        case "boundary":
+            if let command = try BoundaryCLI.parse(commandName: commandName, flags: flags) {
+                return command
+            }
+            throw SwiftLensError.usage("Unknown command `\(commandName)`.")
         case "preset", "rule":
             if let command = try ExplainabilityCLI.parse(commandName: commandName, flags: flags) {
                 return command

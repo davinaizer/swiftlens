@@ -93,6 +93,10 @@ swiftlens preset explain feature-modules
 ```
 
 ```bash
+swiftlens boundary list
+```
+
+```bash
 swiftlens scan .
 ```
 
@@ -126,6 +130,7 @@ swiftlens scan
 swiftlens baseline create
 swiftlens validate-config
 swiftlens init
+swiftlens boundary list
 swiftlens preset list
 swiftlens preset explain <PRESET>
 swiftlens rule explain <RULE-ID>
@@ -142,6 +147,89 @@ Supported flags:
 --path
 --verbose
 ```
+
+## Boundary Inspection
+
+SwiftLens can now inspect the effective boundary model without scanning source files.
+
+Workflow:
+
+1. Initialize or load a local config.
+2. Run `swiftlens boundary list`.
+3. Compare the rendered preset, ignore paths, and boundary scopes with the intended architecture.
+
+Examples:
+
+```bash
+swiftlens init --preset feature-modules
+swiftlens boundary list
+swiftlens boundary list --config .swiftlens.yml
+swiftlens preset explain feature-modules
+```
+
+Example output:
+
+```text
+Project Boundaries
+
+Preset:
+- feature-modules
+
+Ignored Paths:
+- .build/
+- .swiftpm/
+- DerivedData/
+
+Boundaries:
+- App/
+  Source:
+    - preset
+  Allows:
+    - Features/*
+    - Shared/*
+    - Core/*
+
+- Features/
+  Source:
+    - preset
+  Restricted Imports:
+    - Features/*
+  Notes:
+    - sibling feature imports are restricted
+
+- Shared/
+  Source:
+    - preset
+  Restricted Imports:
+    - Features/*
+
+- Core/
+  Source:
+    - preset
+  Restricted Imports:
+    - Features/*
+```
+
+This view is intentionally lightweight:
+
+- it is local-only
+- it is deterministic
+- it does not infer ownership or dependency graphs
+- it reflects preset defaults plus explicit config only
+
+## Preset Debugging
+
+Preset inspection is useful when onboarding or when a config override changes the expected boundary surface.
+
+Typical flow:
+
+```bash
+swiftlens preset list
+swiftlens preset explain feature-modules
+swiftlens boundary list --config .swiftlens.yml
+```
+
+Use `swiftlens preset explain <PRESET>` to inspect the built-in preset intent, then use `swiftlens boundary list` to inspect the effective boundary state after local config overrides and ignore paths are applied.
 
 ## Behavior Guarantees
 

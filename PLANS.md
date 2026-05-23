@@ -2,22 +2,23 @@
 
 ## Current Objective
 
-Phase 4 closed; Phase 5G authorized within the governed phase contract.
+Phase 4 closed; Phase 5H authorized within the governed phase contract.
 
 ## Current Phase
 
-- Current Authorized Phase: Phase 5G - Baseline / Regression Workflow.
+- Current Authorized Phase: Phase 5H - Boundary Inspection UX.
 - Current Implementation Status: Authorized / In Progress.
 - The active phase is the one defined in [docs/SwiftLens-project-action-plan.md](docs/SwiftLens-project-action-plan.md).
 - If the phase is undefined or disputed, resolve the docs first.
 
 ## Active Work
 
-1. Implement deterministic baseline creation and regression-only scan filtering for incremental adoption.
+1. Implement deterministic boundary inspection so users can inspect effective preset and config-scoped boundaries.
 
 ## Completed Work
 
 1. Refactor `AGENTS.md` into a compact bootstrap index that prioritizes `README.md`, `docs/README.md`, `docs/governance/README.md`, and `PLANS.md`, while leaving deeper specs behind the docs indexes.
+1. Implement deterministic baseline creation and regression-only scan filtering for incremental adoption.
 
 ## Rejection Rules
 

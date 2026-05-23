@@ -37,6 +37,15 @@ The built-in preset registry and canonical rule registry are discoverable throug
 - `swiftlens preset explain <preset>`
 - `swiftlens rule explain <rule-id>`
 
+Boundary inspection uses the same local config model and renders the effective state of:
+
+- preset defaults
+- `architecture.forbiddenImports`
+- `ignore.paths`
+- explicit `from:` scopes in configured boundary rules
+
+It does not infer or reconstruct architecture beyond the declared config.
+
 ## 2. Supported Top-Level Keys
 
 - `version`

@@ -163,6 +163,7 @@ enum CLICommand {
     case initCommand(InitOptions)
     case preset(PresetCLICommand)
     case rule(RuleCLICommand)
+    case boundary(BoundaryCLICommand)
 }
 
 enum PresetCLICommand {

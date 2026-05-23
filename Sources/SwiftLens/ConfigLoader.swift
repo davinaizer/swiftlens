@@ -15,7 +15,11 @@ struct ConfigLoader {
         self.presetRegistry = presetRegistry
     }
 
-    func load(configPath: String?, projectPathOverride: String?) throws -> LoadedConfiguration {
+    func load(
+        configPath: String?,
+        projectPathOverride: String?,
+        validateProjectRoot: Bool = true
+    ) throws -> LoadedConfiguration {
         let configURL = try resolveConfigURL(configPath: configPath)
         let contents: String
         do {
@@ -27,10 +31,21 @@ struct ConfigLoader {
         let root = try YAMLParser().parse(contents)
         let config = try ConfigLoaderParser(registry: registry, presetRegistry: presetRegistry)
             .buildConfig(from: root, configURL: configURL)
+        let boundaryInspection = BoundaryInspectionMetadata(
+            hasExplicitForbiddenImports: hasExplicitForbiddenImports(in: root)
+        )
         let projectRootURL = try resolveProjectRoot(
-            config.project.path, configURL: configURL, override: projectPathOverride)
+            config.project.path,
+            configURL: configURL,
+            override: projectPathOverride,
+            validateExists: validateProjectRoot
+        )
         return LoadedConfiguration(
-            configURL: configURL, projectRootURL: projectRootURL, config: config)
+            configURL: configURL,
+            projectRootURL: projectRootURL,
+            config: config,
+            boundaryInspection: boundaryInspection
+        )
     }
 
     func validate(configPath: String?) throws {
@@ -59,7 +74,12 @@ struct ConfigLoader {
         return defaultURL
     }
 
-    private func resolveProjectRoot(_ path: String, configURL: URL, override: String?) throws -> URL {
+    private func resolveProjectRoot(
+        _ path: String,
+        configURL: URL,
+        override: String?,
+        validateExists: Bool
+    ) throws -> URL {
         let base = override ?? path
         let rootBaseURL: URL
         if override == nil {
@@ -69,9 +89,40 @@ struct ConfigLoader {
         }
 
         let baseURL = URL(fileURLWithPath: base, relativeTo: rootBaseURL).standardizedFileURL
-        guard fileManager.fileExists(atPath: baseURL.path) else {
+        guard !validateExists || fileManager.fileExists(atPath: baseURL.path) else {
             throw SwiftLensError.configuration("Project path not found at \(baseURL.path).")
         }
         return baseURL
+    }
+
+    private func hasExplicitForbiddenImports(in root: YAMLValue) -> Bool {
+        guard case .mapping(let topLevel) = root else {
+            return false
+        }
+
+        if case .mapping(let architecture) = topLevel["architecture"],
+            architecture["forbiddenImports"] != nil {
+            return true
+        }
+
+        guard case .mapping(let rules) = topLevel["rules"] else {
+            return false
+        }
+
+        for (ruleID, value) in rules {
+            guard let canonicalRuleID = registry.canonicalRuleID(for: ruleID),
+                canonicalRuleID == ForbiddenImportRule.descriptor.id,
+                case .mapping(let ruleMapping) = value,
+                case .mapping(let configMapping) = ruleMapping["config"]
+            else {
+                continue
+            }
+
+            if configMapping["forbiddenImports"] != nil {
+                return true
+            }
+        }
+
+        return false
     }
 }

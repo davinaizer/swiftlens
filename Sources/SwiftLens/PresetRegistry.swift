@@ -5,6 +5,12 @@ struct PresetExpansion: Equatable, Sendable {
     let ruleOrder: [String]
 }
 
+struct PresetBoundaryBlueprint: Equatable, Sendable {
+    let path: String
+    let allows: [String]
+    let notes: [String]
+}
+
 struct PresetExplanation: Equatable, Sendable {
     let description: [String]
     let intendedStructure: [String]
@@ -16,6 +22,8 @@ struct PresetExplanation: Equatable, Sendable {
 struct PresetDescriptor: Equatable, Sendable {
     let id: String
     let expansion: PresetExpansion
+    let boundaryBlueprints: [PresetBoundaryBlueprint]
+    let boundaryScopeOrder: [String]
     let explanation: PresetExplanation
 }
 
@@ -31,6 +39,24 @@ struct PresetRegistry: Sendable {
                     ("UI", ["Data"])
                 ]
             ),
+            boundaryBlueprints: [
+                PresetBoundaryBlueprint(
+                    path: "App",
+                    allows: [
+                        "UI/*",
+                        "Domain/*",
+                        "Data/*",
+                        "Shared/*"
+                    ],
+                    notes: []
+                )
+            ],
+            boundaryScopeOrder: [
+                "App",
+                "UI",
+                "Domain",
+                "Shared"
+            ],
             explanation: PresetExplanation(
                 description: [
                     "Layered app governance for single-target or lightly modular projects."
@@ -67,6 +93,23 @@ struct PresetRegistry: Sendable {
                     ("Shared", ["Features"])
                 ]
             ),
+            boundaryBlueprints: [
+                PresetBoundaryBlueprint(
+                    path: "App",
+                    allows: [
+                        "Features/*",
+                        "Shared/*",
+                        "Core/*"
+                    ],
+                    notes: []
+                )
+            ],
+            boundaryScopeOrder: [
+                "App",
+                "Features",
+                "Shared",
+                "Core"
+            ],
             explanation: PresetExplanation(
                 description: [
                     "Feature-oriented governance for modular SwiftUI applications."
@@ -108,6 +151,23 @@ struct PresetRegistry: Sendable {
                     ("Shared", ["Features"])
                 ]
             ),
+            boundaryBlueprints: [
+                PresetBoundaryBlueprint(
+                    path: "App",
+                    allows: [
+                        "Features/*",
+                        "Shared/*",
+                        "Dependencies/*"
+                    ],
+                    notes: []
+                )
+            ],
+            boundaryScopeOrder: [
+                "App",
+                "Features",
+                "Shared",
+                "Dependencies"
+            ],
             explanation: PresetExplanation(
                 description: [
                     "Governance defaults for reducer-first TCA-style feature architectures."

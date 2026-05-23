@@ -38,6 +38,8 @@ enum SwiftLensCLI {
             return ExplainabilityCLI.executePreset(presetCommand)
         case .rule(let ruleCommand):
             return ExplainabilityCLI.executeRule(ruleCommand)
+        case .boundary(let boundaryCommand):
+            return BoundaryCLI.execute(boundaryCommand, fileManager: fileManager)
         }
     }
 
