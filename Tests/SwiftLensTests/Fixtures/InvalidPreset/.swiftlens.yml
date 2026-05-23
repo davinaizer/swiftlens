@@ -1,0 +1,6 @@
+version: 1
+preset: not-a-real-preset
+project:
+  path: .
+  include: []
+  exclude: []

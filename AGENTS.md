@@ -1,18 +1,24 @@
-# AGENTS.md — SwiftLens Documentation Pack
+# SwiftLens Agent Bootstrap
 
-- Read in this order:
-  1. `README.md`
-  2. `docs/prd.md`
-  3. `docs/tad.md`
-  4. `docs/SwiftLens-project-definition-pack.md`
-  5. `docs/SwiftLens-project-action-plan.md`
-  6. `PLANS.md`
-  7. `docs/project_bootstrap_guide.md`
-  8. `docs/README.md`
-  9. `docs/governance/README.md`
-  10. `docs/governance/WORKFLOW_CONTRACT.md`
-- `docs/governance/README.md` is the authoritative governance entrypoint.
-- Read docs on demand; do not crawl the repository unnecessarily.
-- Use repo entrypoints and existing scripts only.
-- Create or update `PLANS.md` before non-trivial multi-file work.
-- If something is undefined, resolve it in the governing docs first.
+Read only what the task needs.
+
+## Start Here
+
+- `README.md`
+- `docs/README.md`
+- `docs/governance/README.md`
+- `PLANS.md`
+
+## Open When Needed
+
+- `docs/prd.md`
+- `docs/tad.md`
+- `docs/SwiftLens-project-action-plan.md`
+- `docs/project_bootstrap_guide.md`
+- `docs/governance/WORKFLOW_CONTRACT.md`
+
+## Rules
+
+- Read docs on demand; do not crawl the repository.
+- Do not use `AGENTS.md` as a substitute for the docs.
+- Resolve governance questions in `docs/governance/README.md` first.

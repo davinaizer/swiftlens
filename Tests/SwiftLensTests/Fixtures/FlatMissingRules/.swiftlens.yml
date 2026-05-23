@@ -1,0 +1,10 @@
+project:
+  path: .
+  include: []
+  exclude: []
+architecture:
+  forbiddenImports:
+    -
+      from: Features/
+      imports:
+        - UIKit

@@ -302,6 +302,75 @@ Add the initial governance rules that operate on syntax, imports, paths, and dec
 - keep rule logic shallow and reviewable
 - add shared abstractions only after repeated duplication appears
 
+## Phase 5A - Preset Registry Foundation
+
+### Objective
+
+Introduce a deterministic built-in preset registry and preset expansion layer without changing the analysis model.
+
+### Allowed Capabilities
+
+- built-in preset registry
+- stable preset IDs
+- deterministic preset expansion
+- preset config parsing
+- unknown preset validation
+- fixture-backed preset tests
+
+### Forbidden Capabilities
+
+- semantic analysis
+- dependency graphs
+- rule packs beyond the preset registry layer
+- auto-discovery
+- init commands
+- baseline systems
+- boundary inspection
+- plugin systems
+- runtime downloads
+- graph infrastructure
+
+### Allowed Abstractions
+
+- small static registry
+- explicit preset descriptor types
+- deterministic merge pipeline
+- direct config normalization
+
+### Required Deliverables
+
+- built-in preset registry
+- deterministic preset expansion
+- stable preset identifiers
+- config parsing for `preset: <name>`
+- unknown preset validation with exit code `2`
+- fixture-backed tests for preset resolution and precedence
+
+### Exit Criteria
+
+- known presets resolve deterministically
+- unknown presets fail deterministically
+- preset expansion order is stable
+- explicit config remains authoritative over preset defaults
+- JSON output determinism remains intact
+
+### Explicit Non-Goals
+
+- semantic reconstruction
+- dependency graph generation
+- plugin ecosystems
+- dynamic preset discovery
+- runtime downloads
+- user-defined preset execution
+- architecture inference
+
+### Architectural Constraints
+
+- preserve deterministic execution
+- preserve syntax-first analysis boundaries
+- keep preset resolution local and static
+- do not introduce semantic, graph, or plugin infrastructure
+
 ## Phase 5 - Reporting and Validation
 
 ### Objective
@@ -359,6 +428,250 @@ Stabilize machine output, CI gating, and regression coverage without changing th
 - output must not change rule semantics
 - formatting must remain deterministic
 - reporter code must stay simple enough to audit
+
+## Phase 5E - Init UX
+
+### Objective
+
+Provide a deterministic `swiftlens init` flow that writes a minimal local `.swiftlens.yml` from the built-in preset registry.
+
+### Allowed Capabilities
+
+- `swiftlens init`
+- `swiftlens init --preset <name>`
+- deterministic config generation
+- overwrite protection with explicit `--force`
+- preset validation through the built-in registry
+- fixture-backed init tests
+
+### Forbidden Capabilities
+
+- interactive prompts
+- TUI flows
+- architecture auto-detection
+- rule packs
+- baseline workflows
+- boundary inspection
+- semantic analysis
+- graph systems
+- remote registries
+- plugins
+
+### Required Deliverables
+
+- init command routing
+- preset selection support
+- deterministic `.swiftlens.yml` generation
+- overwrite failure with exit code `2`
+- unknown preset failure with exit code `2`
+- init help output
+- tests for default, explicit preset, overwrite, and scan/validate round-trips
+
+### Exit Criteria
+
+- `swiftlens init` writes the same bytes in clean directories
+- `swiftlens init --preset feature-modules` writes the requested preset
+- existing configs are protected unless `--force` is used
+- generated configs validate and scan successfully
+
+### Explicit Non-Goals
+
+- interactive wizard flows
+- semantic analysis
+- graph infrastructure
+- plugin/runtime systems
+- remote preset fetching
+- architecture inference
+
+### Architectural Constraints
+
+- deterministic output only
+- local-only file I/O
+- no hidden state
+- no speculative abstraction layer
+
+## Phase 5F - Explainability UX
+
+### Objective
+
+Provide deterministic, read-only explainability commands for preset discovery and rule auditability.
+
+### Allowed Capabilities
+
+- `swiftlens preset list`
+- `swiftlens preset explain <preset>`
+- `swiftlens rule explain <rule-id>`
+- static explainability metadata for built-in presets and rules
+- deterministic terminal formatting
+- fixture-backed CLI tests
+
+### Forbidden Capabilities
+
+- semantic analysis
+- graph systems
+- plugin/runtime systems
+- remote registries
+- architecture inference
+- interactive TUI flows
+- baseline workflows
+- boundary inspection
+
+### Required Deliverables
+
+- preset listing command
+- preset explanation command
+- rule explanation command
+- deterministic formatting helper
+- help output updates
+- fixture-backed CLI tests for success, failure, and determinism
+- documentation updates for onboarding, schema, validation, and phase status
+
+### Exit Criteria
+
+- preset and rule explanations render identically across repeated runs
+- unknown preset and rule lookups fail with exit code `2`
+- help output exposes the new explainability commands
+- documentation reflects the new discovery workflow
+
+### Explicit Non-Goals
+
+- semantic analysis
+- dependency graphs
+- plugin/runtime systems
+- remote registries
+- architecture auto-detection
+- interactive TUI flows
+
+### Architectural Constraints
+
+- deterministic output only
+- local-only metadata lookup
+- no hidden state
+- no speculative abstraction layer
+
+## Phase 5G - Baseline / Regression Workflow
+
+### Objective
+
+Provide deterministic baseline creation and regression-only scan filtering so existing repositories can adopt SwiftLens incrementally without waiving the rule model.
+
+### Allowed Capabilities
+
+- `swiftlens baseline create`
+- `swiftlens scan --baseline <path>`
+- local JSON baseline serialization
+- deterministic violation fingerprinting
+- regression-only filtering after rule evaluation
+- fixture-backed baseline tests
+
+### Forbidden Capabilities
+
+- semantic analysis
+- graph systems
+- plugin/runtime systems
+- remote registries
+- architecture inference
+- interactive TUI flows
+- suppression comments
+- inline ignores
+- baseline editing UI
+
+### Required Deliverables
+
+- baseline creation command
+- deterministic baseline file format
+- baseline load and validation path
+- regression filtering stage in scan
+- fixture-backed tests for baseline creation, reuse, invalid files, and ordering
+- documentation updates for onboarding, schema, validation, and phase status
+
+### Exit Criteria
+
+- baseline creation is byte-stable for identical violations
+- scan with a baseline reports only new violations
+- invalid baselines fail with exit code `2`
+- stale baseline entries are ignored silently for MVP
+- documentation reflects incremental adoption and regression-only enforcement
+
+### Explicit Non-Goals
+
+- semantic analysis
+- dependency graphs
+- plugin/runtime systems
+- remote registries
+- architecture auto-detection
+- interactive TUI flows
+- suppression comments
+- inline ignores
+
+### Architectural Constraints
+
+- deterministic output only
+- local-only file I/O
+- no hidden state
+- no speculative abstraction layer
+
+## Phase 5H - Boundary Inspection UX
+
+### Objective
+
+Provide deterministic boundary visibility so users can inspect the effective architectural boundary model without scanning source files or inferring topology.
+
+### Allowed Capabilities
+
+- `swiftlens boundary list`
+- preset-aware boundary rendering
+- config-aware boundary rendering
+- ignore-path rendering
+- explicit `from:` scope rendering
+- fixture-backed inspection tests
+
+### Forbidden Capabilities
+
+- semantic analysis
+- dependency graphs
+- ownership systems
+- graph visualization
+- plugin/runtime systems
+- remote registries
+- architecture inference
+- IDE integrations
+- interactive TUI flows
+
+### Required Deliverables
+
+- boundary listing command
+- deterministic boundary resolution
+- preset-aware output rendering
+- config-aware output rendering
+- fixture-backed tests for presets, overrides, missing configs, invalid configs, help, and determinism
+- documentation updates for onboarding, schema, validation, and phase status
+
+### Exit Criteria
+
+- boundary output is byte-stable for identical configs
+- preset defaults and explicit config overrides are rendered deterministically
+- invalid configs fail with exit code `2`
+- help output exposes the boundary command
+- the boundary view remains local-only and governance-focused
+
+### Explicit Non-Goals
+
+- semantic reconstruction
+- dependency graph generation
+- ownership inference
+- auto-discovered architecture modeling
+- graph visualization
+- plugin surfaces
+- remote registries
+- interactive TUI
+
+### Architectural Constraints
+
+- preserve deterministic execution
+- preserve syntax-first analysis boundaries
+- keep boundary inspection local and non-recursive
+- do not introduce semantic, graph, or plugin infrastructure
 
 ## Phase 6 - Documentation Hardening
 

@@ -1,11 +1,21 @@
-project:
-  path: .
-  include: []
-  exclude: []
-rules:
-  ForbiddenImportRule:
-    enabled: true
-    config:
-      forbiddenImports:
-        - UIKit
+version: 1
 
+preset: app-layers
+
+ignore:
+  paths:
+    - .build/
+    - .swiftlens-bin/
+    - dist/
+    - DerivedData/
+    - Tests/SwiftLensTests/Fixtures/
+
+rules:
+  - architecture.forbidden-import
+
+architecture:
+  forbiddenImports:
+    -
+      from: Sources/
+      imports:
+        - UIKit

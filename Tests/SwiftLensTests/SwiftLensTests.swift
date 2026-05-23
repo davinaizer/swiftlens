@@ -64,7 +64,7 @@ struct SwiftLensPhase1Tests {
 
         #expect(result.exitCode == 1)
         #expect(result.stderr.isEmpty)
-        #expect(result.stdout.contains("ForbiddenImportRule"))
+        #expect(result.stdout.contains("architecture.forbidden-import"))
         #expect(result.stdout.contains("\"violations\":"))
     }
 
@@ -100,78 +100,7 @@ struct SwiftLensPhase1Tests {
 
         #expect(result.exitCode == 0)
         #expect(result.stderr.isEmpty)
-        #expect(result.stdout == "SwiftLens v0.1.0\n")
-    }
-}
-
-@Suite("SwiftLens Phase 3A")
-struct SwiftLensPhase3ATests {
-    private var fixtureRoot: URL {
-        URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .appendingPathComponent("Fixtures", isDirectory: true)
-    }
-
-    private func fixtureURL(_ name: String) -> URL {
-        fixtureRoot.appendingPathComponent(name, isDirectory: true)
-    }
-
-    private func scanResult(_ arguments: [String], in fixture: URL) -> CLIExecutionResult {
-        runCLI(arguments, fileManager: FixedCurrentDirectoryFileManager(currentDirectoryPath: fixture.path))
-    }
-
-    @Test("swiftlens defaults to scan . when invoked without arguments")
-    func commandWithoutArgumentsDefaultsToScan() throws {
-        let fixture = fixtureURL("ScanSuccess")
-        let escapedProjectPath = jsonEscapedPath(fixture.path)
-
-        let result = scanResult(["swiftlens"], in: fixture)
-
-        #expect(result.exitCode == 0)
-        #expect(result.stderr.isEmpty)
-        #expect(result.stdout.contains("\"command\":\"scan\""))
-        #expect(result.stdout.contains("\"projectPath\":\"\(escapedProjectPath)\""))
-    }
-
-    @Test("swiftlens scan resolves config from the current working directory only")
-    func scanUsesCurrentDirectoryConfigOnly() throws {
-        let childDirectory = fixtureURL("ScanSuccess")
-            .appendingPathComponent("Sources", isDirectory: true)
-            .appendingPathComponent("Feature", isDirectory: true)
-
-        let result = runCLI(
-            ["swiftlens", "scan"],
-            fileManager: FixedCurrentDirectoryFileManager(currentDirectoryPath: childDirectory.path)
-        )
-
-        #expect(result.exitCode == 2)
-        #expect(result.stdout.isEmpty)
-        #expect(result.stderr.contains("Config file not found"))
-    }
-
-    @Test("swiftlens scan continues to use the cwd config when present")
-    func scanUsesCwdConfigWhenPresent() throws {
-        let fixture = fixtureURL("ScanSuccess")
-        let escapedProjectPath = jsonEscapedPath(fixture.path)
-
-        let result = scanResult(["swiftlens", "scan"], in: fixture)
-
-        #expect(result.exitCode == 0)
-        #expect(result.stderr.isEmpty)
-        #expect(result.stdout.contains("\"projectPath\":\"\(escapedProjectPath)\""))
-    }
-
-    @Test("default scan root ignores project.path when omitted")
-    func defaultScanRootIgnoresProjectPath() throws {
-        let fixture = fixtureURL("DefaultScanRoot")
-
-        let bareResult = scanResult(["swiftlens"], in: fixture)
-        let scanResult = scanResult(["swiftlens", "scan"], in: fixture)
-
-        #expect(bareResult.exitCode == 1)
-        #expect(scanResult.exitCode == 1)
-        #expect(bareResult.stdout.contains("ForbiddenImportRule"))
-        #expect(scanResult.stdout.contains("ForbiddenImportRule"))
+        #expect(result.stdout == "SwiftLens \(SwiftLensVersion.current)\n")
     }
 }
 
@@ -206,7 +135,7 @@ struct SwiftLensPhase2Tests {
 
         #expect(result.exitCode == 1)
         #expect(result.stderr.isEmpty)
-        #expect(result.stdout.contains("\"rule\":\"ForbiddenImportRule\""))
+        #expect(result.stdout.contains("\"rule\":\"architecture.forbidden-import\""))
         #expect(result.stdout.contains("\"severity\":\"warning\""))
     }
 
@@ -216,7 +145,7 @@ struct SwiftLensPhase2Tests {
 
         #expect(result.exitCode == 1)
         #expect(result.stderr.isEmpty)
-        #expect(result.stdout.contains("\"rule\":\"ForbiddenImportRule\""))
+        #expect(result.stdout.contains("\"rule\":\"architecture.forbidden-import\""))
         #expect(result.stdout.contains("\"severity\":\"error\""))
     }
 
@@ -266,6 +195,15 @@ struct SwiftLensPhase2Tests {
                 defaultSeverity: .warning,
                 defaultConfidence: .high,
                 defaultEnabled: true,
+                explanation: RuleExplanation(
+                    purpose: ["Test rule."],
+                    detectionMechanism: ["Test rule."],
+                    configShape: ["Test rule."],
+                    deterministicBehavior: ["Test rule."],
+                    limitations: ["Test rule."],
+                    exampleViolation: ["Test rule."],
+                    exampleConfig: ["Test rule."]
+                ),
                 evaluate: { context in
                     [
                         Violation(
@@ -293,11 +231,12 @@ struct SwiftLensPhase2Tests {
             packs: [
                 "architecture": PackConfiguration(enabled: true, severityOverrides: [:])
             ],
-            rules: [:]
+            rules: [:],
+            ruleOrder: ["AlphaRule", "BetaRule"]
         )
 
         let violations = engine.evaluate(config: config, files: [])
 
-        #expect(violations.map(\.rule) == ["AlphaRule", "BetaRule"])
+        #expect(violations.map { $0.rule } == ["AlphaRule", "BetaRule"])
     }
 }

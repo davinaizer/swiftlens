@@ -10,6 +10,7 @@ Define the minimum checks required before merge, phase closure, or release.
 - The active phase must be explicit in `PLANS.md` before implementation begins.
 - Phase 2 and later work must follow TDD by default.
 - Relevant tests must fail first, then pass after the smallest code change.
+- `swiftlint lint` must pass before merge, phase closure, rule additions, config changes, reporter changes, and workflow/doc changes that affect Swift source or Swift tests.
 - `swift test` must pass before merge, phase closure, rule additions, config changes, and reporter changes.
 - Fixture-backed tests must cover file- or project-dependent behavior.
 - Phase 3A must be marked closed in `PLANS.md` before Phase 4 implementation begins.

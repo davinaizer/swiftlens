@@ -2,41 +2,99 @@ import Foundation
 
 struct ForbiddenImportRule {
     static let descriptor = RuleDescriptor(
-        id: "ForbiddenImportRule",
+        id: "architecture.forbidden-import",
         pack: "architecture",
         defaultSeverity: .error,
         defaultConfidence: .high,
         defaultEnabled: true,
         configKeys: ["forbiddenImports"],
+        explanation: RuleExplanation(
+            purpose: [
+                "Enforce explicit import boundaries declared by path-scoped governance rules."
+            ],
+            detectionMechanism: [
+                "Scan declared `import` statements only.",
+                "Normalize imported module names into path-like segments.",
+                "Match the file path against configured `from` scopes using prefix-boundary checks.",
+                "Compare the imported module against each configured forbidden import prefix.",
+                "Do not resolve symbols, build targets, transitive dependencies, or runtime behavior."
+            ],
+            configShape: [
+                "rules:",
+                "  - architecture.forbidden-import",
+                "architecture:",
+                "  forbiddenImports:",
+                "    -",
+                "      from: Features/",
+                "      imports:",
+                "        - Infrastructure"
+            ],
+            deterministicBehavior: [
+                "Matching is syntax-first and path-bound.",
+                "The same input config and source tree produce the same result on every run.",
+                "No semantic analysis or graph construction is performed."
+            ],
+            limitations: [
+                "Only declared imports are inspected.",
+                "The rule does not infer ownership or resolve module graphs.",
+                "Path and import matching are intentionally conservative."
+            ],
+            exampleViolation: [
+                "File: Features/Auth/AuthFeature.swift",
+                "import Infrastructure",
+                "This violates a scope that forbids `Infrastructure` imports from `Features/`."
+            ],
+            exampleConfig: [
+                "rules:",
+                "  - architecture.forbidden-import",
+                "architecture:",
+                "  forbiddenImports:",
+                "    -",
+                "      from: Features/",
+                "      imports:",
+                "        - Infrastructure"
+            ]
+        ),
         evaluate: { context in
             let forbiddenImports = Self.forbiddenImports(from: context.settings.config)
             guard !forbiddenImports.isEmpty else {
                 return []
             }
 
-            let forbidden = Set(forbiddenImports)
-            return context.files.flatMap { file in
-                file.imports.compactMap { imported in
-                    guard forbidden.contains(imported.module) else {
-                        return nil
+            var violations: [Violation] = []
+            for file in context.files {
+                for scope in forbiddenImports where pathMatchesPrefixBoundary(file.relativePath, prefix: scope.from) {
+                    let scopeLabel = scope.from.isEmpty ? "<root>" : scope.from
+                    for imported in file.imports where scope.imports.contains(where: {
+                        importMatchesScope(imported.module, scope: $0)
+                    }) {
+                        violations.append(
+                            Violation(
+                                rule: context.descriptor.id,
+                                pack: context.descriptor.pack,
+                                severity: context.settings.severity,
+                                confidence: context.settings.confidence,
+                                file: file.url.path,
+                                range: imported.range,
+                                reason: "Forbidden import `\(imported.module)` found in `\(scopeLabel)`.",
+                                fixPattern:
+                                    "Remove the forbidden import or move the code into an allowed module."
+                            )
+                        )
                     }
-
-                    return Violation(
-                        rule: context.descriptor.id,
-                        pack: context.descriptor.pack,
-                        severity: context.settings.severity,
-                        confidence: context.settings.confidence,
-                        file: file.url.path,
-                        range: imported.range,
-                        reason: "Forbidden import `\(imported.module)` found.",
-                        fixPattern: "Remove the forbidden import or move the code into an allowed module."
-                    )
                 }
             }
+
+            return violations
         }
     )
 
-    private static func forbiddenImports(from config: [String: YAMLValue]) -> [String] {
+    private struct ForbiddenImportScope {
+        let from: String
+        let imports: [String]
+    }
+
+    private static func forbiddenImports(from config: [String: YAMLValue]) -> [ForbiddenImportScope] {
         guard let value = config["forbiddenImports"] else {
             return []
         }
@@ -45,11 +103,45 @@ struct ForbiddenImportRule {
             return []
         }
 
-        return items.compactMap { item in
-            guard case .string(let string) = item else {
-                return nil
+        var scopes: [ForbiddenImportScope] = []
+        for item in items {
+            guard case .mapping(let mapping) = item else {
+                return []
             }
-            return string
+
+            guard let from = mapping["from"]?.stringValue else {
+                return []
+            }
+
+            let scope = normalizeRelativePath(from)
+            let imports: [String]
+            do {
+                imports = try ConfigValueDecoder().stringArrayValue(
+                    mapping["imports"],
+                    field: "architecture.forbiddenImports.imports"
+                )
+            } catch {
+                return []
+            }
+            scopes.append(ForbiddenImportScope(from: scope, imports: imports))
         }
+
+        return scopes
+    }
+
+    private static func importMatchesScope(_ module: String, scope: String) -> Bool {
+        pathMatchesPrefixBoundary(
+            module.replacingOccurrences(of: ".", with: "/"),
+            prefix: scope
+        )
+    }
+}
+
+private extension YAMLValue {
+    var stringValue: String? {
+        guard case .string(let string) = self else {
+            return nil
+        }
+        return string
     }
 }

@@ -50,16 +50,36 @@ struct ScanOptions: Equatable, Sendable {
     var format: String = "json"
     var path: String?
     var verbose: Bool = false
+    var baselinePath: String?
 }
 
 struct ValidationOptions: Equatable, Sendable {
     var configPath: String?
 }
 
+struct BoundaryInspectionMetadata: Equatable, Sendable {
+    let hasExplicitForbiddenImports: Bool
+}
+
+enum BoundarySource: String, Codable, Equatable, Sendable {
+    case preset
+    case explicitConfig = "explicit-config"
+}
+
+struct InitOptions: Equatable, Sendable {
+    var presetID: String?
+    var force: Bool = false
+    var showHelp: Bool = false
+}
+
 struct ProjectConfiguration: Equatable, Sendable {
     let path: String
     let include: [String]
     let exclude: [String]
+}
+
+struct IgnoreConfiguration: Equatable, Sendable {
+    let paths: [String]
 }
 
 struct PackConfiguration: Equatable, Sendable {
@@ -74,15 +94,35 @@ struct RuleConfiguration: Equatable, Sendable {
 }
 
 struct SwiftLensConfig: Equatable, Sendable {
+    let presetID: String?
     let project: ProjectConfiguration
     let packs: [String: PackConfiguration]
     let rules: [String: RuleConfiguration]
+    let ruleOrder: [String]
+    let ignore: IgnoreConfiguration
+
+    init(
+        presetID: String? = nil,
+        project: ProjectConfiguration,
+        packs: [String: PackConfiguration] = [:],
+        rules: [String: RuleConfiguration] = [:],
+        ruleOrder: [String] = [],
+        ignore: IgnoreConfiguration = IgnoreConfiguration(paths: [])
+    ) {
+        self.presetID = presetID
+        self.project = project
+        self.packs = packs
+        self.rules = rules
+        self.ruleOrder = ruleOrder
+        self.ignore = ignore
+    }
 }
 
 struct LoadedConfiguration: Equatable, Sendable {
     let configURL: URL
     let projectRootURL: URL
     let config: SwiftLensConfig
+    let boundaryInspection: BoundaryInspectionMetadata
 }
 
 struct ParsedImport: Equatable, Sendable {
@@ -92,6 +132,7 @@ struct ParsedImport: Equatable, Sendable {
 
 struct ParsedSwiftFile: Equatable, Sendable {
     let url: URL
+    let relativePath: String
     let imports: [ParsedImport]
 }
 

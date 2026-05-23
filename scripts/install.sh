@@ -5,6 +5,9 @@ set -eu
 repo_owner='davinaizer'
 repo_name='swiftlens'
 binary_name='swiftlens'
+asset_name='swiftlens-macos-arm64.tar.gz'
+version_file_url="https://raw.githubusercontent.com/$repo_owner/$repo_name/main/Sources/SwiftLens/Version.generated.swift"
+version_helper_url="https://raw.githubusercontent.com/$repo_owner/$repo_name/main/scripts/version-source.sh"
 
 log() {
     printf '%s\n' "swiftlens-install: $*"
@@ -46,7 +49,29 @@ case "$arch_name" in
         ;;
 esac
 
-release_url="https://github.com/$repo_owner/$repo_name/releases/latest/download/swiftlens-macos-arm64.tar.gz"
+tmpdir=$(mktemp -d "${TMPDIR:-/tmp}/swiftlens-install.XXXXXX")
+version_source_path="$tmpdir/version-source.sh"
+if ! curl -fsSL "$version_helper_url" -o "$version_source_path"; then
+    fail "unable to read version helper: $version_helper_url"
+fi
+
+# shellcheck disable=SC1090
+. "$version_source_path"
+
+resolve_release_version() {
+    if [ -n "${SWIFTLENS_INSTALL_VERSION:-}" ]; then
+        printf '%s\n' "$SWIFTLENS_INSTALL_VERSION"
+        return 0
+    fi
+
+    version_file_path="$tmpdir/Version.generated.swift"
+    if ! curl -fsSL "$version_file_url" -o "$version_file_path"; then
+        fail "unable to read version source: $version_file_url"
+    fi
+
+    release_version=$(swiftlens_version_from_file "$version_file_path") || fail "version source did not contain a release version: $version_file_url"
+    printf '%s\n' "$release_version"
+}
 
 resolve_install_dir() {
     candidate=$1
@@ -73,15 +98,21 @@ else
     fi
 fi
 
+release_version=$(resolve_release_version)
+release_url="https://github.com/$repo_owner/$repo_name/releases/download/$release_version/$asset_name"
+
 log "using install directory: $install_dir"
+log "using version source: $version_file_url"
+log "using release version: $release_version"
 log "downloading release: $release_url"
 
-tmpdir=$(mktemp -d "${TMPDIR:-/tmp}/swiftlens-install.XXXXXX")
 archive_path="$tmpdir/swiftlens.tar.gz"
 extract_dir="$tmpdir/extract"
 mkdir -p "$extract_dir"
 
-curl -fsSL "$release_url" -o "$archive_path"
+if ! curl -fsSL "$release_url" -o "$archive_path"; then
+    fail "unable to download $asset_name for $release_version. Publish the GitHub release before installing or set SWIFTLENS_INSTALL_VERSION."
+fi
 
 tar -xzf "$archive_path" -C "$extract_dir"
 

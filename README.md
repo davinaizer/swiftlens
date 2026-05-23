@@ -60,6 +60,8 @@ Requirements:
 curl -fsSL https://raw.githubusercontent.com/davinaizer/swiftlens/main/scripts/install.sh | sh
 ```
 
+This installs the release version defined in `Sources/SwiftLens/Version.generated.swift` by default. Set `SWIFTLENS_INSTALL_VERSION` if you need a different release.
+
 ```bash
 swiftlens version
 ```
@@ -75,15 +77,43 @@ swift build -c release
 ## Quick Start
 
 ```bash
-swiftlens
+brew install swiftlens
 ```
 
 ```bash
-swiftlens scan
+swiftlens init
+```
+
+```bash
+swiftlens preset list
+```
+
+```bash
+swiftlens preset explain feature-modules
+```
+
+```bash
+swiftlens boundary list
+```
+
+```bash
+swiftlens scan .
 ```
 
 ```bash
 swiftlens scan Sources --format json
+```
+
+```bash
+swiftlens baseline create
+```
+
+```bash
+swiftlens scan . --baseline .swiftlens/baseline.json
+```
+
+```bash
+swiftlens scan . --format json --baseline .swiftlens/baseline.json
 ```
 
 ```bash
@@ -97,7 +127,13 @@ Supported commands:
 ```text
 swiftlens
 swiftlens scan
+swiftlens baseline create
 swiftlens validate-config
+swiftlens init
+swiftlens boundary list
+swiftlens preset list
+swiftlens preset explain <PRESET>
+swiftlens rule explain <RULE-ID>
 swiftlens version
 swiftlens help
 ```
@@ -107,9 +143,93 @@ Supported flags:
 ```text
 --config
 --format
+--baseline
 --path
 --verbose
 ```
+
+## Boundary Inspection
+
+SwiftLens can now inspect the effective boundary model without scanning source files.
+
+Workflow:
+
+1. Initialize or load a local config.
+2. Run `swiftlens boundary list`.
+3. Compare the rendered preset, ignore paths, and boundary scopes with the intended architecture.
+
+Examples:
+
+```bash
+swiftlens init --preset feature-modules
+swiftlens boundary list
+swiftlens boundary list --config .swiftlens.yml
+swiftlens preset explain feature-modules
+```
+
+Example output:
+
+```text
+Project Boundaries
+
+Preset:
+- feature-modules
+
+Ignored Paths:
+- .build/
+- .swiftpm/
+- DerivedData/
+
+Boundaries:
+- App/
+  Source:
+    - preset
+  Allows:
+    - Features/*
+    - Shared/*
+    - Core/*
+
+- Features/
+  Source:
+    - preset
+  Restricted Imports:
+    - Features/*
+  Notes:
+    - sibling feature imports are restricted
+
+- Shared/
+  Source:
+    - preset
+  Restricted Imports:
+    - Features/*
+
+- Core/
+  Source:
+    - preset
+  Restricted Imports:
+    - Features/*
+```
+
+This view is intentionally lightweight:
+
+- it is local-only
+- it is deterministic
+- it does not infer ownership or dependency graphs
+- it reflects preset defaults plus explicit config only
+
+## Preset Debugging
+
+Preset inspection is useful when onboarding or when a config override changes the expected boundary surface.
+
+Typical flow:
+
+```bash
+swiftlens preset list
+swiftlens preset explain feature-modules
+swiftlens boundary list --config .swiftlens.yml
+```
+
+Use `swiftlens preset explain <PRESET>` to inspect the built-in preset intent, then use `swiftlens boundary list` to inspect the effective boundary state after local config overrides and ignore paths are applied.
 
 ## Behavior Guarantees
 
@@ -124,6 +244,31 @@ Supported flags:
 | Exit code `2`       | config or usage error                      |
 | Exit code `3`       | internal failure                           |
 
+## Incremental Adoption
+
+SwiftLens baselines support gradual rollout in existing repositories without changing the rule model.
+
+Workflow:
+
+1. Capture the current violation set as a local baseline.
+2. Keep the baseline under version control or in the repo workspace.
+3. Run scans against the baseline to report only regressions.
+4. Fix new violations without being blocked by legacy debt.
+
+Example:
+
+```bash
+swiftlens baseline create
+swiftlens scan . --baseline .swiftlens/baseline.json
+```
+
+Baseline behavior is deterministic and local-only:
+
+- baseline files are created from the current scan result
+- scan filtering suppresses only exact fingerprint matches
+- stale baseline entries are ignored for MVP
+- baseline filtering does not waive rules or alter rule semantics
+
 ## What SwiftLens Detects
 
 SwiftLens focuses on deterministic governance signals:
@@ -134,15 +279,70 @@ SwiftLens focuses on deterministic governance signals:
 - lightweight architectural heuristics
 - configurable governance rule packs
 
-## Example Configuration
+## Configuration
+
+SwiftLens reads `.swiftlens.yml` from the current working directory unless you pass `--config`.
+
+Supported top-level keys:
+
+- `project`
+- `packs`
+- `rules`
+- `architecture`
+- `ignore`
+
+Supported `project` fields:
+
+- `path`
+- `include`
+- `exclude`
+
+Supported `packs.architecture` fields:
+
+- `enabled`
+- `severityOverrides`
+
+Supported `rules` forms:
+
+- ordered enablement list, for example `rules: [architecture.forbidden-import]`
+- legacy keyed rule configuration, including `ForbiddenImportRule` as a compatibility alias
+
+Supported `architecture` fields:
+
+- `forbiddenImports`
+
+Supported `ignore` fields:
+
+- `paths`
+
+Example configuration:
 
 ```yaml
 project:
-  name: Alfred
-
+  path: .
+  include: []
+  exclude:
+    - .build/**
+    - .swiftlens-bin/**
+    - dist/**
+    - DerivedData/**
 rules:
   - architecture.forbidden-import
+architecture:
+  forbiddenImports:
+    -
+      from: Features/
+      imports:
+        - UIKit
+ignore:
+  paths:
+    - DerivedData/
 ```
+
+For the full schema and validation contract, see:
+
+- [`docs/config-schema.md`](docs/config-schema.md)
+- [`docs/config-validation.md`](docs/config-validation.md)
 
 ## Architecture Principles
 
@@ -196,6 +396,20 @@ Run SwiftLint:
 swiftlint lint
 ```
 
+Link a local build into a repo-local shim directory so it wins on `PATH`:
+
+```bash
+./scripts/dev-link.sh link
+export PATH="$PWD/.swiftlens-bin:$PATH"
+swiftlens --version
+```
+
+Remove the local shim:
+
+```bash
+./scripts/dev-link.sh unlink
+```
+
 SwiftLens development is:
 
 - governance-driven
@@ -213,10 +427,10 @@ Prerequisites:
 - `tar`
 - authenticated `gh` (`gh auth login`)
 
-1. Pick the release version, generate the version file, and tag it:
+1. Pick the release version, write the release version source, and tag it:
 
 ```bash
-./scripts/generate-version-file.sh vX.Y.Z
+./scripts/write-release-version-source.sh vX.Y.Z
 git add Sources/SwiftLens/Version.generated.swift
 git commit -m "chore: prepare vX.Y.Z"
 git tag vX.Y.Z
@@ -245,6 +459,8 @@ To verify the upload flow first:
 ```bash
 ./scripts/upload-release.sh vX.Y.Z --dry-run
 ```
+
+Publish the GitHub release as a normal release, not a pre-release, so the installer URL resolves correctly.
 
 4. Installers can then fetch the asset with:
 

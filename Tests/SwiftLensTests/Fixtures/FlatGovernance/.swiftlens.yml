@@ -1,0 +1,19 @@
+project:
+  path: .
+  include: []
+  exclude: []
+rules:
+  - architecture.forbidden-import
+architecture:
+  forbiddenImports:
+    -
+      from: Features/
+      imports:
+        - UIKit
+    -
+      from: Features/
+      imports:
+        - Foundation
+ignore:
+  paths:
+    - DerivedData/
