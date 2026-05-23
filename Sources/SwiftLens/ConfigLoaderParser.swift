@@ -6,7 +6,7 @@ struct ConfigLoaderParser {
     let rulePackRegistry: RulePackRegistry
     let decoder = ConfigValueDecoder()
 
-    func buildConfig(from root: YAMLValue, configURL: URL) throws -> SwiftLensConfig {
+    func buildConfig(from root: YAMLValue, configURL: URL) throws -> ConfigBuildResult {
         guard case .mapping(let topLevel) = root else {
             throw SwiftLensError.configuration("Config at \(configURL.path) must be a mapping.")
         }
@@ -22,24 +22,28 @@ struct ConfigLoaderParser {
         let architectureRuleConfig = try parseArchitecture(topLevel["architecture"])
         let ignore = try parseIgnore(topLevel["ignore"])
 
-        var rules = presetRuleExpansion?.rules ?? [:]
+        var resolvedRules = presetRuleExpansion?.ruleConfigurations ?? [:]
         if let architectureRuleConfig {
             let canonicalRuleID = ForbiddenImportRule.descriptor.id
-            let baseRuleConfiguration = rules[canonicalRuleID]
-            rules[canonicalRuleID] = mergeRuleConfiguration(
+            let baseRuleConfiguration = resolvedRules[canonicalRuleID]
+            resolvedRules[canonicalRuleID] = try GovernanceNormalization.mergeRuleConfiguration(
                 base: baseRuleConfiguration,
                 override: RuleConfiguration(
                     enabled: nil,
                     severity: nil,
                     config: architectureRuleConfig
-                )
+                ),
+                ruleID: canonicalRuleID,
+                source: .explicitConfig
             )
         }
 
         for (ruleID, ruleConfiguration) in legacyRuleState.ruleConfigurations {
-            rules[ruleID] = mergeRuleConfiguration(
-                base: rules[ruleID],
-                override: ruleConfiguration
+            resolvedRules[ruleID] = try GovernanceNormalization.mergeRuleConfiguration(
+                base: resolvedRules[ruleID],
+                override: ruleConfiguration,
+                ruleID: ruleID,
+                source: .explicitConfig
             )
         }
 
@@ -48,16 +52,25 @@ struct ConfigLoaderParser {
             explicitRuleOrder: legacyRuleState.ruleOrder,
             hasExplicitRules: rulesValue != nil
         )
-        return SwiftLensConfig(
+
+        let config = SwiftLensConfig(
             presetID: presetID,
             project: project,
-            rules: rules,
+            rules: resolvedRules.mapValues(\.configuration),
             ruleOrder: ruleOrder,
             ignore: ignore
         )
+
+        let governance = GovernanceResolution(
+            ruleConfigurations: resolvedRules,
+            ruleOrder: ruleOrder,
+            ignorePaths: ignore.paths
+        )
+
+        return ConfigBuildResult(config: config, governance: governance)
     }
 
-    private func validateTopLevelKeys(_ keys: Dictionary<String, YAMLValue>.Keys) throws {
+    private func validateTopLevelKeys(_ keys: [String]) throws {
         let allowedTopLevelKeys: Set<String> = [
             "version",
             "preset",
@@ -140,12 +153,12 @@ struct ConfigLoaderParser {
         return expansion
     }
 
-    private func presetRuleExpansion(for presetExpansion: PresetExpansion?) throws -> RulePackExpansion? {
+    private func presetRuleExpansion(for presetExpansion: PresetExpansion?) throws -> ResolvedRulePackExpansion? {
         guard let presetExpansion else {
             return nil
         }
 
-        return try rulePackRegistry.expansion(for: presetExpansion.packOrder)
+        return try rulePackRegistry.resolvedExpansion(for: presetExpansion.packOrder)
     }
 
     func mergedRuleOrder(
@@ -159,8 +172,12 @@ struct ConfigLoaderParser {
 
         var merged = presetRuleOrder ?? []
         var seen = Set(merged)
-        for ruleID in explicitRuleOrder where seen.insert(ruleID).inserted {
-            merged.append(ruleID)
+        for ruleID in explicitRuleOrder {
+            let canonicalRuleID = canonicalRuleID(for: ruleID) ?? ruleID
+            guard seen.insert(canonicalRuleID).inserted else {
+                continue
+            }
+            merged.append(canonicalRuleID)
         }
 
         return merged

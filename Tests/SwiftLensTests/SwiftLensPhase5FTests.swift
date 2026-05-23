@@ -52,6 +52,11 @@ Description
 
 Layered app governance for single-target or lightly modular projects.
 
+Composition
+
+pack: domain-ui-separation
+pack: app-shell
+
 Intended Structure
 
 Use this preset when a project is organized into broad app layers such as App, UI, Domain, Data, and Shared.
@@ -82,6 +87,12 @@ private let phase5FFeatureModulesExplanation = """
 Description
 
 Feature-oriented governance for modular SwiftUI applications.
+
+Composition
+
+pack: feature-isolation
+pack: shared-boundaries
+pack: app-shell
 
 Intended Structure
 
@@ -168,6 +179,10 @@ architecture:
     + "\n"
 
 private let phase5FFeatureIsolationPackExplanation = """
+Source
+
+pack: feature-isolation
+
 Description
 
 Restricts sibling feature imports for modular feature-oriented apps.

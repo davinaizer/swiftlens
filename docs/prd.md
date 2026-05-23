@@ -292,11 +292,13 @@ Required validation:
 
 Precedence:
 
-1. Built-in rule defaults establish base severity and config.
-2. `packs.<pack>.severityOverrides` overrides built-in severity for rules in that pack.
-3. `rules.<rule>.severity` overrides both built-in severity and pack-level severity.
-4. `rules.<rule>.config` merges over built-in rule config; unknown keys fail validation.
-5. CLI flags affect execution scope and reporter selection only.
+1. Explicit project config has highest precedence.
+2. Later pack defaults override earlier pack defaults.
+3. Earlier pack defaults override preset-owned fallback defaults, if any.
+4. Preset-owned fallback defaults override built-in rule defaults.
+5. Built-in rule defaults establish the lowest base severity and config.
+6. `rules.<rule>.severity` and `rules.<rule>.config` remain deterministic override inputs within the explicit project config layer.
+7. CLI flags affect execution scope and reporter selection only.
 
 ## 17. Release Criteria
 

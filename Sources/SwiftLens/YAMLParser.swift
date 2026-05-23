@@ -6,11 +6,57 @@ private struct YAMLLine {
     let content: String
 }
 
+struct YAMLMapping: Equatable, Sendable {
+    let entries: [(key: String, value: YAMLValue)]
+
+    init(_ entries: [(String, YAMLValue)] = []) {
+        self.entries = entries.map { (key: $0.0, value: $0.1) }
+    }
+
+    var isEmpty: Bool {
+        entries.isEmpty
+    }
+
+    var keys: [String] {
+        entries.map(\.key)
+    }
+
+    var orderedEntries: [(key: String, value: YAMLValue)] {
+        entries
+    }
+
+    var dictionary: [String: YAMLValue] {
+        var result: [String: YAMLValue] = [:]
+        for entry in entries {
+            result[entry.key] = entry.value
+        }
+        return result
+    }
+
+    subscript(_ key: String) -> YAMLValue? {
+        entries.last(where: { $0.key == key })?.value
+    }
+
+    static func == (lhs: YAMLMapping, rhs: YAMLMapping) -> Bool {
+        guard lhs.entries.count == rhs.entries.count else {
+            return false
+        }
+
+        for (left, right) in zip(lhs.entries, rhs.entries) {
+            guard left.key == right.key, left.value == right.value else {
+                return false
+            }
+        }
+
+        return true
+    }
+}
+
 indirect enum YAMLValue: Equatable, Sendable {
     case string(String)
     case bool(Bool)
     case array([YAMLValue])
-    case mapping([String: YAMLValue])
+    case mapping(YAMLMapping)
 }
 
 struct YAMLParser {
@@ -55,7 +101,7 @@ struct YAMLParser {
 
     private func parseMapping(lines: [YAMLLine], index: inout Int, expectedIndent: Int) throws
         -> YAMLValue {
-        var values: [String: YAMLValue] = [:]
+        var values: [(String, YAMLValue)] = []
 
         while index < lines.count {
             let line = lines[index]
@@ -84,31 +130,33 @@ struct YAMLParser {
             index += 1
 
             if !remainder.isEmpty {
-                values[key] = parseScalar(remainder)
+                values.append((key, parseScalar(remainder)))
                 continue
             }
 
             guard index < lines.count else {
-                values[key] = .mapping([:])
+                values.append((key, .mapping(YAMLMapping())))
                 continue
             }
 
             let nextLine = lines[index]
             guard nextLine.indent > expectedIndent else {
-                values[key] = .mapping([:])
+                values.append((key, .mapping(YAMLMapping())))
                 continue
             }
 
             if nextLine.content.hasPrefix("-") {
-                values[key] = try parseArray(
+                values.append((key, try parseArray(
                     lines: lines, index: &index, expectedIndent: nextLine.indent)
+                ))
             } else {
-                values[key] = try parseMapping(
+                values.append((key, try parseMapping(
                     lines: lines, index: &index, expectedIndent: nextLine.indent)
+                ))
             }
         }
 
-        return .mapping(values)
+        return .mapping(YAMLMapping(values))
     }
 
     private func parseArray(lines: [YAMLLine], index: inout Int, expectedIndent: Int) throws
@@ -138,13 +186,13 @@ struct YAMLParser {
             }
 
             guard index < lines.count else {
-                values.append(.mapping([:]))
+                values.append(.mapping(YAMLMapping()))
                 continue
             }
 
             let nextLine = lines[index]
             guard nextLine.indent > expectedIndent else {
-                values.append(.mapping([:]))
+                values.append(.mapping(YAMLMapping()))
                 continue
             }
 

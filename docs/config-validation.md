@@ -32,14 +32,16 @@ Preset resolution is deterministic:
 - built-in presets are resolved locally from the binary
 - unknown preset names are rejected with exit code `2`
 - preset defaults are expanded through built-in rule packs before explicit project config is applied
-- explicit project config overrides preset defaults
+- explicit project config overrides all preset-owned and pack-owned defaults
+- normalized rule IDs are canonicalized before merge
+- duplicate same-layer normalized scope identities are rejected with exit code `2`
 
 Rule-pack resolution is deterministic too:
 
 - built-in rule packs are resolved locally from the binary
 - unknown pack names are not user-configurable and are rejected as invalid top-level config when present
 - `swiftlens pack list` and `swiftlens pack explain <pack>` read the pack registry only
-- pack defaults are merged in preset-declared order and then rule-declared order
+- pack defaults are merged in preset-declared order, later pack defaults override earlier ones, and duplicate merged scopes preserve stable ordering
 
 Explainability lookups use the same built-in registries:
 
@@ -57,6 +59,7 @@ Boundary inspection is deterministic too:
 
 - `swiftlens boundary list` resolves the same local config model as scan and init
 - boundary rendering reflects the effective preset, ignore paths, and configured boundary scopes only
+- rendered sources use deterministic provenance labels such as `preset`, `pack: <id>`, and `explicit-config`
 - invalid configs return exit code `2` before any boundary output is rendered
 
 Baseline UX is deterministic too:
@@ -68,11 +71,11 @@ Baseline UX is deterministic too:
 
 ## 2. Precedence
 
-1. Preset defaults define the baseline when `preset` is set.
-2. Built-in rule defaults define the baseline.
-3. Built-in rule pack defaults apply in preset order.
-4. Explicit rule config overrides pack defaults.
-5. Rule-level config merges over built-in config.
+1. Explicit project config has highest precedence.
+2. Later pack defaults override earlier pack defaults.
+3. Earlier pack defaults override preset-owned fallback defaults, if any.
+4. Preset-owned fallback defaults override built-in rule defaults.
+5. Built-in rule defaults define the lowest baseline.
 6. CLI flags never mutate rule semantics.
 
 ## 3. Current Validation Behavior
@@ -85,8 +88,9 @@ Baseline UX is deterministic too:
 - unknown rule IDs are rejected
 - unknown preset names are rejected
 - `rules` may be either a canonical ordered list or the legacy keyed alias shape
+- duplicate rule list entries collapse deterministically after canonicalization
 - `architecture.forbiddenImports` is validated deterministically and path-bound with prefix/boundary matching
-- `ignore.paths` is applied before parsing discovered files
+- `ignore.paths` is normalized, deduplicated, and applied before parsing discovered files
 - `rules.<rule>.config` must be a mapping when provided
 - `rules.<rule>.severity` must be one of `advisory`, `warning`, or `error`
 - baseline files must decode as version `1` JSON with the documented baseline shape

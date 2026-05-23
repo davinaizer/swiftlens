@@ -351,7 +351,7 @@ Introduce a deterministic built-in preset registry and preset expansion layer wi
 - known presets resolve deterministically
 - unknown presets fail deterministically
 - preset expansion order is stable
-- explicit config remains authoritative over preset defaults
+- explicit config remains authoritative over preset and pack defaults
 - JSON output determinism remains intact
 
 ### Explicit Non-Goals
@@ -619,7 +619,7 @@ Provide deterministic baseline creation and regression-only scan filtering so ex
 
 ### Objective
 
-Provide deterministic boundary visibility so users can inspect the effective architectural boundary model without scanning source files or inferring topology.
+Provide deterministic boundary visibility so users can inspect the effective architectural boundary model, including normalized provenance, without scanning source files or inferring topology.
 
 ### Allowed Capabilities
 
@@ -655,6 +655,7 @@ Provide deterministic boundary visibility so users can inspect the effective arc
 
 - boundary output is byte-stable for identical configs
 - preset defaults and explicit config overrides are rendered deterministically
+- provenance labels remain stable across repeated normalization
 - invalid configs fail with exit code `2`
 - help output exposes the boundary command
 - the boundary view remains local-only and governance-focused

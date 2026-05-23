@@ -33,7 +33,7 @@ extension ConfigLoaderParser {
             }
 
             guard seen.insert(canonicalRuleID).inserted else {
-                throw SwiftLensError.configuration("Duplicate rule key `\(ruleID)`.")
+                continue
             }
             order.append(canonicalRuleID)
         }
@@ -41,12 +41,12 @@ extension ConfigLoaderParser {
         return (order, [:])
     }
 
-    func parseLegacyRules(_ mapping: [String: YAMLValue]) throws
+    func parseLegacyRules(_ mapping: YAMLMapping) throws
         -> (ruleOrder: [String], ruleConfigurations: [String: RuleConfiguration]) {
         var ruleConfigurations: [String: RuleConfiguration] = [:]
         var ruleIDs: [String] = []
 
-        for (ruleID, ruleValue) in mapping {
+        for (ruleID, ruleValue) in mapping.orderedEntries {
             guard let canonicalRuleID = canonicalRuleID(for: ruleID) else {
                 throw SwiftLensError.configuration("Unknown rule key `\(ruleID)`.")
             }
@@ -129,7 +129,7 @@ extension ConfigLoaderParser {
             return try canonicalForbiddenImportConfig(from: mapping["forbiddenImports"])
         }
 
-        return mapping
+        return mapping.dictionary
     }
 
     func parseArchitecture(_ value: YAMLValue?) throws -> [String: YAMLValue]? {
@@ -152,10 +152,10 @@ extension ConfigLoaderParser {
             "forbiddenImports": .array(
                 try parseForbiddenImportScopes(from: forbiddenImports)
                     .map { scope in
-                        YAMLValue.mapping([
-                            "from": YAMLValue.string(scope.from),
-                            "imports": YAMLValue.array(scope.imports.map(YAMLValue.string))
-                        ])
+                        YAMLValue.mapping(YAMLMapping([
+                            ("from", YAMLValue.string(scope.from)),
+                            ("imports", YAMLValue.array(scope.imports.map(YAMLValue.string)))
+                        ]))
                     }
             )
         ]
@@ -170,7 +170,7 @@ extension ConfigLoaderParser {
         try validateKeys(mapping.keys, allowed: ["paths"], subject: "`ignore`")
 
         return IgnoreConfiguration(
-            paths: try normalizedPathList(mapping["paths"], field: "ignore.paths")
+            paths: try normalizedIgnorePathList(mapping["paths"], field: "ignore.paths")
         )
     }
 
@@ -197,10 +197,10 @@ extension ConfigLoaderParser {
         return [
             "forbiddenImports": .array(
                 legacyImports.map { module in
-                    YAMLValue.mapping([
-                        "from": YAMLValue.string(""),
-                        "imports": YAMLValue.array([YAMLValue.string(module)])
-                    ])
+                    YAMLValue.mapping(YAMLMapping([
+                        ("from", YAMLValue.string("")),
+                        ("imports", YAMLValue.array([YAMLValue.string(module)]))
+                    ]))
                 }
             )
         ]
@@ -215,7 +215,12 @@ extension ConfigLoaderParser {
         return rawPaths.map(normalizeRelativePath)
     }
 
-    func requireMapping(_ value: YAMLValue, field: String) throws -> [String: YAMLValue] {
+    func normalizedIgnorePathList(_ value: YAMLValue?, field: String) throws -> [String] {
+        let rawPaths = try normalizedPathList(value, field: field)
+        return GovernanceNormalization.mergeIgnorePaths(base: [], override: rawPaths)
+    }
+
+    func requireMapping(_ value: YAMLValue, field: String) throws -> YAMLMapping {
         guard case .mapping(let mapping) = value else {
             throw SwiftLensError.configuration("\(field) must be a mapping.")
         }
@@ -223,7 +228,7 @@ extension ConfigLoaderParser {
     }
 
     func validateKeys(
-        _ keys: Dictionary<String, YAMLValue>.Keys,
+        _ keys: [String],
         allowed: Set<String>,
         subject: String
     ) throws {
@@ -240,14 +245,4 @@ extension ConfigLoaderParser {
         registry.canonicalRuleID(for: ruleID)
     }
 
-    func mergeRuleConfiguration(
-        base: RuleConfiguration?,
-        override: RuleConfiguration
-    ) -> RuleConfiguration {
-        RuleConfiguration(
-            enabled: override.enabled ?? base?.enabled,
-            severity: override.severity ?? base?.severity,
-            config: base?.config.merging(override.config) { _, new in new } ?? override.config
-        )
-    }
 }

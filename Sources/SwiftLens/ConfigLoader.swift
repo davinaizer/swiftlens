@@ -32,7 +32,7 @@ struct ConfigLoader {
         }
 
         let root = try YAMLParser().parse(contents)
-        let config = try ConfigLoaderParser(
+        let buildResult = try ConfigLoaderParser(
             registry: registry,
             presetRegistry: presetRegistry,
             rulePackRegistry: rulePackRegistry
@@ -42,7 +42,7 @@ struct ConfigLoader {
             hasExplicitForbiddenImports: hasExplicitForbiddenImports(in: root)
         )
         let projectRootURL = try resolveProjectRoot(
-            config.project.path,
+            buildResult.config.project.path,
             configURL: configURL,
             override: projectPathOverride,
             validateExists: validateProjectRoot
@@ -50,8 +50,9 @@ struct ConfigLoader {
         return LoadedConfiguration(
             configURL: configURL,
             projectRootURL: projectRootURL,
-            config: config,
-            boundaryInspection: boundaryInspection
+            config: buildResult.config,
+            boundaryInspection: boundaryInspection,
+            governance: buildResult.governance
         )
     }
 
@@ -116,7 +117,7 @@ struct ConfigLoader {
             return false
         }
 
-        for (ruleID, value) in rules {
+        for (ruleID, value) in rules.orderedEntries {
             guard let canonicalRuleID = registry.canonicalRuleID(for: ruleID),
                 canonicalRuleID == ForbiddenImportRule.descriptor.id,
                 case .mapping(let ruleMapping) = value,

@@ -8,7 +8,7 @@ struct BoundaryInspectionReport: Equatable, Sendable {
 
 struct BoundaryInspectionEntry: Equatable, Sendable {
     let path: String
-    let sources: [BoundarySource]
+    let sources: [GovernanceSource]
     let allows: [String]
     let restrictedImports: [String]
     let notes: [String]
@@ -34,7 +34,7 @@ struct BoundaryInspector {
         guard let descriptor = registry.descriptor(for: canonicalRuleID) else {
             return BoundaryInspectionReport(
                 presetID: presetID,
-                ignoredPaths: loadedConfiguration.config.ignore.paths,
+                ignoredPaths: loadedConfiguration.governance.ignorePaths,
                 boundaries: []
             )
         }
@@ -43,7 +43,7 @@ struct BoundaryInspector {
         guard settings.enabled else {
             return BoundaryInspectionReport(
                 presetID: presetID,
-                ignoredPaths: loadedConfiguration.config.ignore.paths,
+                ignoredPaths: loadedConfiguration.governance.ignorePaths,
                 boundaries: []
             )
         }
@@ -70,7 +70,7 @@ struct BoundaryInspector {
 
         return BoundaryInspectionReport(
             presetID: presetID,
-            ignoredPaths: loadedConfiguration.config.ignore.paths,
+            ignoredPaths: loadedConfiguration.governance.ignorePaths,
             boundaries: boundaries
         )
     }
@@ -79,35 +79,23 @@ struct BoundaryInspector {
         loadedConfiguration: LoadedConfiguration,
         canonicalRuleID: String
     ) throws -> [BoundaryInspectionEntry] {
-        guard let ruleConfig = loadedConfiguration.config.rules[canonicalRuleID] else {
+        guard let ruleResolution = loadedConfiguration.governance.ruleConfigurations[canonicalRuleID] else {
             return []
         }
 
-        let source: BoundarySource = loadedConfiguration.boundaryInspection.hasExplicitForbiddenImports
-            ? .explicitConfig
-            : .preset
-
-        let scopes = try ForbiddenImportSupport.decodeScopes(
-            from: ruleConfig.config["forbiddenImports"],
-            field: "forbiddenImports"
-        )
-        let orderedScopes = source == .preset
-            ? orderedPresetScopes(scopes, presetID: loadedConfiguration.config.presetID)
-            : scopes
-        return try boundaryEntries(scopes: orderedScopes, source: source)
+        return try boundaryEntries(scopes: ruleResolution.forbiddenImportScopes)
     }
 
     private func boundaryEntries(
-        scopes: [ForbiddenImportScope],
-        source: BoundarySource
+        scopes: [ResolvedForbiddenImportScope]
     ) throws -> [BoundaryInspectionEntry] {
         scopes.map { scope in
             BoundaryInspectionEntry(
-                path: displayPath(scope.from),
-                sources: [source],
+                path: displayPath(scope.scope.from),
+                sources: [scope.source],
                 allows: [],
-                restrictedImports: scope.imports.map(displayImportPattern),
-                notes: source == .preset ? presetNotes(for: scope) : []
+                restrictedImports: scope.scope.imports.map(displayImportPattern),
+                notes: scope.source == .preset ? presetNotes(for: scope.scope) : []
             )
         }
     }
@@ -119,33 +107,6 @@ struct BoundaryInspector {
             return ["sibling feature imports are restricted"]
         }
         return []
-    }
-
-    private func orderedPresetScopes(
-        _ scopes: [ForbiddenImportScope],
-        presetID: String?
-    ) -> [ForbiddenImportScope] {
-        guard let presetID,
-            let descriptor = presetRegistry.descriptor(for: presetID) else {
-            return scopes
-        }
-
-        let order = descriptor.boundaryScopeOrder
-        let orderIndex: [String: Int] = Dictionary(
-            uniqueKeysWithValues: order.enumerated().map { (normalizeRelativePath($0.element), $0.offset) }
-        )
-
-        return scopes.sorted { left, right in
-            let leftIndex = orderIndex[normalizeRelativePath(left.from)] ?? Int.max
-            let rightIndex = orderIndex[normalizeRelativePath(right.from)] ?? Int.max
-            if leftIndex != rightIndex {
-                return leftIndex < rightIndex
-            }
-            if normalizeRelativePath(left.from) != normalizeRelativePath(right.from) {
-                return normalizeRelativePath(left.from) < normalizeRelativePath(right.from)
-            }
-            return left.imports.joined(separator: ",") < right.imports.joined(separator: ",")
-        }
     }
 
     private func displayPath(_ path: String) -> String {

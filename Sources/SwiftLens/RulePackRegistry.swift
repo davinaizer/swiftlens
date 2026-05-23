@@ -82,10 +82,10 @@ enum ForbiddenImportSupport {
     static func encodeScopes(_ scopes: [ForbiddenImportScope]) -> YAMLValue {
         .array(
             scopes.map { scope in
-                .mapping([
-                    "from": .string(normalizeRelativePath(scope.from)),
-                    "imports": .array(scope.imports.map(YAMLValue.string))
-                ])
+                .mapping(YAMLMapping([
+                    ("from", .string(normalizeRelativePath(scope.from))),
+                    ("imports", .array(scope.imports.map(YAMLValue.string)))
+                ]))
             }
         )
     }
@@ -146,9 +146,17 @@ struct RulePackRegistry: Sendable {
     }
 
     func expansion(for packIDs: [String]) throws -> RulePackExpansion {
+        let resolved = try resolvedExpansion(for: packIDs)
+        return RulePackExpansion(
+            rules: resolved.ruleConfigurations.mapValues(\.configuration),
+            ruleOrder: resolved.ruleOrder
+        )
+    }
+
+    func resolvedExpansion(for packIDs: [String]) throws -> ResolvedRulePackExpansion {
         var ruleOrder: [String] = []
         var seenRuleIDs: Set<String> = []
-        var resolvedRules: [String: RuleConfiguration] = [:]
+        var resolvedRules: [String: ResolvedRuleConfiguration] = [:]
 
         for packID in packIDs {
             guard let descriptor = descriptor(for: packID) else {
@@ -160,15 +168,16 @@ struct RulePackRegistry: Sendable {
             }
 
             for (ruleID, ruleConfiguration) in descriptor.expansion.rules {
-                resolvedRules[ruleID] = try mergeRuleConfiguration(
+                resolvedRules[ruleID] = try GovernanceNormalization.mergeRuleConfiguration(
                     base: resolvedRules[ruleID],
                     override: ruleConfiguration,
-                    ruleID: ruleID
+                    ruleID: ruleID,
+                    source: .pack(packID)
                 )
             }
         }
 
-        return RulePackExpansion(rules: resolvedRules, ruleOrder: ruleOrder)
+        return ResolvedRulePackExpansion(ruleConfigurations: resolvedRules, ruleOrder: ruleOrder)
     }
 
     private static func makeDefaultRegistry() -> RulePackRegistry {
@@ -177,40 +186,6 @@ struct RulePackRegistry: Sendable {
         } catch {
             preconditionFailure("Built-in rule pack registry must be valid: \(error)")
         }
-    }
-
-    private func mergeRuleConfiguration(
-        base: RuleConfiguration?,
-        override: RuleConfiguration,
-        ruleID: String
-    ) throws -> RuleConfiguration {
-        let enabled = override.enabled ?? base?.enabled
-        let severity = override.severity ?? base?.severity
-        let config = try mergeRuleConfig(
-            base: base?.config ?? [:],
-            override: override.config,
-            ruleID: ruleID
-        )
-
-        return RuleConfiguration(enabled: enabled, severity: severity, config: config)
-    }
-
-    private func mergeRuleConfig(
-        base: [String: YAMLValue],
-        override: [String: YAMLValue],
-        ruleID: String
-    ) throws -> [String: YAMLValue] {
-        var merged = base.merging(override) { _, new in new }
-
-        guard ruleID == ForbiddenImportRule.descriptor.id else {
-            return merged
-        }
-
-        let baseScopes = try ForbiddenImportSupport.scopes(from: base)
-        let overrideScopes = try ForbiddenImportSupport.scopes(from: override)
-        let mergedScopes = ForbiddenImportSupport.mergeScopes(base: baseScopes, override: overrideScopes)
-        merged["forbiddenImports"] = ForbiddenImportSupport.encodeScopes(mergedScopes)
-        return merged
     }
 
 }

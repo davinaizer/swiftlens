@@ -46,8 +46,10 @@ Boundary inspection uses the same local config model and renders the effective s
 - `architecture.forbiddenImports`
 - `ignore.paths`
 - explicit `from:` scopes in configured boundary rules
+The rendered boundaries also surface deterministic source provenance such as `preset`, `pack: <id>`, and `explicit-config`.
 
 It does not infer or reconstruct architecture beyond the declared config.
+The rendered state is normalized deterministically, with canonical rule IDs, stable ordering, and deduplicated ignore paths.
 
 ## 2. Supported Top-Level Keys
 
@@ -92,7 +94,7 @@ Rule packs are built into the binary and are not user-configurable in `.swiftlen
 
 | Field | Type | Required | Notes |
 | --- | --- | --- | --- |
-| `rules` | string array | no | Ordered enablement list for canonical rule IDs |
+| `rules` | string array | no | Ordered enablement list for canonical rule IDs; duplicate entries collapse deterministically after normalization |
 | `rules.<rule>.enabled` | boolean | yes | Legacy alias path for compatibility |
 | `rules.<rule>.severity` | enum | no | Legacy alias path for compatibility |
 | `rules.<rule>.config` | map | no | Legacy alias path for compatibility |
@@ -106,6 +108,7 @@ The current canonical rule-family config lives under:
 - `architecture.forbiddenImports`
 
 The legacy `ForbiddenImportRule` rule-config shape remains accepted as a compatibility alias.
+When normalized, `architecture.forbiddenImports` is merged deterministically with later explicit overrides replacing earlier same-scope definitions and duplicate same-layer scope identities rejected with exit code `2`.
 
 ## 6. Example
 

@@ -414,6 +414,7 @@ dependency-direction
 Deliver:
 
 - local config overrides for preset-generated config
+- deterministic normalization of canonical rule IDs, scope identities, and ignore paths
 - deterministic merge precedence
 - tests for override behavior
 
@@ -424,6 +425,7 @@ Precedence:
 | explicit project config | highest  |
 | later pack defaults     | middle   |
 | earlier pack defaults   | lower    |
+| preset-owned fallback defaults, if any | lower still |
 | built-in rule defaults  | lowest   |
 
 ### Phase 5E — Init UX
@@ -459,6 +461,7 @@ Purpose:
 - improve trust
 - reduce config confusion
 - make presets auditable
+- surface deterministic effective sources such as `preset`, `pack: <id>`, and `explicit-config`
 
 ### Phase 5G — Baseline / Regression Workflow
 
@@ -489,6 +492,7 @@ Purpose:
 
 - show discovered zones/features
 - help users understand what SwiftLens thinks the architecture is
+- render effective boundary provenance from normalized preset and pack composition
 - inspired by Fallow’s boundary-listing UX
 
 ---
@@ -532,7 +536,7 @@ All preset behavior must preserve:
 - `app-layers` enforces basic layer rules
 - `feature-modules` enforces sibling-feature isolation
 - `tca-features` enforces conservative reducer/feature boundaries
-- explicit config overrides preset defaults
+- explicit config overrides preset and pack defaults deterministically
 
 ### CLI Tests
 

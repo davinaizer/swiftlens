@@ -94,21 +94,19 @@ struct SwiftLensPhase5HTests {
 
         - Features/
           Source:
-            - preset
+            - pack: feature-isolation
           Restricted Imports:
             - Features/*
-          Notes:
-            - sibling feature imports are restricted
 
         - Shared/
           Source:
-            - preset
+            - pack: shared-boundaries
           Restricted Imports:
             - Features/*
 
         - Core/
           Source:
-            - preset
+            - pack: shared-boundaries
           Restricted Imports:
             - Features/*
         """
@@ -175,6 +173,18 @@ struct SwiftLensPhase5HTests {
             - explicit-config
           Restricted Imports:
             - Foundation
+
+        - Shared/
+          Source:
+            - pack: shared-boundaries
+          Restricted Imports:
+            - Features/*
+
+        - Core/
+          Source:
+            - pack: shared-boundaries
+          Restricted Imports:
+            - Features/*
         """
             + "\n"
 

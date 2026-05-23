@@ -61,9 +61,75 @@ struct BoundaryInspectionMetadata: Equatable, Sendable {
     let hasExplicitForbiddenImports: Bool
 }
 
-enum BoundarySource: String, Codable, Equatable, Sendable {
+enum GovernanceSource: Equatable, Hashable, Sendable {
+    case builtInRuleDefaults
+    case presetOwnedFallbackDefaults
     case preset
-    case explicitConfig = "explicit-config"
+    case pack(String)
+    case explicitConfig
+
+    var displayName: String {
+        switch self {
+        case .builtInRuleDefaults:
+            return "built-in-rule-defaults"
+        case .presetOwnedFallbackDefaults:
+            return "preset-owned-fallback-defaults"
+        case .preset:
+            return "preset"
+        case .pack(let packID):
+            return "pack: \(packID)"
+        case .explicitConfig:
+            return "explicit-config"
+        }
+    }
+}
+
+extension GovernanceSource: Codable {
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        let value = try container.decode(String.self)
+        switch value {
+        case "built-in-rule-defaults":
+            self = .builtInRuleDefaults
+        case "preset-owned-fallback-defaults":
+            self = .presetOwnedFallbackDefaults
+        case "preset":
+            self = .preset
+        case "explicit-config":
+            self = .explicitConfig
+        default:
+            if value.hasPrefix("pack: ") {
+                self = .pack(String(value.dropFirst("pack: ".count)))
+            } else {
+                throw DecodingError.dataCorruptedError(
+                    in: container,
+                    debugDescription: "Unknown governance source `\(value)`."
+                )
+            }
+        }
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(displayName)
+    }
+}
+
+struct ResolvedForbiddenImportScope: Equatable, Sendable {
+    let scope: ForbiddenImportScope
+    let source: GovernanceSource
+}
+
+struct ResolvedRuleConfiguration: Equatable, Sendable {
+    let configuration: RuleConfiguration
+    let sources: [GovernanceSource]
+    let forbiddenImportScopes: [ResolvedForbiddenImportScope]
+}
+
+struct GovernanceResolution: Equatable, Sendable {
+    let ruleConfigurations: [String: ResolvedRuleConfiguration]
+    let ruleOrder: [String]
+    let ignorePaths: [String]
 }
 
 struct InitOptions: Equatable, Sendable {
@@ -115,6 +181,12 @@ struct LoadedConfiguration: Equatable, Sendable {
     let projectRootURL: URL
     let config: SwiftLensConfig
     let boundaryInspection: BoundaryInspectionMetadata
+    let governance: GovernanceResolution
+}
+
+struct ConfigBuildResult: Equatable, Sendable {
+    let config: SwiftLensConfig
+    let governance: GovernanceResolution
 }
 
 struct ParsedImport: Equatable, Sendable {

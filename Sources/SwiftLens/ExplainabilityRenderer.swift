@@ -18,6 +18,10 @@ enum ExplainabilityRenderer {
     static func renderPresetExplanation(_ descriptor: PresetDescriptor) -> String {
         renderSections([
             ("Description", descriptor.explanation.description),
+            (
+                "Composition",
+                descriptor.expansion.packOrder.map { "pack: \($0)" }
+            ),
             ("Intended Structure", descriptor.explanation.intendedStructure),
             ("Governance Defaults", descriptor.explanation.governanceDefaults),
             ("Example Layout", descriptor.explanation.exampleLayout),
@@ -41,6 +45,10 @@ enum ExplainabilityRenderer {
 
     static func renderPackExplanation(_ descriptor: RulePackDescriptor) -> String {
         var lines: [String] = []
+        lines.append("Source")
+        lines.append("")
+        lines.append("pack: \(descriptor.id)")
+        lines.append("")
         lines.append("Description")
         lines.append("")
         lines.append(contentsOf: descriptor.explanation.description)

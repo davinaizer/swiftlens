@@ -161,6 +161,7 @@ Supported flags:
 ## Boundary Inspection
 
 SwiftLens can now inspect the effective boundary model without scanning source files.
+The rendered sources are deterministic and use provenance labels such as `preset`, `pack: <id>`, and `explicit-config`.
 
 Workflow:
 
@@ -201,21 +202,19 @@ Boundaries:
 
 - Features/
   Source:
-    - preset
+    - pack: feature-isolation
   Restricted Imports:
     - Features/*
-  Notes:
-    - sibling feature imports are restricted
 
 - Shared/
   Source:
-    - preset
+    - pack: shared-boundaries
   Restricted Imports:
     - Features/*
 
 - Core/
   Source:
-    - preset
+    - pack: shared-boundaries
   Restricted Imports:
     - Features/*
 ```
