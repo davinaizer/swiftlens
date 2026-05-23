@@ -4,15 +4,18 @@ struct ConfigLoader {
     private let fileManager: FileManager
     private let registry: RuleRegistry
     private let presetRegistry: PresetRegistry
+    private let rulePackRegistry: RulePackRegistry
 
     init(
         fileManager: FileManager = .default,
         registry: RuleRegistry = .default,
-        presetRegistry: PresetRegistry = .default
+        presetRegistry: PresetRegistry = .default,
+        rulePackRegistry: RulePackRegistry = .default
     ) {
         self.fileManager = fileManager
         self.registry = registry
         self.presetRegistry = presetRegistry
+        self.rulePackRegistry = rulePackRegistry
     }
 
     func load(
@@ -29,7 +32,11 @@ struct ConfigLoader {
         }
 
         let root = try YAMLParser().parse(contents)
-        let config = try ConfigLoaderParser(registry: registry, presetRegistry: presetRegistry)
+        let config = try ConfigLoaderParser(
+            registry: registry,
+            presetRegistry: presetRegistry,
+            rulePackRegistry: rulePackRegistry
+        )
             .buildConfig(from: root, configURL: configURL)
         let boundaryInspection = BoundaryInspectionMetadata(
             hasExplicitForbiddenImports: hasExplicitForbiddenImports(in: root)

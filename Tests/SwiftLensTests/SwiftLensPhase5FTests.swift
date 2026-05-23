@@ -27,6 +27,26 @@ Available presets:
 """
     + "\n"
 
+private let phase5FPackListOutput = """
+Available rule packs:
+
+- feature-isolation
+  Restricts sibling feature imports for modular feature-oriented apps.
+
+- shared-boundaries
+  Prevents shared support code from depending on features.
+
+- app-shell
+  Defines the app composition-root boundary.
+
+- domain-ui-separation
+  Separates UI code from domain and data-layer dependencies.
+
+- dependency-direction
+  Constrains dependency clients and feature code to approved import directions.
+"""
+    + "\n"
+
 private let phase5FAppLayersExplanation = """
 Description
 
@@ -147,16 +167,64 @@ architecture:
 """
     + "\n"
 
+private let phase5FFeatureIsolationPackExplanation = """
+Description
+
+Restricts sibling feature imports for modular feature-oriented apps.
+
+Enabled Rules
+
+- architecture.forbidden-import
+
+Generated Boundaries
+
+- Features/
+  Restricted Imports:
+    - Features/*
+  Notes:
+    - Sibling feature imports are restricted.
+
+Intended Usage
+
+Use this pack when features should remain isolated from other features.
+
+Notes
+
+This pack is syntax-first and path-bound.
+
+Limitations
+
+It does not infer ownership or transitive module graphs.
+"""
+    + "\n"
+
 private let phase5FPresetUsage = """
 SwiftLens \(SwiftLensVersion.current)
 
 Usage:
   swiftlens preset list
   swiftlens preset explain <PRESET>
+  swiftlens pack list
+  swiftlens pack explain <PACK>
 
 Commands:
   swiftlens preset list
   swiftlens preset explain <PRESET>
+  swiftlens pack list
+  swiftlens pack explain <PACK>
+"""
+    + "\n"
+
+private let phase5FPackUsage = """
+SwiftLens \(SwiftLensVersion.current)
+
+Usage:
+  swiftlens pack list
+  swiftlens pack explain <PACK>
+
+Commands:
+  swiftlens pack list
+  swiftlens pack explain <PACK>
 """
     + "\n"
 
@@ -224,6 +292,44 @@ struct SwiftLensPhase5FTests {
         #expect(result.stdout == repeatResult.stdout)
     }
 
+    @Test("pack list renders stable ordering and formatting")
+    func packListRendersStableOrderingAndFormatting() throws {
+        let result = phase5FRunCLI(["swiftlens", "pack", "list"])
+        let repeatResult = phase5FRunCLI(["swiftlens", "pack", "list"])
+
+        #expect(result.exitCode == 0)
+        #expect(repeatResult.exitCode == 0)
+        #expect(result.stderr.isEmpty)
+        #expect(repeatResult.stderr.isEmpty)
+        #expect(result.stdout == phase5FPackListOutput)
+        #expect(result.stdout == repeatResult.stdout)
+    }
+
+    @Test("pack explain renders feature-isolation explanation deterministically")
+    func packExplainRendersFeatureIsolationExplanationDeterministically() throws {
+        let result = phase5FRunCLI(["swiftlens", "pack", "explain", "feature-isolation"])
+        let repeatResult = phase5FRunCLI([
+            "swiftlens",
+            "pack",
+            "explain",
+            "feature-isolation"
+        ])
+
+        #expect(result.exitCode == 0)
+        #expect(result.stderr.isEmpty)
+        #expect(result.stdout == phase5FFeatureIsolationPackExplanation)
+        #expect(result.stdout == repeatResult.stdout)
+    }
+
+    @Test("unknown pack fails with usage exit code")
+    func unknownPackFailsWithUsageExitCode() throws {
+        let result = phase5FRunCLI(["swiftlens", "pack", "explain", "not-a-real-pack"])
+
+        #expect(result.exitCode == 2)
+        #expect(result.stdout.isEmpty)
+        #expect(result.stderr == "Usage error: Unknown pack `not-a-real-pack`.\n")
+    }
+
     @Test("unknown preset fails with usage exit code")
     func unknownPresetFailsWithUsageExitCode() throws {
         let result = phase5FRunCLI(["swiftlens", "preset", "explain", "not-a-real-preset"])
@@ -250,6 +356,8 @@ struct SwiftLensPhase5FTests {
         #expect(result.stderr.isEmpty)
         #expect(result.stdout.contains("swiftlens preset list"))
         #expect(result.stdout.contains("swiftlens preset explain <PRESET>"))
+        #expect(result.stdout.contains("swiftlens pack list"))
+        #expect(result.stdout.contains("swiftlens pack explain <PACK>"))
         #expect(result.stdout.contains("swiftlens rule explain <RULE-ID>"))
     }
 

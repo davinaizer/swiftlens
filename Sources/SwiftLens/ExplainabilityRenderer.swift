@@ -25,6 +25,57 @@ enum ExplainabilityRenderer {
         ])
     }
 
+    static func renderPackList(_ descriptors: [RulePackDescriptor]) -> String {
+        var lines: [String] = ["Available rule packs:", ""]
+
+        for (index, descriptor) in descriptors.enumerated() {
+            lines.append("- \(descriptor.id)")
+            lines.append("  \(descriptor.explanation.description.first ?? "")")
+            if index != descriptors.count - 1 {
+                lines.append("")
+            }
+        }
+
+        return lines.joined(separator: "\n") + "\n"
+    }
+
+    static func renderPackExplanation(_ descriptor: RulePackDescriptor) -> String {
+        var lines: [String] = []
+        lines.append("Description")
+        lines.append("")
+        lines.append(contentsOf: descriptor.explanation.description)
+        lines.append("")
+        lines.append("Enabled Rules")
+        lines.append("")
+        if descriptor.explanation.enabledRules.isEmpty {
+            lines.append("- none")
+        } else {
+            lines.append(contentsOf: descriptor.explanation.enabledRules.map { "- \($0)" })
+        }
+        lines.append("")
+        lines.append("Generated Boundaries")
+        lines.append("")
+        if descriptor.explanation.generatedBoundaries.isEmpty {
+            lines.append("- none")
+        } else {
+            lines.append(contentsOf: renderBoundarySections(descriptor.explanation.generatedBoundaries))
+        }
+        lines.append("")
+        lines.append("Intended Usage")
+        lines.append("")
+        lines.append(contentsOf: descriptor.explanation.intendedUsage)
+        lines.append("")
+        lines.append("Notes")
+        lines.append("")
+        lines.append(contentsOf: descriptor.explanation.notes)
+        lines.append("")
+        lines.append("Limitations")
+        lines.append("")
+        lines.append(contentsOf: descriptor.explanation.limitations)
+
+        return lines.joined(separator: "\n") + "\n"
+    }
+
     static func renderRuleExplanation(_ descriptor: RuleDescriptor) -> String {
         return renderSections([
             ("Purpose", descriptor.explanation.purpose),
@@ -77,5 +128,28 @@ enum ExplainabilityRenderer {
         }
 
         return lines.joined(separator: "\n") + "\n"
+    }
+
+    private static func renderBoundarySections(_ boundaries: [RulePackBoundaryBlueprint]) -> [String] {
+        var lines: [String] = []
+        for (index, boundary) in boundaries.enumerated() {
+            lines.append("- \(boundary.path)/")
+            if !boundary.allows.isEmpty {
+                lines.append("  Allows:")
+                lines.append(contentsOf: boundary.allows.map { "    - \($0)" })
+            }
+            if !boundary.restrictedImports.isEmpty {
+                lines.append("  Restricted Imports:")
+                lines.append(contentsOf: boundary.restrictedImports.map { "    - \($0)" })
+            }
+            if !boundary.notes.isEmpty {
+                lines.append("  Notes:")
+                lines.append(contentsOf: boundary.notes.map { "    - \($0)" })
+            }
+            if index != boundaries.count - 1 {
+                lines.append("")
+            }
+        }
+        return lines
     }
 }

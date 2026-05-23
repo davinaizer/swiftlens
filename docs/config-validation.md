@@ -20,7 +20,6 @@ Validation must reject:
 - missing required fields
 - invalid severity values
 - invalid paths
-- invalid pack names
 - invalid rule IDs
 - unknown keys at any level
 - unknown rule config keys
@@ -32,8 +31,15 @@ Preset resolution is deterministic:
 
 - built-in presets are resolved locally from the binary
 - unknown preset names are rejected with exit code `2`
-- preset defaults are expanded before explicit project config is applied
+- preset defaults are expanded through built-in rule packs before explicit project config is applied
 - explicit project config overrides preset defaults
+
+Rule-pack resolution is deterministic too:
+
+- built-in rule packs are resolved locally from the binary
+- unknown pack names are not user-configurable and are rejected as invalid top-level config when present
+- `swiftlens pack list` and `swiftlens pack explain <pack>` read the pack registry only
+- pack defaults are merged in preset-declared order and then rule-declared order
 
 Explainability lookups use the same built-in registries:
 
@@ -63,9 +69,9 @@ Baseline UX is deterministic too:
 ## 2. Precedence
 
 1. Preset defaults define the baseline when `preset` is set.
-2. Built-in rule defaults define the rule baseline.
-3. Pack-level severity overrides apply next.
-4. Rule-level severity overrides win over pack-level and built-in values.
+2. Built-in rule defaults define the baseline.
+3. Built-in rule pack defaults apply in preset order.
+4. Explicit rule config overrides pack defaults.
 5. Rule-level config merges over built-in config.
 6. CLI flags never mutate rule semantics.
 
@@ -81,11 +87,10 @@ Baseline UX is deterministic too:
 - `rules` may be either a canonical ordered list or the legacy keyed alias shape
 - `architecture.forbiddenImports` is validated deterministically and path-bound with prefix/boundary matching
 - `ignore.paths` is applied before parsing discovered files
-- `packs.<pack>.severityOverrides` must be a mapping when provided
 - `rules.<rule>.config` must be a mapping when provided
 - `rules.<rule>.severity` must be one of `advisory`, `warning`, or `error`
-- empty `packs.<pack>.severityOverrides` must use block form, not inline `{}` syntax
 - baseline files must decode as version `1` JSON with the documented baseline shape
+- user-authored `packs:` sections are rejected as unknown top-level keys
 
 ## 4. Exit Codes
 

@@ -23,6 +23,8 @@ enum SwiftLensCLIParsing {
           swiftlens boundary list [--config PATH]
           swiftlens preset list
           swiftlens preset explain <PRESET>
+          swiftlens pack list
+          swiftlens pack explain <PACK>
           swiftlens rule explain <RULE-ID>
           swiftlens version
           swiftlens help
@@ -66,25 +68,40 @@ enum SwiftLensCLIParsing {
         case "scan":
             return .scan(try parseScanOptions(flags))
         case "baseline":
-            if let command = try BaselineCLI.parse(commandName: commandName, flags: flags) {
-                return command
-            }
-            throw SwiftLensError.usage("Unknown command `\(commandName)`.")
+            return try parseBaselineCommand(flags)
         case "init":
             return .initCommand(try parseInitOptions(flags))
         case "boundary":
-            if let command = try BoundaryCLI.parse(commandName: commandName, flags: flags) {
-                return command
-            }
-            throw SwiftLensError.usage("Unknown command `\(commandName)`.")
-        case "preset", "rule":
-            if let command = try ExplainabilityCLI.parse(commandName: commandName, flags: flags) {
-                return command
-            }
-            throw SwiftLensError.usage("Unknown command `\(commandName)`.")
+            return try parseBoundaryCommand(flags)
+        case "preset", "pack", "rule":
+            return try parseExplainabilityCommand(commandName: commandName, flags: flags)
         default:
             throw SwiftLensError.usage("Unknown command `\(commandName)`.")
         }
+    }
+
+    private static func parseBaselineCommand(_ flags: [String]) throws -> CLICommand {
+        guard let command = try BaselineCLI.parse(commandName: "baseline", flags: flags) else {
+            throw SwiftLensError.usage("Unknown command `baseline`.")
+        }
+        return command
+    }
+
+    private static func parseBoundaryCommand(_ flags: [String]) throws -> CLICommand {
+        guard let command = try BoundaryCLI.parse(commandName: "boundary", flags: flags) else {
+            throw SwiftLensError.usage("Unknown command `boundary`.")
+        }
+        return command
+    }
+
+    private static func parseExplainabilityCommand(
+        commandName: String,
+        flags: [String]
+    ) throws -> CLICommand {
+        guard let command = try ExplainabilityCLI.parse(commandName: commandName, flags: flags) else {
+            throw SwiftLensError.usage("Unknown command `\(commandName)`.")
+        }
+        return command
     }
 
     private static func parseScanOptions(_ arguments: [String]) throws -> ScanOptions {

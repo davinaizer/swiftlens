@@ -20,6 +20,7 @@ Define the immutable repo rules that constrain scope, phase work, and document o
 - Phase 5H is the current authorized phase.
 - Phase 3A work was limited to local developer DX and remained phase-gated.
 - Phase 5H work remains constrained by the phase contract and must not expand beyond its explicitly authorized scope.
+- Built-in rule packs may exist as internal composition units, but user-authored pack composition remains out of scope until a governing doc explicitly authorizes it.
 - Any request that introduces semantic analysis, plugin ecosystems, distributed services, GUI surfaces, or auto-fix behavior is out of scope unless a governing doc explicitly allows it.
 - Local developer DX must remain deterministic and cwd-local.
 

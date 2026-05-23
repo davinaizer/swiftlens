@@ -9,10 +9,16 @@ enum ExplainabilityCLI {
         executeRuleCommand(command)
     }
 
+    static func executePack(_ command: PackCLICommand) -> CLIExecutionResult {
+        executePackCommand(command)
+    }
+
     static func parse(commandName: String, flags: [String]) throws -> CLICommand? {
         switch commandName {
         case "preset":
             return .preset(try parsePresetCommand(flags))
+        case "pack":
+            return .pack(try parsePackCommand(flags))
         case "rule":
             return .rule(try parseRuleCommand(flags))
         default:
@@ -27,10 +33,29 @@ enum ExplainabilityCLI {
         Usage:
           swiftlens preset list
           swiftlens preset explain <PRESET>
+          swiftlens pack list
+          swiftlens pack explain <PACK>
 
         Commands:
           swiftlens preset list
           swiftlens preset explain <PRESET>
+          swiftlens pack list
+          swiftlens pack explain <PACK>
+        """
+            + "\n"
+    }
+
+    static func packUsageText() -> String {
+        """
+        SwiftLens \(SwiftLensVersion.current)
+
+        Usage:
+          swiftlens pack list
+          swiftlens pack explain <PACK>
+
+        Commands:
+          swiftlens pack list
+          swiftlens pack explain <PACK>
         """
             + "\n"
     }
@@ -65,6 +90,27 @@ enum ExplainabilityCLI {
             return CLIExecutionResult(
                 exitCode: 0,
                 stdout: ExplainabilityRenderer.renderPresetExplanation(descriptor),
+                stderr: "")
+        }
+    }
+
+    private static func executePackCommand(_ command: PackCLICommand) -> CLIExecutionResult {
+        switch command {
+        case .help:
+            return CLIExecutionResult(exitCode: 0, stdout: packUsageText(), stderr: "")
+        case .list:
+            return CLIExecutionResult(
+                exitCode: 0,
+                stdout: ExplainabilityRenderer.renderPackList(
+                    RulePackRegistry.default.descriptors),
+                stderr: "")
+        case .explain(let packID):
+            guard let descriptor = RulePackRegistry.default.descriptor(for: packID) else {
+                return usageError("Unknown pack `\(packID)`.")
+            }
+            return CLIExecutionResult(
+                exitCode: 0,
+                stdout: ExplainabilityRenderer.renderPackExplanation(descriptor),
                 stderr: "")
         }
     }
@@ -108,6 +154,33 @@ enum ExplainabilityCLI {
             return .explain(presetID)
         default:
             throw SwiftLensError.usage("Unknown subcommand `\(subcommand)` for `preset`.")
+        }
+    }
+
+    private static func parsePackCommand(_ arguments: [String]) throws -> PackCLICommand {
+        var iterator = arguments.makeIterator()
+        guard let subcommand = iterator.next() else {
+            return .help
+        }
+
+        switch subcommand {
+        case "help", "-h", "--help":
+            try ensureNoExtraArguments(iterator: &iterator, subject: "`swiftlens pack`")
+            return .help
+        case "list":
+            try ensureNoExtraArguments(iterator: &iterator, subject: "`swiftlens pack list`")
+            return .list
+        case "explain":
+            guard let packID = iterator.next() else {
+                throw SwiftLensError.usage("Missing value for `pack explain`.")
+            }
+            try ensureNoExtraArguments(
+                iterator: &iterator,
+                subject: "`swiftlens pack explain`"
+            )
+            return .explain(packID)
+        default:
+            throw SwiftLensError.usage("Unknown subcommand `\(subcommand)` for `pack`.")
         }
     }
 
@@ -162,11 +235,18 @@ enum CLICommand {
     case baseline(BaselineCLICommand)
     case initCommand(InitOptions)
     case preset(PresetCLICommand)
+    case pack(PackCLICommand)
     case rule(RuleCLICommand)
     case boundary(BoundaryCLICommand)
 }
 
 enum PresetCLICommand {
+    case help
+    case list
+    case explain(String)
+}
+
+enum PackCLICommand {
     case help
     case list
     case explain(String)

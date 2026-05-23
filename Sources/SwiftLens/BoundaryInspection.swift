@@ -28,7 +28,6 @@ struct BoundaryInspector {
 
     func inspect(_ loadedConfiguration: LoadedConfiguration) throws -> BoundaryInspectionReport {
         let presetID = loadedConfiguration.config.presetID
-        let parser = ConfigLoaderParser(registry: registry, presetRegistry: presetRegistry)
         let ruleEngine = RuleEngine(registry: registry)
         let canonicalRuleID = ForbiddenImportRule.descriptor.id
 
@@ -65,7 +64,7 @@ struct BoundaryInspector {
 
         let ruleBoundaries = try resolveRuleBoundaries(
             loadedConfiguration: loadedConfiguration,
-            parser: parser
+            canonicalRuleID: canonicalRuleID
         )
         boundaries.append(contentsOf: ruleBoundaries)
 
@@ -78,32 +77,24 @@ struct BoundaryInspector {
 
     private func resolveRuleBoundaries(
         loadedConfiguration: LoadedConfiguration,
-        parser: ConfigLoaderParser
+        canonicalRuleID: String
     ) throws -> [BoundaryInspectionEntry] {
-        if loadedConfiguration.boundaryInspection.hasExplicitForbiddenImports {
-            guard let ruleConfig = loadedConfiguration.config.rules[ForbiddenImportRule.descriptor.id] else {
-                return []
-            }
-
-            return try boundaryEntries(
-                scopes: try parser.parseForbiddenImportScopes(
-                    from: ruleConfig.config["forbiddenImports"] ?? .array([])
-                ),
-                source: .explicitConfig
-            )
-        }
-
-        guard let presetID = loadedConfiguration.config.presetID,
-            let expansion = presetRegistry.expansion(for: presetID),
-            let ruleConfig = expansion.rules[ForbiddenImportRule.descriptor.id] else {
+        guard let ruleConfig = loadedConfiguration.config.rules[canonicalRuleID] else {
             return []
         }
 
-        let scopes = try parser.parseForbiddenImportScopes(
-            from: ruleConfig.config["forbiddenImports"] ?? .array([])
+        let source: BoundarySource = loadedConfiguration.boundaryInspection.hasExplicitForbiddenImports
+            ? .explicitConfig
+            : .preset
+
+        let scopes = try ForbiddenImportSupport.decodeScopes(
+            from: ruleConfig.config["forbiddenImports"],
+            field: "forbiddenImports"
         )
-        let orderedScopes = orderedPresetScopes(scopes, presetID: presetID)
-        return try boundaryEntries(scopes: orderedScopes, source: .preset)
+        let orderedScopes = source == .preset
+            ? orderedPresetScopes(scopes, presetID: loadedConfiguration.config.presetID)
+            : scopes
+        return try boundaryEntries(scopes: orderedScopes, source: source)
     }
 
     private func boundaryEntries(
@@ -132,9 +123,10 @@ struct BoundaryInspector {
 
     private func orderedPresetScopes(
         _ scopes: [ForbiddenImportScope],
-        presetID: String
+        presetID: String?
     ) -> [ForbiddenImportScope] {
-        guard let descriptor = presetRegistry.descriptor(for: presetID) else {
+        guard let presetID,
+            let descriptor = presetRegistry.descriptor(for: presetID) else {
             return scopes
         }
 

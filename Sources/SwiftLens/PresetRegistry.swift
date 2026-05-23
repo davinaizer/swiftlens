@@ -1,8 +1,7 @@
 import Foundation
 
 struct PresetExpansion: Equatable, Sendable {
-    let rules: [String: RuleConfiguration]
-    let ruleOrder: [String]
+    let packOrder: [String]
 }
 
 struct PresetBoundaryBlueprint: Equatable, Sendable {
@@ -34,9 +33,9 @@ struct PresetRegistry: Sendable {
         PresetDescriptor(
             id: "app-layers",
             expansion: PresetRegistry.presetExpansion(
-                forbiddenImports: [
-                    ("Domain", ["SwiftUI", "UIKit", "AppKit"]),
-                    ("UI", ["Data"])
+                packOrder: [
+                    "domain-ui-separation",
+                    "app-shell"
                 ]
             ),
             boundaryBlueprints: [
@@ -87,10 +86,10 @@ struct PresetRegistry: Sendable {
         PresetDescriptor(
             id: "feature-modules",
             expansion: PresetRegistry.presetExpansion(
-                forbiddenImports: [
-                    ("Core", ["Features"]),
-                    ("Features", ["Features"]),
-                    ("Shared", ["Features"])
+                packOrder: [
+                    "feature-isolation",
+                    "shared-boundaries",
+                    "app-shell"
                 ]
             ),
             boundaryBlueprints: [
@@ -143,12 +142,9 @@ struct PresetRegistry: Sendable {
         PresetDescriptor(
             id: "tca-features",
             expansion: PresetRegistry.presetExpansion(
-                forbiddenImports: [
-                    ("Dependencies", ["Features"]),
-                    ("Dependencies", ["SwiftUI", "UIKit", "AppKit"]),
-                    ("Features", ["Features"]),
-                    ("Features", ["SwiftUI", "UIKit", "AppKit"]),
-                    ("Shared", ["Features"])
+                packOrder: [
+                    "dependency-direction",
+                    "app-shell"
                 ]
             ),
             boundaryBlueprints: [
@@ -213,35 +209,7 @@ struct PresetRegistry: Sendable {
         descriptors.map(\.id)
     }
 
-    private static func presetExpansion(
-        forbiddenImports: [(from: String, imports: [String])]
-    ) -> PresetExpansion {
-        PresetExpansion(
-            rules: [
-                ForbiddenImportRule.descriptor.id: forbiddenImportRuleConfiguration(
-                    forbiddenImports: forbiddenImports
-                )
-            ],
-            ruleOrder: [ForbiddenImportRule.descriptor.id]
-        )
-    }
-
-    private static func forbiddenImportRuleConfiguration(
-        forbiddenImports: [(from: String, imports: [String])]
-    ) -> RuleConfiguration {
-        RuleConfiguration(
-            enabled: true,
-            severity: nil,
-            config: [
-                "forbiddenImports": .array(
-                    forbiddenImports.map { scope in
-                        .mapping([
-                        "from": .string(normalizeRelativePath(scope.from)),
-                        "imports": .array(scope.imports.map(YAMLValue.string))
-                        ])
-                    }
-                )
-            ]
-        )
+    private static func presetExpansion(packOrder: [String]) -> PresetExpansion {
+        PresetExpansion(packOrder: packOrder)
     }
 }

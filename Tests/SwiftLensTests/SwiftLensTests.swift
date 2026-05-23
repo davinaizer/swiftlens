@@ -129,8 +129,8 @@ struct SwiftLensPhase2Tests {
         ])
     }
 
-    @Test("scan honors pack severity overrides")
-    func scanHonorsPackSeverityOverrides() throws {
+    @Test("scan honors explicit rule severity overrides")
+    func scanHonorsExplicitRuleSeverityOverrides() throws {
         let result = scanResult(for: "PackSeverityOverride")
 
         #expect(result.exitCode == 1)
@@ -139,8 +139,8 @@ struct SwiftLensPhase2Tests {
         #expect(result.stdout.contains("\"severity\":\"warning\""))
     }
 
-    @Test("scan lets rule severity override pack severity overrides")
-    func scanLetsRuleSeverityOverrideWin() throws {
+    @Test("scan lets explicit rule severity override win")
+    func scanLetsExplicitRuleSeverityOverrideWin() throws {
         let result = scanResult(for: "RuleSeverityOverride")
 
         #expect(result.exitCode == 1)
@@ -172,8 +172,8 @@ struct SwiftLensPhase2Tests {
         #expect(result.stdout.contains("Configuration valid."))
     }
 
-    @Test("validate-config rejects unknown pack names")
-    func validateConfigRejectsUnknownPackNames() throws {
+    @Test("validate-config rejects unknown top-level keys")
+    func validateConfigRejectsUnknownTopLevelKeys() throws {
         let result = runCLI([
             "swiftlens",
             "validate-config",
@@ -183,7 +183,7 @@ struct SwiftLensPhase2Tests {
 
         #expect(result.exitCode == 2)
         #expect(result.stdout.isEmpty)
-        #expect(result.stderr.contains("Unknown pack key"))
+        #expect(result.stderr.contains("Unknown top-level key"))
     }
 
     @Test("rule engine preserves descriptor order")
@@ -228,9 +228,6 @@ struct SwiftLensPhase2Tests {
         let engine = RuleEngine(registry: registry)
         let config = SwiftLensConfig(
             project: ProjectConfiguration(path: ".", include: [], exclude: []),
-            packs: [
-                "architecture": PackConfiguration(enabled: true, severityOverrides: [:])
-            ],
             rules: [:],
             ruleOrder: ["AlphaRule", "BetaRule"]
         )

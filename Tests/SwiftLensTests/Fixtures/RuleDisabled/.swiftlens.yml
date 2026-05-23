@@ -2,10 +2,6 @@ project:
   path: .
   include: []
   exclude: []
-packs:
-  architecture:
-    enabled: true
-    severityOverrides:
 rules:
   ForbiddenImportRule:
     enabled: false

@@ -82,11 +82,6 @@ struct IgnoreConfiguration: Equatable, Sendable {
     let paths: [String]
 }
 
-struct PackConfiguration: Equatable, Sendable {
-    let enabled: Bool
-    let severityOverrides: [String: Severity]
-}
-
 struct RuleConfiguration: Equatable, Sendable {
     let enabled: Bool?
     let severity: Severity?
@@ -96,7 +91,6 @@ struct RuleConfiguration: Equatable, Sendable {
 struct SwiftLensConfig: Equatable, Sendable {
     let presetID: String?
     let project: ProjectConfiguration
-    let packs: [String: PackConfiguration]
     let rules: [String: RuleConfiguration]
     let ruleOrder: [String]
     let ignore: IgnoreConfiguration
@@ -104,14 +98,12 @@ struct SwiftLensConfig: Equatable, Sendable {
     init(
         presetID: String? = nil,
         project: ProjectConfiguration,
-        packs: [String: PackConfiguration] = [:],
         rules: [String: RuleConfiguration] = [:],
         ruleOrder: [String] = [],
         ignore: IgnoreConfiguration = IgnoreConfiguration(paths: [])
     ) {
         self.presetID = presetID
         self.project = project
-        self.packs = packs
         self.rules = rules
         self.ruleOrder = ruleOrder
         self.ignore = ignore

@@ -175,44 +175,10 @@ extension ConfigLoaderParser {
     }
 
     func parseForbiddenImportScopes(from value: YAMLValue) throws -> [ForbiddenImportScope] {
-        guard case .array(let items) = value else {
-            throw SwiftLensError.configuration(
-                "`architecture.forbiddenImports` must be a list."
-            )
-        }
-
-        var scopes: [ForbiddenImportScope] = []
-        for item in items {
-            guard case .mapping(let mapping) = item else {
-                throw SwiftLensError.configuration(
-                    "`architecture.forbiddenImports` must contain mappings."
-                )
-            }
-
-            try validateKeys(
-                mapping.keys,
-                allowed: ["from", "imports"],
-                subject: "`architecture.forbiddenImports`"
-            )
-
-            guard let from = decoder.stringValue(mapping["from"]) else {
-                throw SwiftLensError.configuration(
-                    "`architecture.forbiddenImports.from` is required."
-                )
-            }
-
-            scopes.append(
-                ForbiddenImportScope(
-                    from: normalizeRelativePath(from),
-                    imports: try decoder.stringArrayValue(
-                        mapping["imports"],
-                        field: "architecture.forbiddenImports.imports"
-                    )
-                )
-            )
-        }
-
-        return scopes
+        try ForbiddenImportSupport.decodeScopes(
+            from: value,
+            field: "architecture.forbiddenImports"
+        )
     }
 
     func canonicalForbiddenImportConfig(from value: YAMLValue?) throws -> [String: YAMLValue] {
@@ -225,15 +191,13 @@ extension ConfigLoaderParser {
             field: "rules.ForbiddenImportRule.config.forbiddenImports"
         )
         guard !legacyImports.isEmpty else {
-            return [
-                "forbiddenImports": .array([])
-            ]
+            return ["forbiddenImports": .array([])]
         }
 
         return [
             "forbiddenImports": .array(
                 legacyImports.map { module in
-                YAMLValue.mapping([
+                    YAMLValue.mapping([
                         "from": YAMLValue.string(""),
                         "imports": YAMLValue.array([YAMLValue.string(module)])
                     ])
@@ -286,9 +250,4 @@ extension ConfigLoaderParser {
             config: base?.config.merging(override.config) { _, new in new } ?? override.config
         )
     }
-}
-
-struct ForbiddenImportScope {
-    let from: String
-    let imports: [String]
 }

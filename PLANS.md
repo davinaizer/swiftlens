@@ -2,12 +2,12 @@
 
 ## Current Objective
 
-Phase 4 closed; Phase 5H authorized within the governed phase contract.
+Phase 5C completed; Phase 5H remains the active authorized phase in the governed plan.
 
 ## Current Phase
 
 - Current Authorized Phase: Phase 5H - Boundary Inspection UX.
-- Current Implementation Status: Authorized / In Progress.
+- Current Implementation Status: Authorized / Pending.
 - The active phase is the one defined in [docs/SwiftLens-project-action-plan.md](docs/SwiftLens-project-action-plan.md).
 - If the phase is undefined or disputed, resolve the docs first.
 
@@ -18,6 +18,7 @@ Phase 4 closed; Phase 5H authorized within the governed phase contract.
 ## Completed Work
 
 1. Refactor `AGENTS.md` into a compact bootstrap index that prioritizes `README.md`, `docs/README.md`, `docs/governance/README.md`, and `PLANS.md`, while leaving deeper specs behind the docs indexes.
+1. Implement deterministic internal rule pack composition for preset expansion, pack explainability, and pack-aware rule resolution.
 1. Implement deterministic baseline creation and regression-only scan filtering for incremental adoption.
 
 ## Rejection Rules

@@ -135,22 +135,16 @@ SwiftLens should separate four concepts:
 | rule           | executable deterministic check         |
 | project config | local customization and overrides      |
 
-Example future config:
+Internal composition model:
 
 ```yaml
 version: 1
 preset: feature-modules
 
-roots:
-  - Sources
-
-rulePacks:
-  - boundary-core
-  - layer-separation
-  - testing-boundaries
+# preset -> rule packs -> rules
 ```
 
-Presets are built into the binary and expand locally before rule evaluation.
+Presets are built into the binary and expand locally through built-in rule packs before rule evaluation.
 
 ---
 
@@ -262,12 +256,13 @@ Future presets should be added only after the MVP preset engine, explainability,
 
 ### MVP Rule Packs
 
-| Rule pack            | Purpose                               | Include in MVP      |
-| -------------------- | ------------------------------------- | ------------------- |
-| `boundary-core`      | path/import boundary rules            | Yes                 |
-| `layer-separation`   | layer direction and framework leakage | Yes                 |
-| `testing-boundaries` | test-only import rules                | Yes                 |
-| `api-surface`        | public/open/package API checks        | Maybe, conservative |
+| Rule pack               | Purpose                                  | Include in MVP |
+| ----------------------- | ---------------------------------------- | -------------- |
+| `feature-isolation`     | sibling feature import restrictions      | Yes            |
+| `shared-boundaries`     | shared/core import restrictions          | Yes            |
+| `app-shell`             | composition-root boundary metadata       | Yes            |
+| `domain-ui-separation`  | domain/UI framework and data separation  | Yes            |
+| `dependency-direction`  | dependency-client and feature direction  | Yes            |
 
 ### Future Rule Packs
 
@@ -299,16 +294,11 @@ rules:
 
 ### Medium-Term Shape
 
-Add rule packs:
+Add built-in rule packs as an internal composition layer:
 
-```yaml
-version: 1
-preset: feature-modules
-
-rulePacks:
-  - boundary-core
-  - layer-separation
-```
+- presets reference pack IDs
+- packs reference rule IDs
+- user-authored `rulePacks:` or `packs:` sections are not part of the Phase 5C contract
 
 ### Long-Term Shape
 
@@ -404,15 +394,19 @@ Deliver:
 - built-in rule pack registry
 - stable rule pack IDs
 - deterministic rule-pack expansion
+- pack explainability metadata
+- duplicate pack ID validation
 - duplicate rule deduplication
 - conflict validation
 
 Initial packs:
 
 ```text
-boundary-core
-layer-separation
-testing-boundaries
+feature-isolation
+shared-boundaries
+app-shell
+domain-ui-separation
+dependency-direction
 ```
 
 ### Phase 5D — Project Overrides
@@ -428,8 +422,9 @@ Precedence:
 | Source                  | Priority |
 | ----------------------- | -------- |
 | explicit project config | highest  |
-| rule packs              | middle   |
-| preset defaults         | lowest   |
+| later pack defaults     | middle   |
+| earlier pack defaults   | lower    |
+| built-in rule defaults  | lowest   |
 
 ### Phase 5E — Init UX
 
@@ -454,6 +449,8 @@ Deliver:
 ```bash
 swiftlens preset list
 swiftlens preset explain feature-modules
+swiftlens pack list
+swiftlens pack explain feature-isolation
 swiftlens rule explain architecture.forbidden-import
 ```
 
@@ -527,6 +524,8 @@ All preset behavior must preserve:
 - unknown pack fails with exit code `2`
 - duplicate rules deduplicate deterministically
 - pack expansion preserves stable order
+- pack explain output is stable
+- pack list output is stable
 
 ### Preset Behavior Tests
 
@@ -540,6 +539,8 @@ All preset behavior must preserve:
 - `swiftlens init` creates expected config
 - `swiftlens preset list` output is stable
 - `swiftlens preset explain` output is stable
+- `swiftlens pack list` output is stable
+- `swiftlens pack explain` output is stable
 - existing scan behavior remains unchanged
 
 ---
